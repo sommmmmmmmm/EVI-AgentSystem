@@ -76,61 +76,49 @@ class RiskAssessmentAgent:
         }
     
     def _initialize_risk_criteria(self) -> Dict[str, Any]:
-        """   """
+        """리스크 평가 기준 초기화 - 3가지 핵심 리스크"""
         return {
             'quantitative': {
-                'financial_ratios': {
-                    'debt_ratio': {
-                        'critical': 1.0,   # 100% 
-                        'high': 0.7,       # 70% 
-                        'medium': 0.5,     # 50% 
-                        'low': 0.3         # 30% 
+                'technology_investment': {
+                    'rnd_ratio': {
+                        'critical': 0.25,   # 25% 이상 (매출 대비 과도)
+                        'high': 0.20,       # 20% 이상
+                        'medium': 0.15,     # 15% 이상
+                        'low': 0.10         # 10% 이상 (혁신 기업)
                     },
-                    'current_ratio': {
-                        'critical': 0.5,   # 0.5 
-                        'high': 1.0,       # 1.0 
-                        'medium': 1.2,     # 1.2 
-                        'low': 1.5         # 1.5 
-                    },
-                    'roe': {
-                        'critical': -0.05,  #  
-                        'high': 0.03,       # 3% 
-                        'medium': 0.08,     # 8% 
-                        'low': 0.15         # 15% 
-                    },
-                    'operating_margin': {
-                        'critical': -0.05,  #  
-                        'high': 0.02,       # 2% 
-                        'medium': 0.05,     # 5% 
-                        'low': 0.10         # 10% 
+                    'intangible_ratio': {
+                        'critical': 0.50,   # 50% 이상 (총자산 대비)
+                        'high': 0.40,       # 40% 이상
+                        'medium': 0.30,     # 30% 이상
+                        'low': 0.20         # 20% 이상
                     }
                 },
-                'market_metrics': {
-                    'volatility': {
-                        'critical': 0.6,    # 60% 
-                        'high': 0.4,        # 40% 
-                        'medium': 0.25,     # 25% 
-                        'low': 0.15         # 15% 
+                'working_capital': {
+                    'wc_to_sales_ratio': {
+                        'critical': 0.40,   # 40% 이상 (과다)
+                        'high': 0.30,       # 30% 이상
+                        'medium': 0.20,     # 20% 이상
+                        'low': 0.10         # 10% 이상 (적정)
                     },
-                    'beta': {
-                        'critical': 2.0,    # 2.0 
-                        'high': 1.5,        # 1.5 
-                        'medium': 1.2,      # 1.2 
-                        'low': 0.8          # 0.8~1.2
-                    },
-                    'max_drawdown': {
-                        'critical': 0.5,    # 50%  
-                        'high': 0.3,        # 30%  
-                        'medium': 0.2,      # 20%  
-                        'low': 0.1          # 10%  
+                    'cash_conversion_cycle': {
+                        'critical': 120,    # 120일 이상
+                        'high': 90,         # 90일 이상
+                        'medium': 60,       # 60일 이상
+                        'low': 30           # 30일 이상 (양호)
                     }
                 },
-                'liquidity_metrics': {
-                    'trading_volume_ratio': {
-                        'critical': 0.001,  #   
-                        'high': 0.01,       #  
-                        'medium': 0.05,     #  
-                        'low': 0.1          #  
+                'growth_stage': {
+                    'capex_ratio': {
+                        'critical': 0.30,   # 30% 이상 (매출 대비 과도)
+                        'high': 0.20,       # 20% 이상
+                        'medium': 0.15,     # 15% 이상
+                        'low': 0.10         # 10% 이상 (성장단계)
+                    },
+                    'depreciation_growth': {
+                        'critical': 0.50,   # 50% 이상 증가
+                        'high': 0.30,       # 30% 이상 증가
+                        'medium': 0.20,     # 20% 이상 증가
+                        'low': 0.10         # 10% 이상 증가
                     }
                 }
             }
@@ -273,132 +261,223 @@ class RiskAssessmentAgent:
             }
     
     def _analyze_quantitative_risks(self, company: str, state: Dict[str, Any]) -> Dict[str, Any]:
-        """   (80% )"""
+        """정량적 리스크 분석 (80% 가중치) - 3가지 핵심 지표"""
         try:
-            #     
+            # 재무제표 데이터 확인
             financial_analysis = state.get('financial_analysis', {})
             company_data = financial_analysis.get(company, {})
             
             if not company_data.get('data_available', False):
-                #     
+                # 데이터 없을 경우
                 is_listed = self._is_listed_company(company, state)
-                risk_score = 0.7 if is_listed else 0.5  #    
+                risk_score = 0.7 if is_listed else 0.5
                 
                 return {
-                    'financial_ratio_risk': risk_score,
-                    'market_risk': risk_score,
-                    'liquidity_risk': risk_score,
+                    'technology_investment_risk': risk_score,
+                    'working_capital_risk': risk_score,
+                    'growth_stage_risk': risk_score,
                     'quantitative_score': risk_score,
                     'data_available': False,
-                    'data_missing_reason': '  ' if is_listed else '  '
+                    'data_missing_reason': '상장기업 데이터 부족' if is_listed else '비상장 기업'
                 }
             
-            #    ( )
-            financial_ratio_risk = self._analyze_financial_ratio_risk_continuous(company, state)
+            # 1. 기술투자 리스크 (40%)
+            tech_investment_risk = self._analyze_technology_investment_risk(company, state)
             
-            #    ( )
-            market_risk = self._analyze_market_risk_actual(company, state)
+            # 2. 운전자본 리스크 (35%)
+            working_capital_risk = self._analyze_working_capital_risk(company, state)
             
-            #    ( )
-            liquidity_risk = self._analyze_liquidity_risk_actual(company, state)
+            # 3. 성장단계 리스크 (25%)
+            growth_stage_risk = self._analyze_growth_stage_risk(company, state)
             
-            #    ( )
+            # 가중 평균 계산
             quantitative_score = (
-                financial_ratio_risk * 0.5 +   #  50%
-                market_risk * 0.3 +             #   30%
-                liquidity_risk * 0.2            #   20%
+                tech_investment_risk * 0.40 +    # 기술투자 40%
+                working_capital_risk * 0.35 +    # 운전자본 35%
+                growth_stage_risk * 0.25         # 성장단계 25%
             )
             
             return {
-                'financial_ratio_risk': financial_ratio_risk,
-                'market_risk': market_risk,
-                'liquidity_risk': liquidity_risk,
+                'technology_investment_risk': tech_investment_risk,
+                'working_capital_risk': working_capital_risk,
+                'growth_stage_risk': growth_stage_risk,
                 'quantitative_score': quantitative_score,
                 'data_available': True
             }
             
         except Exception as e:
-            print(f"   [FAIL] {company}    : {e}")
+            print(f"정량적 분석 [FAIL] {company} 리스크 분석 실패: {e}")
             return {
-                'financial_ratio_risk': 0.5,
-                'market_risk': 0.5,
-                'liquidity_risk': 0.5,
+                'technology_investment_risk': 0.5,
+                'working_capital_risk': 0.5,
+                'growth_stage_risk': 0.5,
                 'quantitative_score': 0.5,
                 'data_available': False,
                 'error': str(e)
             }
     
-    def _is_listed_company(self, company: str, state: Dict[str, Any]) -> bool:
-        """  """
-        #  state   
-        #     
-        korean_companies = ['LG', 'SDI', '', '', 'SK']
-        return company in korean_companies
+    def _analyze_technology_investment_risk(self, company: str, state: Dict[str, Any]) -> float:
+        """기술투자 리스크 분석 (R&D 비용 비중 + 무형자산 비중)"""
+        try:
+            tech_criteria = self.risk_criteria['quantitative']['technology_investment']
+            
+            # 재무제표 데이터 추출
+            financial_analysis = state.get('financial_analysis', {})
+            company_data = financial_analysis.get(company, {})
+            
+            # 재무제표에서 데이터 추출
+            income_statement = company_data.get('income_statement', {})
+            balance_sheet = company_data.get('balance_sheet', {})
+            
+            # R&D 비용 / 매출
+            rnd_expense = income_statement.get('rnd_expense', 0)
+            revenue = income_statement.get('revenue', 1)
+            rnd_ratio = rnd_expense / revenue if revenue > 0 else 0.0
+            
+            # 무형자산 / 총자산
+            intangible_assets = balance_sheet.get('intangible_assets', 0)
+            total_assets = balance_sheet.get('total_assets', 1)
+            intangible_ratio = intangible_assets / total_assets if total_assets > 0 else 0.0
+            
+            # 각 지표의 리스크 점수 계산
+            rnd_risk = self._calculate_continuous_risk_score(
+                value=rnd_ratio,
+                thresholds=tech_criteria['rnd_ratio'],
+                higher_is_riskier=True  # R&D 비중이 높을수록 위험
+            )
+            
+            intangible_risk = self._calculate_continuous_risk_score(
+                value=intangible_ratio,
+                thresholds=tech_criteria['intangible_ratio'],
+                higher_is_riskier=True  # 무형자산 비중이 높을수록 위험
+            )
+            
+            # 가중 평균 (R&D 60%, 무형자산 40%)
+            tech_investment_risk = rnd_risk * 0.6 + intangible_risk * 0.4
+            
+            print(f"      기술투자 리스크: R&D비중={rnd_ratio:.2%}, 무형자산비중={intangible_ratio:.2%}, 리스크={tech_investment_risk:.3f}")
+            
+            return tech_investment_risk
+            
+        except Exception as e:
+            print(f"      [WARNING] {company} 기술투자 리스크 분석 실패: {e}")
+            return 0.5
     
-    def _analyze_financial_ratio_risk_continuous(self, company: str, state: Dict[str, Any]) -> float:
-        """   -   """
-        financial_criteria = self.risk_criteria['quantitative']['financial_ratios']
-        
-        #      
-        financial_analysis = state.get('financial_analysis', {})
-        quantitative_analysis = financial_analysis.get('quantitative_analysis', {})
-        company_data = quantitative_analysis.get(company, {})
-        
-        if not company_data.get('data_available', False):
-            #   -    
-            if self._is_listed_company(company, state):
-                print(f"      [WARNING] {company}      -  ")
-                return 0.7  #      
+    def _analyze_working_capital_risk(self, company: str, state: Dict[str, Any]) -> float:
+        """운전자본 리스크 분석 (운전자본/매출 + CCC)"""
+        try:
+            wc_criteria = self.risk_criteria['quantitative']['working_capital']
+            
+            # 재무제표 데이터 추출
+            financial_analysis = state.get('financial_analysis', {})
+            company_data = financial_analysis.get(company, {})
+            
+            balance_sheet = company_data.get('balance_sheet', {})
+            income_statement = company_data.get('income_statement', {})
+            
+            # 운전자본 = 유동자산 - 유동부채
+            current_assets = balance_sheet.get('current_assets', 0)
+            current_liabilities = balance_sheet.get('current_liabilities', 0)
+            working_capital = current_assets - current_liabilities
+            
+            # 운전자본 / 매출
+            revenue = income_statement.get('revenue', 1)
+            wc_to_sales = working_capital / revenue if revenue > 0 else 0.0
+            
+            # CCC (현금전환주기) 계산
+            # CCC = 재고회전일수 + 매출채권회전일수 - 매입채무회전일수
+            inventory = balance_sheet.get('inventory', 0)
+            accounts_receivable = balance_sheet.get('accounts_receivable', 0)
+            accounts_payable = balance_sheet.get('accounts_payable', 0)
+            cogs = income_statement.get('cogs', revenue * 0.7)  # 기본값: 매출의 70%
+            
+            # 회전일수 계산 (간이 계산)
+            inventory_days = (inventory / cogs * 365) if cogs > 0 else 0
+            receivable_days = (accounts_receivable / revenue * 365) if revenue > 0 else 0
+            payable_days = (accounts_payable / cogs * 365) if cogs > 0 else 0
+            
+            ccc = inventory_days + receivable_days - payable_days
+            
+            # 각 지표의 리스크 점수 계산
+            wc_risk = self._calculate_continuous_risk_score(
+                value=abs(wc_to_sales),  # 절댓값 사용 (과다/과소 모두 위험)
+                thresholds=wc_criteria['wc_to_sales_ratio'],
+                higher_is_riskier=True
+            )
+            
+            ccc_risk = self._calculate_continuous_risk_score(
+                value=ccc,
+                thresholds=wc_criteria['cash_conversion_cycle'],
+                higher_is_riskier=True  # CCC가 길수록 위험
+            )
+            
+            # 가중 평균 (운전자본비율 50%, CCC 50%)
+            working_capital_risk = wc_risk * 0.5 + ccc_risk * 0.5
+            
+            print(f"      운전자본 리스크: WC/매출={wc_to_sales:.2%}, CCC={ccc:.1f}일, 리스크={working_capital_risk:.3f}")
+            
+            return working_capital_risk
+            
+        except Exception as e:
+            print(f"      [WARNING] {company} 운전자본 리스크 분석 실패: {e}")
+            return 0.5
+    
+    def _analyze_growth_stage_risk(self, company: str, state: Dict[str, Any]) -> float:
+        """성장단계 리스크 분석 (CapEx/매출 + 감가상각비 증가율)"""
+        try:
+            growth_criteria = self.risk_criteria['quantitative']['growth_stage']
+            
+            # 재무제표 데이터 추출
+            financial_analysis = state.get('financial_analysis', {})
+            company_data = financial_analysis.get(company, {})
+            
+            cash_flow = company_data.get('cash_flow_statement', {})
+            income_statement = company_data.get('income_statement', {})
+            
+            # CapEx / 매출
+            capex = abs(cash_flow.get('capex', 0))  # 투자는 음수로 표시되므로 절댓값
+            revenue = income_statement.get('revenue', 1)
+            capex_ratio = capex / revenue if revenue > 0 else 0.0
+            
+            # 감가상각비 증가율
+            depreciation_current = income_statement.get('depreciation', 0)
+            depreciation_previous = company_data.get('previous_year', {}).get('depreciation', depreciation_current)
+            
+            if depreciation_previous > 0:
+                depreciation_growth = (depreciation_current - depreciation_previous) / depreciation_previous
             else:
-                print(f"      ℹ {company}   -  ")
-                return 0.5  #    
-        
-        financial_metrics = company_data.get('financial_metrics_analysis', {})
-        financial_ratios = financial_metrics.get('financial_ratios', {})
-        
-        risk_scores = []
-        
-        # 1.   ( )
-        debt_ratio = financial_ratios.get('debt_ratio', 0.5)
-        debt_risk = self._calculate_continuous_risk_score(
-            value=debt_ratio,
-            thresholds=financial_criteria['debt_ratio'],
-            higher_is_riskier=True
-        )
-        risk_scores.append(('debt_ratio', debt_risk, 0.3))
-        
-        # 2.   ( )
-        current_ratio = financial_ratios.get('current_ratio', 1.2)
-        current_risk = self._calculate_continuous_risk_score(
-            value=current_ratio,
-            thresholds=financial_criteria['current_ratio'],
-            higher_is_riskier=False  #   
-        )
-        risk_scores.append(('current_ratio', current_risk, 0.25))
-        
-        # 3. ROE  ( )
-        roe = financial_ratios.get('roe', 0.08)
-        roe_risk = self._calculate_continuous_risk_score(
-            value=roe,
-            thresholds=financial_criteria['roe'],
-            higher_is_riskier=False  # ROE  
-        )
-        risk_scores.append(('roe', roe_risk, 0.25))
-        
-        # 4.   ( )
-        operating_margin = financial_ratios.get('operating_margin', 0.05)
-        margin_risk = self._calculate_continuous_risk_score(
-            value=operating_margin,
-            thresholds=financial_criteria['operating_margin'],
-            higher_is_riskier=False  #   
-        )
-        risk_scores.append(('operating_margin', margin_risk, 0.2))
-        
-        #   
-        total_risk = sum(score * weight for _, score, weight in risk_scores)
-        total_weight = sum(weight for _, _, weight in risk_scores)
-        
-        return total_risk / total_weight if total_weight > 0 else 0.5
+                depreciation_growth = 0.0
+            
+            # 각 지표의 리스크 점수 계산
+            capex_risk = self._calculate_continuous_risk_score(
+                value=capex_ratio,
+                thresholds=growth_criteria['capex_ratio'],
+                higher_is_riskier=True  # CapEx 비중이 높을수록 투자 부담
+            )
+            
+            depreciation_risk = self._calculate_continuous_risk_score(
+                value=abs(depreciation_growth),  # 절댓값 (증가/감소 모두 고려)
+                thresholds=growth_criteria['depreciation_growth'],
+                higher_is_riskier=True
+            )
+            
+            # 가중 평균 (CapEx 60%, 감가상각 40%)
+            growth_stage_risk = capex_risk * 0.6 + depreciation_risk * 0.4
+            
+            print(f"      성장단계 리스크: CapEx/매출={capex_ratio:.2%}, 감가상각증가율={depreciation_growth:.2%}, 리스크={growth_stage_risk:.3f}")
+            
+            return growth_stage_risk
+            
+        except Exception as e:
+            print(f"      [WARNING] {company} 성장단계 리스크 분석 실패: {e}")
+            return 0.5
+    
+    def _is_listed_company(self, company: str, state: Dict[str, Any]) -> bool:
+        """상장 여부 확인"""
+        # state 데이터 확인
+        # 간단한 휴리스틱
+        korean_companies = ['LG', 'SDI', '삼성', '현대', 'SK']
+        return company in korean_companies
     
     def _calculate_continuous_risk_score(
         self, 
@@ -448,116 +527,6 @@ class RiskAssessmentAgent:
             else:
                 # low    
                 return max(0.0, 0.25 * (1 - (value - low) / low))
-    
-    def _analyze_market_risk_actual(self, company: str, state: Dict[str, Any]) -> float:
-        """   -   """
-        try:
-            print(f"       {company}    ...")
-            
-            # state   
-            market_data = state.get('market_data', {}).get(company, {})
-            
-            if not market_data:
-                print(f"      [WARNING] {company}    -  ")
-                return 0.7  #    
-            
-            #    
-            volatility = market_data.get('volatility', None)
-            if volatility is not None:
-                #  0.2() ~ 0.6()  0.3 ~ 0.8   
-                volatility_risk = min(max((volatility - 0.2) / 0.4 * 0.5 + 0.3, 0.3), 0.8)
-                print(f"       : {volatility:.3f} → : {volatility_risk:.3f}")
-            else:
-                volatility_risk = 0.5  #   
-                print(f"      [WARNING]   ")
-            
-            #    
-            beta = market_data.get('beta', None)
-            if beta is not None:
-                #  0.5() ~ 2.0()  0.3 ~ 0.8   
-                beta_risk = min(max(abs(beta - 1.0) * 0.4 + 0.3, 0.3), 0.8)
-                print(f"       : {beta:.3f} → : {beta_risk:.3f}")
-            else:
-                beta_risk = 0.5  #   
-                print(f"      [WARNING]   ")
-            
-            #     
-            max_drawdown = market_data.get('max_drawdown', None)
-            if max_drawdown is not None:
-                #  0.1() ~ 0.5()  0.3 ~ 0.8   
-                drawdown_risk = min(max(abs(max_drawdown) * 1.5 + 0.3, 0.3), 0.8)
-                print(f"       : {max_drawdown:.3f} → : {drawdown_risk:.3f}")
-            else:
-                drawdown_risk = 0.5  #   
-                print(f"      [WARNING]   ")
-            
-            #     
-            volume_ratio = market_data.get('trading_volume_ratio', None)
-            if volume_ratio is not None:
-                #   0.05() ~ 0.2()  0.8 ~ 0.2    ()
-                volume_risk = max(0.2, 0.8 - volume_ratio * 3)
-                print(f"       : {volume_ratio:.3f} → : {volume_risk:.3f}")
-            else:
-                volume_risk = 0.5  #   
-                print(f"      [WARNING]   ")
-            
-            #   (     )
-            weights = []
-            risks = []
-            
-            if volatility is not None:
-                weights.append(0.4)
-                risks.append(volatility_risk)
-            if beta is not None:
-                weights.append(0.3)
-                risks.append(beta_risk)
-            if max_drawdown is not None:
-                weights.append(0.2)
-                risks.append(drawdown_risk)
-            if volume_ratio is not None:
-                weights.append(0.1)
-                risks.append(volume_risk)
-            
-            if weights and risks:
-                #  
-                total_weight = sum(weights)
-                normalized_weights = [w / total_weight for w in weights]
-                
-                market_risk = sum(w * r for w, r in zip(normalized_weights, risks))
-                print(f"      [OK]  : {market_risk:.3f} (  )")
-            else:
-                market_risk = 0.7  #   
-                print(f"      [WARNING]     -  ")
-            
-            return min(max(market_risk, 0.1), 1.0)
-            
-        except Exception as e:
-            print(f"   [FAIL] {company}    : {e}")
-            return 0.7  #    
-    
-    def _analyze_liquidity_risk_actual(self, company: str, state: Dict[str, Any]) -> float:
-        """   -  """
-        try:
-            liquidity_criteria = self.risk_criteria['quantitative']['liquidity_metrics']
-            
-            # state   
-            market_data = state.get('market_data', {}).get(company, {})
-            
-            #   (  / )
-            trading_volume_ratio = market_data.get('trading_volume_ratio', 0.05)
-            
-            #     
-            liquidity_risk = self._calculate_continuous_risk_score(
-                value=trading_volume_ratio,
-                thresholds=liquidity_criteria['trading_volume_ratio'],
-                higher_is_riskier=False  #   
-            )
-            
-            return liquidity_risk
-            
-        except Exception as e:
-            print(f"   [WARNING] {company}    ,  : {e}")
-            return 0.2  # 
     
     def _analyze_qualitative_risks(self, company: str, state: Dict[str, Any]) -> Dict[str, Any]:
         """   (20% ) -   """
@@ -870,34 +839,6 @@ class RiskAssessmentAgent:
         print(f"[ERROR] LLM API가 실패하여 '{title}' 리스크 분석을 수행할 수 없습니다.")
         return None
     
-    def _is_listed_company(self, company: str, state: Dict[str, Any]) -> bool:
-        """   """
-        try:
-            # 1.    
-            if company in self.listed_companies:
-                return True
-            
-            # 2.      
-            market_data = state.get('market_data', {}).get(company, {})
-            if market_data and any(key in market_data for key in ['volatility', 'beta', 'trading_volume_ratio']):
-                return True
-            
-            # 3.       ( )
-            financial_analysis = state.get('financial_analysis', {}).get(company, {})
-            if financial_analysis.get('data_available', False):
-                return True
-            
-            # 4.      
-            listed_keywords = ['', '()', 'Co.', 'Ltd.', 'Corp.', 'Inc.']
-            if any(keyword in company for keyword in listed_keywords):
-                return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"      [WARNING] {company}    : {e}")
-            return False
-    
     def _determine_severity(self, content: str) -> str:
         """    """
         content_lower = content.lower()
@@ -1020,23 +961,24 @@ class RiskAssessmentAgent:
         qualitative_risks: Dict[str, Any],
         overall_risk_score: float
     ) -> str:
-        """   """
+        """기업 리스크 요약 생성"""
         risk_level = self._determine_risk_level(overall_risk_score)
         
-        #   
+        # 정량적 리스크 (새로운 3가지 지표)
         quant_score = quantitative_risks.get('quantitative_score', 0.5)
-        financial_risk = quantitative_risks.get('financial_ratio_risk', 0.5)
-        market_risk = quantitative_risks.get('market_risk', 0.5)
+        tech_risk = quantitative_risks.get('technology_investment_risk', 0.5)
+        wc_risk = quantitative_risks.get('working_capital_risk', 0.5)
+        growth_risk = quantitative_risks.get('growth_stage_risk', 0.5)
         
-        #   
+        # 정성적 리스크
         qual_score = qualitative_risks.get('qualitative_score', 0.0)
         risk_count = qualitative_risks.get('risk_count', 0)
         
         summary = f"""
-{company}   :
--   : {risk_level.upper()} ({overall_risk_score:.2f})
--  : {quant_score:.2f} (: {financial_risk:.2f}, : {market_risk:.2f})
--  : {qual_score:.2f} ( : {risk_count})
+{company} 리스크 평가:
+- 종합 등급: {risk_level.upper()} ({overall_risk_score:.2f})
+- 정량적 리스크: {quant_score:.2f} (기술투자: {tech_risk:.2f}, 운전자본: {wc_risk:.2f}, 성장단계: {growth_risk:.2f})
+- 정성적 리스크: {qual_score:.2f} (리스크 이슈: {risk_count}건)
         """.strip()
         
         return summary
