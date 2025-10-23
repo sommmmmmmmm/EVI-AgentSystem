@@ -174,6 +174,44 @@ GNEWS_API_KEY=your_gnews_api_key_here
 ---
 
 ## 🏗️ Architecture
+graph TB
+    Start([시작]) --> MT[MarketTrendAgent<br/>시장 트렌드 분석]
+    Start --> SM[SupplierMatchingAgent<br/>공급업체 매칭]
+    
+    MT --> |뉴스 데이터| State[State Management<br/>상태 관리]
+    SM --> |공급업체 데이터| State
+    
+    State --> FA[FinancialAnalyzerAgent<br/>재무 분석]
+    FA --> |재무 데이터| State
+    
+    State --> RA[RiskAssessmentAgent<br/>리스크 평가]
+    RA --> |리스크 데이터| State
+    
+    State --> IS[InvestmentStrategyAgent<br/>투자 전략]
+    IS --> |투자 권고| State
+    
+    State --> RG[ReportGeneratorAgent<br/>리포트 생성]
+    RG --> |PDF/HTML| Output[최종 리포트]
+    
+    Output --> End([완료])
+    
+    %% 데이터 소스
+    GNews[GNews API<br/>뉴스 검색] --> MT
+    WebSearch[Web Search<br/>웹 검색] --> SM
+    DART[DART API<br/>공시 데이터] --> FA
+    Yahoo[Yahoo Finance<br/>주가 데이터] --> FA
+    Alpha[Alpha Vantage<br/>해외 재무] --> FA
+    
+    %% 스타일링
+    classDef agent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef data fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef state fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef output fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    class MT,SM,FA,RA,IS,RG agent
+    class GNews,WebSearch,DART,Yahoo,Alpha data
+    class State state
+    class Output output
 
 
 📂 Directory Structure
