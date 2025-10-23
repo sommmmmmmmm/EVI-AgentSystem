@@ -101,19 +101,20 @@ class SupplierMatchingAgent:
                 else:
                     print(f"   [OK]  '{keyword}' 0  ")
         
-        #  
+        #   (    )
         unique_suppliers = []
         seen_names = set()
-        
+
         for supplier in discovered_suppliers:
-            name = supplier.get('name', '')
-            if name and name not in seen_names:
+            name = supplier.get('name', '').strip()
+            # , ,  1
+            if name and len(name) > 1 and not name.startswith('_') and name not in seen_names:
                 unique_suppliers.append(supplier)
                 seen_names.add(name)
-        
+
         print(f"     {len(discovered_suppliers)}   ( )")
         print(f"       {len(unique_suppliers)} ")
-        
+
         return unique_suppliers
 
     def _search_suppliers_web(self, keyword: str, category: str) -> List[Dict[str, Any]]:

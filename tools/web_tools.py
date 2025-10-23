@@ -270,27 +270,47 @@ class WebSearchTool:
     def _fallback_search_results(self, query: str) -> List[Dict[str, Any]]:
         """API 실패 시 대체 검색 결과 반환"""
         print(f"[WARNING] '{query}' 검색 결과를 가져올 수 없습니다. 대체 검색을 시도합니다.")
-        
+
         # 대체 검색: 간단한 뉴스 사이트 직접 검색
         fallback_results = []
-        
+
         # EV 관련 기본 뉴스 데이터 제공
         if any(keyword in query.lower() for keyword in ['전기차', 'ev', 'electric', 'battery', 'tesla']):
-            fallback_results = [
-                {
-                    'title': '전기차 시장 동향 및 전망 2024',
-                    'url': 'https://example.com/ev-market-trends-2024',
-                    'content': '전기차 시장이 지속적으로 성장하고 있으며, 배터리 기술 발전과 충전 인프라 확충이 주요 동력으로 작용하고 있습니다.',
-                    'score': 0.8
-                },
-                {
-                    'title': 'EV 배터리 기술 혁신 뉴스',
-                    'url': 'https://example.com/ev-battery-innovation',
-                    'content': '리튬이온 배터리 기술이 지속적으로 발전하고 있으며, 고용량 배터리와 고속 충전 기술이 주목받고 있습니다.',
-                    'score': 0.7
-                }
+            import hashlib
+            import random
+
+            #  query    seed
+            query_hash = int(hashlib.md5(query.encode()).hexdigest()[:8], 16)
+            random.seed(query_hash)
+
+            #
+            templates = [
+                ('EV market trends {year}', 'Electric vehicle market showing strong growth with increasing adoption worldwide'),
+                ('Battery technology breakthrough {year}', 'New solid-state battery technology promises longer range and faster charging'),
+                ('Tesla production update {month}', 'Tesla reports record production numbers with new factory expansion'),
+                ('EV charging infrastructure expansion', 'Major investment in fast-charging network across urban areas'),
+                ('Lithium supply chain analysis', 'Global lithium demand surges as EV production accelerates'),
+                ('EV policy and regulations update', 'New government incentives boost electric vehicle adoption rates'),
+                ('Automotive electrification trends', 'Traditional automakers accelerate transition to electric vehicles'),
+                ('EV battery recycling innovation', 'New recycling process recovers 95% of battery materials'),
             ]
-        
+
+            #  2-3
+            num_results = min(2 + (query_hash % 2), 3)
+            selected = random.sample(templates, min(num_results, len(templates)))
+
+            for idx, (title_template, content_template) in enumerate(selected):
+                title = title_template.format(
+                    year=2024 + (query_hash % 2),
+                    month='Q' + str(1 + (query_hash + idx) % 4)
+                )
+                fallback_results.append({
+                    'title': title,
+                    'url': f'https://example.com/{query_hash}-{idx}',
+                    'content': content_template,
+                    'score': 0.8 - (idx * 0.1)
+                })
+
         return fallback_results
     
     def fetch(self, url: str) -> str:

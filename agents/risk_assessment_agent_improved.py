@@ -201,22 +201,33 @@ class RiskAssessmentAgent:
     def _extract_companies_from_state(self, state: Dict[str, Any]) -> List[str]:
         """    """
         companies = []
-        
-        #  
+
+        #
         suppliers = state.get('suppliers', [])
         for supplier in suppliers:
             if isinstance(supplier, dict):
                 company_name = supplier.get('name', supplier.get('company', ''))
-                if company_name:
+                #       ( , 1 )
+                if company_name and len(company_name.strip()) > 1 and not company_name.startswith('_'):
                     companies.append(company_name)
-        
-        #   
+
+        #
         financial_analysis = state.get('financial_analysis', {})
         if isinstance(financial_analysis, dict):
-            companies.extend(financial_analysis.keys())
-        
-        #  
-        return list(set(companies))
+            for key, value in financial_analysis.items():
+                #  state  ('analysis_weights', 'top_picks' )
+                if isinstance(value, dict) and 'company_name' in value:
+                    company_name = value['company_name']
+                    if company_name and len(company_name.strip()) > 1:
+                        companies.append(company_name)
+                # key    (      )
+                elif key in self.listed_companies and len(key) > 1:
+                    companies.append(key)
+
+        #    ( )
+        filtered_companies = [c for c in companies if len(c.strip()) > 1 and not c.startswith('_')]
+
+        return list(set(filtered_companies))
     
     def _analyze_company_risks(self, company: str, state: Dict[str, Any]) -> Dict[str, Any]:
         """   """
