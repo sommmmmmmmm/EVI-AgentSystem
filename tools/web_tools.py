@@ -1,6 +1,5 @@
 """
-간단한 웹 검색 도구 (API 키 없이 작동)
-Tavily API 대체용
+Tavily API를 사용한 웹 검색 도구
 """
 
 import os
@@ -11,17 +10,30 @@ from tools.cache_manager import CacheManager
 from urllib.parse import quote_plus
 import re
 
+# 환경변수 로드
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 class WebSearchTool:
     """
-    간단한 웹 검색 도구
-    API 키 없이 작동하는 무료 검색
+    Tavily API를 사용한 웹 검색 도구
+    Fallback: Google/DuckDuckGo 무료 검색
     """
-    
+
     def __init__(self):
         self.cache_manager = CacheManager()
+        self.tavily_api_key = os.getenv('TAVILY_API_KEY')
         self.session = requests.Session()
-        
+
+        if self.tavily_api_key:
+            print(f"[OK] Tavily API 키 설정됨: {self.tavily_api_key[:8]}...")
+        else:
+            print("[WARNING] Tavily API 키가 없습니다. Fallback 검색을 사용합니다.")
+
         # 더 안정적인 User-Agent 설정
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -31,19 +43,19 @@ class WebSearchTool:
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1'
         })
-        
+
         # 연결 설정 최적화 - 재시도 횟수 증가 및 타임아웃 연장
         self.session.mount('http://', requests.adapters.HTTPAdapter(max_retries=3))
         self.session.mount('https://', requests.adapters.HTTPAdapter(max_retries=3))
     
     def search(self, query: str, num_results: int = 10) -> List[Dict[str, Any]]:
         """
-        간단한 웹 검색 실행
-        
+        웹 검색 실행 (Tavily API 우선, Fallback: Google/DuckDuckGo)
+
         Args:
             query: 검색 쿼리
             num_results: 결과 개수
-        
+
         Returns:
             검색 결과 리스트
         """
@@ -51,34 +63,39 @@ class WebSearchTool:
         if not self._is_valid_search_query(query):
             print(f"[SKIP] 유효하지 않은 검색어: '{query}'")
             return []
-        
+
         # 1. 캐시에서 결과 조회
         cached_result = self.cache_manager.get_cached_result(query, num_results)
         if cached_result is not None:
             return cached_result
-        
+
         try:
-            # 검색 엔진 하나만 시도하여 속도 개선 (Google 우선)
             results = []
-            
-            # 1. Google 검색 시도 (재시도 1회만)
-            google_results = self._search_with_retry(self._google_search, query, num_results, "Google")
-            if google_results:
-                results.extend(google_results)
-            
-            # Google 실패 시에만 DuckDuckGo 시도 (Bing은 느려서 제외)
+
+            # 1. Tavily API 시도 (우선)
+            if self.tavily_api_key:
+                tavily_results = self._tavily_search(query, num_results)
+                if tavily_results:
+                    results.extend(tavily_results)
+                    print(f"    [Tavily] '{query}' 완료: {len(results)}개 결과")
+
+            # 2. Tavily 실패 시 Google 시도
+            if not results:
+                google_results = self._search_with_retry(self._google_search, query, num_results, "Google")
+                if google_results:
+                    results.extend(google_results)
+
+            # 3. Google 실패 시 DuckDuckGo 시도
             if not results:
                 ddg_results = self._search_with_retry(self._duckduckgo_search, query, num_results, "DuckDuckGo")
                 results.extend(ddg_results)
-            
+
             if results:
-                print(f"    간단 검색 '{query}' 완료: {len(results)}개 결과")
-                
-                # 2. 결과를 캐시에 저장
+                # 결과를 캐시에 저장
                 self.cache_manager.set_cached_result(query, num_results, results)
-                
+
                 # 요청 간격 추가
-                time.sleep(1)
+                time.sleep(0.5)
                 return results[:num_results]
             else:
                 print(f"[ERROR] 모든 검색 엔진 실패: '{query}' - 대체 검색을 시도합니다")
@@ -88,9 +105,50 @@ class WebSearchTool:
                     print(f"    대체 검색 '{query}' 완료: {len(fallback_results)}개 결과")
                     return fallback_results[:num_results]
                 return []
-                
+
         except Exception as e:
             print(f"[ERROR] 검색 시스템 오류: {e}")
+            return []
+
+    def _tavily_search(self, query: str, num_results: int = 10) -> List[Dict[str, Any]]:
+        """
+        Tavily API를 사용한 웹 검색
+        """
+        try:
+            print(f"    [Tavily] '{query}' 검색 중...")
+
+            response = requests.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": self.tavily_api_key,
+                    "query": query,
+                    "search_depth": "basic",
+                    "max_results": min(num_results, 10),
+                    "include_answer": False,
+                    "include_raw_content": False
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            results = []
+
+            for idx, result in enumerate(data.get('results', [])):
+                results.append({
+                    'title': result.get('title', ''),
+                    'url': result.get('url', ''),
+                    'content': result.get('content', ''),
+                    'score': result.get('score', 0.9 - (idx * 0.05))
+                })
+
+            return results
+
+        except requests.exceptions.HTTPError as e:
+            print(f"    [ERROR] Tavily API 오류: {e}")
+            return []
+        except Exception as e:
+            print(f"    [WARNING] Tavily 검색 실패: {e}")
             return []
     
     def _is_valid_search_query(self, query: str) -> bool:
