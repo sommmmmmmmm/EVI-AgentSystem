@@ -84,12 +84,57 @@ config = {
 ```
 
 ### **API 키 설정**
+
+프로젝트 루트에 `.env` 파일을 생성하고 다음 API 키들을 설정하세요:
+
 ```bash
-# .env 파일에 추가 (선택사항)
+# 필수 API 키
 OPENAI_API_KEY=your_openai_api_key_here
-GNEWS_API_KEY=your_gnews_api_key_here
 DART_API_KEY=your_dart_api_key_here
+
+# 뉴스 검색 API (둘 중 하나 필수)
+GNEWS_API_KEY=your_gnews_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
+
+# 해외 기업 재무 데이터 (선택사항)
+# Alpha Vantage를 사용하려면 ALPHA_VANTAGE_ENABLED=1로 설정
+ALPHA_VANTAGE_ENABLED=1
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
 ```
+
+#### API 키 발급 방법
+
+1. **OpenAI API** (필수)
+   - https://platform.openai.com/api-keys
+   - GPT-4o 모델 사용을 위한 필수 키
+
+2. **DART API** (필수)
+   - https://opendart.fss.or.kr/
+   - 한국 상장 기업 재무 데이터 수집용
+
+3. **Tavily API** (권장 - 유료)
+   - https://tavily.com/
+   - 고품질 AI 검색 API
+   - 웹 검색 및 뉴스 수집용
+   - 유료 플랜 권장 (무료는 제한적)
+
+4. **GNews API** (선택사항)
+   - https://gnews.io/
+   - 무료 플랜: 하루 100회 요청
+   - 뉴스 기사 수집용
+
+5. **SEC EDGAR API** (무료, 미국 기업용)
+   - https://www.sec.gov/edgar
+   - **API 키 불필요** (User-Agent만 필요)
+   - 미국 상장 기업 공식 재무제표 (10-K, 10-Q)
+   - Tesla, GM, Ford 등 미국 기업 재무 분석
+   - **신뢰도 최고** (공식 SEC 제출 서류)
+
+6. **Alpha Vantage API** (선택사항)
+   - https://www.alphavantage.co/support/#api-key
+   - 무료 플랜: 분당 5회 요청
+   - 비미국 해외 기업 또는 SEC EDGAR 실패 시 사용
+   - 사용하지 않으면 비미국 해외 기업은 분석에서 제외됨
 
 ### **네트워크 문제 대응**
 - **API 실패 시**: fallback 데이터로 안정적인 보고서 생성
@@ -212,18 +257,23 @@ graph TB
     Output --> End([완료])
     
     GNews[GNews API<br/>뉴스 검색] --> MT
-    WebSearch[Web Search<br/>웹 검색] --> SM
-    DART[DART API<br/>공시 데이터] --> FA
-    Yahoo[Yahoo Finance<br/>주가 데이터] --> FA
-    Alpha[Alpha Vantage<br/>해외 재무] --> FA
+    Tavily[Tavily API<br/>AI 웹 검색] --> MT
+    Tavily2[Tavily API<br/>공급업체 검색] --> SM
+    DART[DART API<br/>한국 기업 재무] --> FA
+    SEC[SEC EDGAR<br/>미국 기업 재무<br/>무료] --> FA
+    Alpha[Alpha Vantage<br/>글로벌 재무<br/>선택사항] --> FA
+    Yahoo[Yahoo Finance<br/>실시간 주가] --> FA
+    Expert[Expert DB<br/>증권사 리포트] --> FA
     
     classDef agent fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     classDef data fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef priority fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px
     classDef state fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
     classDef output fill:#fff3e0,stroke:#e65100,stroke-width:2px
     
     class MT,SM,FA,RA,IS,RG agent
-    class GNews,WebSearch,DART,Yahoo,Alpha data
+    class GNews,Tavily,Tavily2,DART,Yahoo,Alpha,Expert data
+    class SEC priority
     class State state
     class Output output
 ```
@@ -327,9 +377,24 @@ print(f"신뢰도: {analysis['integrated_score']['confidence']:.2f}")
 #### **재무 데이터 수집**
 ```
 1. FinancialAnalyzerAgent 실행
-   ├── 한국 기업: DART API → 네이버 금융
-   ├── 해외 기업: Yahoo Finance → Alpha Vantage
-   └── API 실패 시 분석에서 제외
+   ├── 한국 기업 처리
+   │   ├── DART API로 corp_code 조회
+   │   ├── DART API로 재무제표 수집 (ROE, 영업이익률, ROA, 부채비율, 유동비율)
+   │   └── Yahoo Finance로 실시간 주가 수집
+   │
+   ├── 해외 기업 처리 (우선순위 순서)
+   │   ① SEC EDGAR API (무료, 미국 상장 기업, 공식 재무제표)
+   │   │   └── Tesla, GM, Ford 등 미국 기업 10-K/10-Q 보고서
+   │   ②Alpha Vantage API (ALPHA_VANTAGE_ENABLED=1인 경우)
+   │   │   └── 글로벌 기업 재무제표 (API 제한 있음)
+   │   ③ Yahoo Finance (주가 정보만)
+   │   │   └── 실시간 주가, 시가총액
+   │   └── 모든 API 실패 시 분석에서 제외
+   │
+   └── 증권사 애널리스트 리포트 수집
+       ├── 전문가 의견 데이터베이스 조회
+       ├── 웹 검색으로 추가 리포트 수집
+       └── 시간 가중치 적용 (최신 리포트 우선)
 ```
 
 ### **2. 투자 점수 계산 방법**

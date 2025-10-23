@@ -69,19 +69,39 @@ class SupplierMatchingAgent:
         """    """
         discovered_suppliers = []
         
+        # 키워드 필터링 함수
+        def is_valid_search_keyword(keyword: str) -> bool:
+            """검색에 사용할 수 있는 유효한 키워드인지 검사"""
+            if not keyword or not keyword.strip():
+                return False
+            if keyword.strip() in ['-', '_', '/', '\\', '|', '.', ',', '&']:
+                return False
+            if len(keyword.strip()) < 2:
+                return False
+            if keyword.strip().isdigit():
+                return False
+            # 특수문자만으로 이루어진 경우
+            if not any(c.isalnum() for c in keyword):
+                return False
+            return True
+        
+        # 키워드 필터링 적용
+        filtered_keywords = {}
+        for category, keywords in categorized_keywords.items():
+            valid_keywords = [k for k in keywords if is_valid_search_keyword(k)]
+            if valid_keywords:
+                filtered_keywords[category] = valid_keywords
+        
         print(f"     : {categorized_keywords}")
+        print(f"        : {filtered_keywords}")
         
         #      ()
-        if not categorized_keywords or all(not keywords for keywords in categorized_keywords.values()):
+        if not filtered_keywords or all(not keywords for keywords in filtered_keywords.values()):
             print("   [WARNING]      ")
-            categorized_keywords = {
-                '_': ['', '', ''],
-                '_': ['', '', 'BMS'],
-                '_': ['', '', '']
-            }
-            print(f"      : {categorized_keywords}")
+            print("   [INFO]        ")
+            return discovered_suppliers
         
-        print(f"        : {categorized_keywords}")
+        categorized_keywords = filtered_keywords
         
         for category, keywords in categorized_keywords.items():
             if not keywords:

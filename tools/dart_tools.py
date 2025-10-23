@@ -425,28 +425,35 @@ class DARTTool:
             return {'data_available': False}
     
     def _try_naver_finance(self, company_name: str) -> Dict[str, Any]:
-        """     (Yahoo Finance )"""
+        """해외 기업 재무 데이터 수집 (우선순위: SEC EDGAR > Alpha Vantage > Yahoo Finance)"""
         try:
-            print(f"     '{company_name}'    ...")
+            print(f"    해외 기업 '{company_name}' 재무 데이터 수집 중...")
 
-            # 1. Yahoo Finance API  
-            yahoo_result = self._try_yahoo_finance(company_name)
-            if yahoo_result['data_available']:
-                return yahoo_result
+            # 1. SEC EDGAR API 시도 (미국 기업, 무료, 공식 데이터)
+            print(f"   [INFO] SEC EDGAR API 시도 중...")
+            sec_result = self._try_sec_edgar(company_name)
+            if sec_result['data_available']:
+                return sec_result
 
-            # 2. Alpha Vantage API  (.env ALPHA_VANTAGE_ENABLED=1 )
+            # 2. Alpha Vantage API 시도 (.env ALPHA_VANTAGE_ENABLED=1인 경우)
             import os
             alpha_vantage_enabled = os.getenv('ALPHA_VANTAGE_ENABLED', '0') == '1'
 
             if alpha_vantage_enabled:
-                print(f"   [INFO] Alpha Vantage API  (ALPHA_VANTAGE_ENABLED=1)")
+                print(f"   [INFO] Alpha Vantage API 시도 중 (ALPHA_VANTAGE_ENABLED=1)")
                 alpha_vantage_result = self._try_alpha_vantage(company_name)
                 if alpha_vantage_result['data_available']:
                     return alpha_vantage_result
             else:
-                print(f"   [INFO] Alpha Vantage API  (ALPHA_VANTAGE_ENABLED=0)")
+                print(f"   [INFO] Alpha Vantage API 비활성화 (ALPHA_VANTAGE_ENABLED=0)")
 
-            # 3. API 실패 시 에러 반환
+            # 3. Yahoo Finance API 시도 (주가 정보만)
+            print(f"   [INFO] Yahoo Finance API 시도 중...")
+            yahoo_result = self._try_yahoo_finance(company_name)
+            if yahoo_result['data_available']:
+                return yahoo_result
+
+            # 4. 모든 API 실패 시 에러 반환
             print(f"[ERROR] '{company_name}'의 재무 데이터를 가져올 수 없습니다.")
             return {
                 'error': f"'{company_name}'의 재무 데이터를 가져올 수 없습니다",
@@ -456,11 +463,11 @@ class DARTTool:
             }
 
         except Exception as e:
-            print(f"[FAIL]    : {e}")
+            print(f"[FAIL] 해외 기업 데이터 수집 실패: {e}")
             return {'data_available': False}
     
     def _try_alpha_vantage(self, company_name: str) -> Dict[str, Any]:
-        """Alpha Vantage API """
+        """Alpha Vantage API (SEC EDGAR 실패 시 사용)"""
         try:
             from tools.alpha_vantage_tools import AlphaVantageTool
             
@@ -468,15 +475,35 @@ class DARTTool:
             result = alpha_vantage.get_company_financial_data(company_name)
             
             if result['data_available']:
-                print(f"   [OK] Alpha Vantage '{company_name}'   ")
+                print(f"   [OK] Alpha Vantage '{company_name}' 데이터 수집")
             
             return result
             
         except ImportError:
-            print(f"   [WARNING] Alpha Vantage    ")
+            print(f"   [WARNING] Alpha Vantage 도구 없음")
             return {'data_available': False}
         except Exception as e:
-            print(f"   [FAIL] Alpha Vantage  : {e}")
+            print(f"   [FAIL] Alpha Vantage 실패: {e}")
+            return {'data_available': False}
+    
+    def _try_sec_edgar(self, company_name: str) -> Dict[str, Any]:
+        """SEC EDGAR API (미국 기업 우선)"""
+        try:
+            from tools.sec_edgar_tools import SECEdgarTool
+            
+            sec_edgar = SECEdgarTool()
+            result = sec_edgar.get_company_financial_data(company_name)
+            
+            if result['data_available']:
+                print(f"   [OK] SEC EDGAR '{company_name}' 데이터 수집")
+            
+            return result
+            
+        except ImportError:
+            print(f"   [WARNING] SEC EDGAR 도구 없음")
+            return {'data_available': False}
+        except Exception as e:
+            print(f"   [FAIL] SEC EDGAR 실패: {e}")
             return {'data_available': False}
     
     def _try_yahoo_finance(self, company_name: str) -> Dict[str, Any]:

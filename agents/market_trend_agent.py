@@ -199,6 +199,25 @@ class MarketTrendAgent:
 
         #  
         found_companies = list(set(found_companies))
+        
+        # 무의미한 키워드 필터링
+        def is_valid_keyword(keyword: str) -> bool:
+            """유효한 키워드인지 검사"""
+            if not keyword or not keyword.strip():
+                return False
+            if keyword.strip() in ['-', '_', '/', '\\', '|', '.', ',']:
+                return False
+            if len(keyword.strip()) < 2:
+                return False
+            if keyword.strip().isdigit():
+                return False
+            return True
+        
+        # 회사명 필터링
+        found_companies = [c for c in found_companies if is_valid_keyword(c)]
+        
+        # 키워드 필터링
+        top_keywords = [k for k in top_keywords if is_valid_keyword(k)]
 
         print(f"   [OK]   : {len(found_companies)}")
         for company in found_companies[:10]:  #  10 
