@@ -187,9 +187,8 @@ DART_API_KEY=your_dart_api_key_here
 ---
 
 ## 🏗️ Architecture
-ARCHITECTURE.md 파일 참고
-```mermaid
-# 시스템 아키텍처
+
+### 시스템 아키텍처
 ```mermaid
 graph TB
     Start([시작]) --> MT[MarketTrendAgent<br/>시장 트렌드 분석]
@@ -229,7 +228,8 @@ graph TB
     class Output output
 ```
 
-📂 Directory Structure
+### 📂 Directory Structure
+```
 EVI_Agent/
 ├── data/                  # 입력 데이터 (PDF 문서, 보고서)
 ├── agents/                # 각 기능별 Agent 모듈
@@ -246,6 +246,7 @@ EVI_Agent/
 ├── outputs/               # 생성된 리포트 / 로그 파일
 ├── main.py                # 메인 실행 스크립트
 └── README.md              # 프로젝트 문서
+```
 
 ---
 
