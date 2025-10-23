@@ -246,11 +246,11 @@ class GNewsTool:
         전기차 관련 뉴스 전용 검색
         """
         ev_queries = [
-            "전기차 시장 동향",
+            "electric vehicle market trends",
             "EV battery technology",
             "electric vehicle sales",
-            "Tesla news",
-            "자동차 전기화"
+            "Tesla news latest",
+            "automotive electrification"
         ]
         
         all_articles = []
