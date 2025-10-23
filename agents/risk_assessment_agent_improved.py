@@ -829,10 +829,20 @@ class RiskAssessmentAgent:
             response = self.llm_tool.generate(prompt)
             print(f"       LLM : {response[:100]}...")
             
-            # JSON  
+            # JSON 파싱 (마크다운 코드 블록 제거)
             import json
             try:
-                analysis = json.loads(response)
+                # ```json ... ``` 마크다운 블록 제거
+                cleaned_response = response.strip()
+                if cleaned_response.startswith('```json'):
+                    cleaned_response = cleaned_response[7:]  # ```json 제거
+                elif cleaned_response.startswith('```'):
+                    cleaned_response = cleaned_response[3:]  # ``` 제거
+                if cleaned_response.endswith('```'):
+                    cleaned_response = cleaned_response[:-3]  # ``` 제거
+                cleaned_response = cleaned_response.strip()
+                
+                analysis = json.loads(cleaned_response)
                 if not analysis.get('is_risk', False):
                     print(f"      ℹ LLM :  ")
                     return None
@@ -844,8 +854,9 @@ class RiskAssessmentAgent:
                 }
                 print(f"      [OK] LLM  : {result['severity']} (: {result['confidence']})")
                 return result
-            except json.JSONDecodeError:
-                print(f"      [WARNING] JSON  ,   ")
+            except json.JSONDecodeError as e:
+                print(f"      [WARNING] JSON 파싱 오류: {e}")
+                print(f"      [DEBUG] 정리된 텍스트: {cleaned_response[:200]}")
                 print(f"[ERROR] JSON 파싱 실패로 '{title}' 리스크 분석을 수행할 수 없습니다.")
                 return None
                 

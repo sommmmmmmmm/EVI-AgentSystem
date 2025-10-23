@@ -46,8 +46,9 @@ def create_workflow(web_search_tool, llm_tool, dart_tool):
             #  CoT
             result = market_agent.analyze_market_trends(state)
 
-            # State  (  )
+            # State 업데이트 (공시 데이터 추가)
             state['news_articles'] = result.get('news_articles', [])
+            state['disclosure_data'] = result.get('disclosure_data', [])  # 공시 데이터 추가
             state['keywords'] = result.get('keywords', [])
             state['categorized_keywords'] = result.get('categorized_keywords', {})
             state['market_trends'] = result.get('market_trends', [])
@@ -64,12 +65,13 @@ def create_workflow(web_search_tool, llm_tool, dart_tool):
                 f"[OK] MarketTrendAgent  (CoT) - {datetime.now().isoformat()}"
             )
 
-            print(f"   [OK] : {len(result.get('news_articles', []))}")
-            print(f"   [OK] : {len(result.get('keywords', []))}")
-            print(f"   [OK] : {len(result.get('market_trends', []))}")
-            print(f"   [OK] : {len(state['suppliers'])}")
-            print(f"   [OK] : {len(state['source_manager'].citations)}")
-            print("[OK] \n")
+            print(f"   [OK] 뉴스: {len(result.get('news_articles', []))}")
+            print(f"   [OK] 공시: {len(result.get('disclosure_data', []))}")  # 공시 개수 출력
+            print(f"   [OK] 키워드: {len(result.get('keywords', []))}")
+            print(f"   [OK] 트렌드: {len(result.get('market_trends', []))}")
+            print(f"   [OK] 발견 기업: {len(state['suppliers'])}")
+            print(f"   [OK] 출처: {len(state['source_manager'].citations)}")
+            print("[OK]\n")
             
         except Exception as e:
             error_msg = f"[FAIL] MarketTrendAgent : {str(e)}"

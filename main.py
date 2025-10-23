@@ -40,8 +40,10 @@ def main():
     
     config = {
         'report_month': datetime.now().strftime('%Y-%m'),
-        'days_ago': 30,  # 최근 30일 이내 뉴스만 수집 (더 많은 결과 확보)
-        'max_news_articles': 10,  # 최대 10개 뉴스 기사로 제한
+        'days_ago': 30,  # 최근 30일 이내 뉴스만 수집
+        'max_news_articles': 100,  # 최대 100개 뉴스 기사로 증가 (신뢰도 향상)
+        'max_disclosures_per_company': 10,  # 기업당 최대 공시 수
+        'max_sec_filings_per_company': 8,  # SEC 기업당 최대 공시 수
         'keywords': ['EV', 'electric vehicle', 'battery', 'charging'],  # 영어 키워드로 변경
         'target_audience': 'individual investors',  # 영어로 변경
         'language': 'en'  # 영어 보고서 생성

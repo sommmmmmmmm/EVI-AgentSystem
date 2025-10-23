@@ -23,15 +23,23 @@ LangGraph 기반 멀티 에이전트 구조를 활용해, 전기차 산업의 **
 
 ## Features
 
-- **자동 공급망 분석** : 뉴스·공시 기반으로 전기차 부품 공급사 관계 자동 검증  
-- **실시간 재무 분석** : Yahoo Finance API를 통한 실시간 주가 및 시장 데이터 분석
-- **전문가 의견 통합** : 투자은행, 증권사, 연구기관의 전문가 의견을 시간 가중치로 통합
-- **정교한 리스크 평가** : 리스크 심각도별 가중치 적용 및 의견 분산도 고려
-- **정량·정성 통합 분석** : 주가 기반 정량적 점수(30%) + 전문가 의견 정성적 점수(70%)
-- **신뢰도 기반 투자 등급** : 신뢰도에 따른 투자 등급 및 추천 시스템
-- **투자 전략 리포트 생성** : 주요 종목, 리스크 요인, 전문가 출처, Glossary 포함 PDF 리포트 자동 생성
-- **최적화된 뉴스 수집** : 최근 7일 이내 뉴스만 수집, 최대 10개 기사로 제한하여 성능 최적화
-- **네트워크 문제 대응** : API 실패 시 fallback 데이터로 안정적인 보고서 생성  
+### 🎯 핵심 기능
+- **고신뢰도 데이터 수집** : Tavily AI 검색으로 최대 100개 뉴스 + 한국/해외 공시 통합 수집
+- **시간 가중치 시스템** : 최근 기사일수록 높은 가중치 부여 (1주일 이내 = 1.0, 4주일 = 0.4)
+- **글로벌 공시 통합** : DART(한국 기업) + SEC EDGAR(미국 기업) 공식 재무제표
+- **자동 공급망 분석** : 뉴스·공시 기반 전기차 부품 공급사 관계 자동 검증
+- **실시간 재무 분석** : Yahoo Finance + SEC EDGAR 실시간 주가 및 재무 데이터
+
+### 💡 분석 기능
+- **전문가 의견 통합** : 투자은행, 증권사, 연구기관 전문가 의견 시간 가중치 통합
+- **정교한 리스크 평가** : 리스크 심각도별 가중치 + 의견 분산도 고려
+- **정량·정성 통합** : 재무 데이터(30%) + 전문가 의견(70%) 균형 분석
+- **신뢰도 기반 등급** : 데이터 신뢰도에 따른 투자 등급 및 추천
+
+### 📊 보고서 생성
+- **상세 리포트** : 종목 분석, 리스크 요인, 전문가 출처, Glossary 포함
+- **다중 포맷** : JSON, Markdown, HTML 지원
+- **시각화** : 가중치 분포, 공시 통계, 키워드 트렌드  
 
 ---
 
@@ -41,11 +49,12 @@ LangGraph 기반 멀티 에이전트 구조를 활용해, 전기차 산업의 **
 |-------------|--------------------------------|
 | **Framework** | LangGraph, LangChain, Python 3.11+ |
 | **LLM** | GPT-4o via OpenAI API |
-| **API** | OpenAI, Tavily (Web Search), DART (Korea Financial Data), Yahoo Finance, Alpha Vantage (Optional) |
-| **Financial Data** | DART (국내 기업), Yahoo Finance (실시간 주가 및 해외 기업) |
-| **Web Search** | Tavily API, DuckDuckGo (Fallback) |
-| **Data Processing** | Pandas, NumPy |
-| **Output** | JSON, Markdown Reports |
+| **News Search** | Tavily AI Search (Primary, 4000 Credits) |
+| **Korean Data** | DART API (전자공시시스템) |
+| **US Data** | SEC EDGAR API (미국 기업 공식 재무제표) |
+| **Market Data** | Yahoo Finance (실시간 주가) |
+| **Fallback** | DuckDuckGo Search (Tavily 실패 시) |
+| **Output** | JSON, Markdown, HTML |
 
 ---
 
@@ -53,33 +62,47 @@ LangGraph 기반 멀티 에이전트 구조를 활용해, 전기차 산업의 **
 
 | Agent | Description |
 |--------|--------------|
-| **MarketTrendAgent** | 전기차 시장 트렌드 및 정책 키워드 추출 (GNews API 활용) |
-| **SupplierMatchingAgent** | 공급사 후보 발굴 및 DART 상장사 검증 |
-| **FinancialAnalyzerAgent** | 주가, 수익률, 밸류에이션 및 이벤트 스터디 |
-| **RiskAssessmentAgent** | IRA, 원자재, 환율 등 외부 리스크 스코어링 |
-| **InvestmentStrategyAgent** | 정량·정성 데이터 통합으로 종목 추천 |
-| **ReportGeneratorAgent** | 전체 리포트 PDF/HTML 자동 생성 (Glossary 포함) |
+| **MarketTrendAgent** | Tavily로 뉴스 100개 수집 + 시간 가중치 + DART/SEC 공시 통합 |
+| **SupplierMatchingAgent** | 키워드 기반 공급사 자동 발굴 및 관계 분석 |
+| **FinancialAnalyzerAgent** | SEC EDGAR + DART + Yahoo Finance 재무 데이터 통합 분석 |
+| **RiskAssessmentAgent** | 공시·뉴스 기반 리스크 자동 추출 및 스코어링 |
+| **InvestmentStrategyAgent** | 정량(30%) + 정성(70%) 통합 종목 추천 |
+| **ReportGeneratorAgent** | 전체 리포트 Markdown/HTML 자동 생성 |
 
-## 🔧 API 사용 현황 및 제한 이슈
+## 🔧 데이터 수집 시스템
 
-### **뉴스 검색 API 변경사항**
-- **이전**: TAVILY API 사용
-- **현재**: GNews API 사용
-- **변경 이유**: TAVILY API 사용 제한 및 네트워크 타임아웃 이슈
-- **장점**: 
-  - 더 안정적인 뉴스 검색
-  - 한국어 뉴스 지원 강화
-  - API 제한 없음
-  - 실시간 뉴스 데이터 제공
+### **뉴스 검색**
+- **메인 소스**: Tavily AI Search
+- **검색 쿼리**: 21개 카테고리별 최적화 쿼리
+- **수집량**: 최대 100개 기사
+- **시간 가중치**: 
+  - 1주일 이내: 1.0 (최고 우선순위)
+  - 2주일 이내: 0.8
+  - 3주일 이내: 0.6
+  - 4주일 이내: 0.4
+  - 그 이상: 0.2
 
-### **뉴스 수집 최적화 설정**
+### **공시 데이터 수집**
+#### 한국 기업 (DART API)
+- LG에너지솔루션, 삼성SDI, SK온, 현대자동차, 기아, 에코프로비엠
+- 기업당 최대 10개 공시
+- EV 관련 공시 자동 필터링
+- 중요도 태깅 (High/Medium/Low)
+
+#### 해외 기업 (SEC EDGAR)
+- Tesla, GM, Ford, Rivian 등 미국 기업
+- 기업당 최대 8개 공시 (10-K, 10-Q, 8-K)
+- 공식 재무제표 및 Form 4/5 포함
+- API 키 불필요 (무료)
+
+### **데이터 수집 설정**
 ```python
-# main.py에서 설정
+# main.py 설정
 config = {
-    'days_ago': 7,  # 최근 7일 이내 뉴스만 수집
-    'max_news_articles': 10,  # 최대 10개 뉴스 기사로 제한
-    'keywords': ['전기차', 'EV', '배터리', '충전'],
-    'target_audience': '개인 투자자'
+    'days_ago': 30,  # 최근 30일
+    'max_news_articles': 100,  # 뉴스 100개
+    'max_disclosures_per_company': 10,  # 한국 기업당 공시 10개
+    'max_sec_filings_per_company': 8,  # 미국 기업당 공시 8개
 }
 ```
 
@@ -91,13 +114,11 @@ config = {
 # 필수 API 키
 OPENAI_API_KEY=your_openai_api_key_here
 DART_API_KEY=your_dart_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here  # 필수! (뉴스 검색 메인)
 
-# 뉴스 검색 API (둘 중 하나 필수)
-GNEWS_API_KEY=your_gnews_api_key_here
-TAVILY_API_KEY=your_tavily_api_key_here
-
-# 해외 기업 재무 데이터 (선택사항)
-# Alpha Vantage를 사용하려면 ALPHA_VANTAGE_ENABLED=1로 설정
+# 선택사항
+GNEWS_API_KEY=your_gnews_api_key_here  # 사용 안 함 (403 에러)
+ALPHA_VANTAGE_ENABLED=0  # SEC EDGAR 우선 사용
 ALPHA_VANTAGE_ENABLED=1
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
 ```
