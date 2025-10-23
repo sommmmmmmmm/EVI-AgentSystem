@@ -552,48 +552,100 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 ### Low Risk Companies ({len(low_risk_companies)})
 {', '.join(low_risk_companies) if low_risk_companies else 'None identified'}
 
-##  Key Risk Factors
+## 📊 주요 리스크 요인
 
-### Quantitative Risk (80% weight)
-1. **Financial Risk**
-   - Debt ratio: Risk if >50%
-   - Current ratio: Risk if <1.0
-   - ROE: Risk if <10%
-   - Operating margin: Risk if <5%
+### 정량적 리스크 (80% 가중치)
 
-2. **Market Risk**
-   - Beta: Risk if >1.2 (high volatility)
-   - Volatility: Risk if >30%
-   - Market cap: Risk if <100B KRW
+#### 1. 기술투자 리스크 (40%)
+- **R&D 비용 비중**: R&D / 매출
+  - Critical: 25% 이상 (매출 대비 과도한 투자)
+  - High: 20% 이상
+  - Medium: 15% 이상 (혁신 기업 수준)
+  - Low: 10% 이상
 
-### Qualitative Risk (20% weight)
-1. **Governance Risk**
-   - Management stability concerns
-   - Board composition imbalance
-   - Audit quality issues
+- **무형자산 비중**: 무형자산 / 총자산
+  - Critical: 50% 이상 (과도한 무형자산 의존)
+  - High: 40% 이상
+  - Medium: 30% 이상
+  - Low: 20% 이상
 
-2. **Legal Risk**
-   - Litigation exposure
-   - Regulatory compliance issues
+#### 2. 운전자본 리스크 (35%)
+- **운전자본/매출 비율**: (유동자산 - 유동부채) / 매출
+  - Critical: 40% 이상 (과다 운전자본)
+  - High: 30% 이상
+  - Medium: 20% 이상
+  - Low: 10% 이상 (적정 수준)
 
-##  Risk Mitigation Strategies
+- **현금전환주기 (CCC)**: 재고회전일수 + 매출채권회전일수 - 매입채무회전일수
+  - Critical: 120일 이상 (현금 유동성 리스크)
+  - High: 90일 이상
+  - Medium: 60일 이상
+  - Low: 30일 이상 (양호)
 
-### Portfolio Level
-1. **Diversification**: Sector and company diversification
-2. **Risk Limits**: Limit high-risk company exposure
-3. **Cash Reserves**: Maintain liquidity
+#### 3. 성장단계 리스크 (25%)
+- **설비투자 비중**: CapEx / 매출
+  - Critical: 30% 이상 (과도한 투자 부담)
+  - High: 20% 이상
+  - Medium: 15% 이상
+  - Low: 10% 이상 (성장단계)
 
-### Individual Stock Level
-1. **Regular Monitoring**: Track financial metrics
-2. **Event Tracking**: Monitor major disclosures and news
-3. **Stop Loss**: Set clear stop-loss criteria
+- **감가상각비 증가율**: 전년 대비 증가율
+  - Critical: 50% 이상 증가
+  - High: 30% 이상 증가
+  - Medium: 20% 이상 증가
+  - Low: 10% 이상 증가
 
-##  Monitoring Points
+### 정성적 리스크 (20% 가중치)
 
-1. **Major OEM Disclosures**: Track supply relationship changes
-2. **Battery Raw Material Prices**: Monitor raw material price fluctuations
-3. **Government Policy Changes**: Watch for eco-friendly policy modifications
-4. **Competitor Actions**: Analyze competitor strategies and performance
+#### 1. 거버넌스 리스크
+- 경영진 안정성 문제
+- 이사회 구성 불균형
+- 감사 품질 이슈
+
+#### 2. 법적 리스크
+- 소송 노출
+- 규제 준수 문제
+- 법규 위반 이력
+
+#### 3. 경영 리스크
+- 전략 실행력 부족
+- 리더십 변화
+- 핵심 인력 유출
+
+## 🛡️ 리스크 완화 전략
+
+### 포트폴리오 레벨
+1. **분산투자**: 업종 및 기업 분산으로 리스크 분산
+2. **리스크 한도**: 고위험 기업 노출 제한
+3. **현금 보유**: 기회 포착 및 유동성 확보를 위한 현금 보유
+
+### 개별 종목 레벨
+1. **정기 모니터링**: 재무 지표 및 리스크 요인 추적
+2. **이벤트 추적**: 주요 공시 및 뉴스 모니터링
+3. **손절 기준**: 명확한 손절 기준 설정 및 준수
+
+## 📈 모니터링 포인트
+
+### 1. 주요 OEM 공시
+- 공급 계약 변경 사항 추적
+- 수주 규모 및 단가 변화 모니터링
+
+### 2. 배터리 원자재 가격
+- 리튬, 니켈 등 핵심 원자재 가격 추이
+- 원자재 가격 변동이 마진에 미치는 영향
+
+### 3. 정부 정책 변화
+- 친환경 정책 및 보조금 변화
+- 규제 강화/완화 동향
+
+### 4. 경쟁사 동향
+- 경쟁사 전략 및 실적 분석
+- 시장 점유율 변화 추적
+
+### 5. 재무지표 변화
+- 기술투자 비중 변화 (R&D, 무형자산)
+- 운전자본 효율성 변화 (CCC 개선/악화)
+- 성장 투자 강도 변화 (CapEx, 감가상각)
 """
         
         return analysis
@@ -637,75 +689,75 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 """
         
         analysis = f"""
-# 6. Investment Strategy
+# 6. 투자 전략
 
-##  Portfolio Strategy
+## 📊 포트폴리오 전략
 
-### Strategy Overview
-- **Strategy Name**: {portfolio_strategy.get('strategy_name', 'Balanced Strategy')}
-- **Description**: {portfolio_strategy.get('strategy_description', '')}
-- **Expected Return**: {portfolio_strategy.get('total_investment_score', 0.0):.2f}
+### 전략 개요
+- **전략명**: {portfolio_strategy.get('strategy_name', '균형형 전략')}
+- **전략 설명**: {portfolio_strategy.get('strategy_description', '')}
+- **기대 수익률**: {portfolio_strategy.get('total_investment_score', 0.0):.2f}
 
-### Recommended Portfolio Composition
+### 추천 포트폴리오 구성
 
-{portfolio_analysis if portfolio_analysis else "No portfolio recommendations available."}
+{portfolio_analysis if portfolio_analysis else "현재 추천 가능한 포트폴리오가 없습니다."}
 
-### Asset Allocation
-- **Growth Stocks**: {portfolio_strategy.get('target_allocation', {}).get('growth_stocks', 0.5):.1%}
-- **Value Stocks**: {portfolio_strategy.get('target_allocation', {}).get('value_stocks', 0.4):.1%}
-- **Cash**: {portfolio_strategy.get('target_allocation', {}).get('cash', 0.1):.1%}
+### 자산 배분
+- **성장주**: {portfolio_strategy.get('target_allocation', {}).get('growth_stocks', 0.5):.1%}
+- **가치주**: {portfolio_strategy.get('target_allocation', {}).get('value_stocks', 0.4):.1%}
+- **현금**: {portfolio_strategy.get('target_allocation', {}).get('cash', 0.1):.1%}
 
-##  Investment Opportunities
+## 🎯 투자 기회
 
-{opportunities_analysis if opportunities_analysis else "No specific opportunities identified."}
+{opportunities_analysis if opportunities_analysis else "현재 특정 투자 기회가 식별되지 않았습니다."}
 
-## ⏰ Investment Timing
+## ⏰ 투자 타이밍
 
-### Entry Strategy
-- **Approach**: {timing_strategy.get('entry_strategy', 'Gradual accumulation')}
-- **Market Outlook**: {timing_strategy.get('market_outlook', 'Positive')}
+### 진입 전략
+- **접근 방법**: {timing_strategy.get('entry_strategy', '점진적 매수')}
+- **시장 전망**: {timing_strategy.get('market_outlook', '긍정적')}
 
-### Timing Factors
-{chr(10).join([f"- {factor}" for factor in timing_strategy.get('timing_factors', [])]) if timing_strategy.get('timing_factors') else "- Monitor EV market growth rate"}
+### 타이밍 고려 요소
+{chr(10).join([f"- {factor}" for factor in timing_strategy.get('timing_factors', [])]) if timing_strategy.get('timing_factors') else "- EV 시장 성장률 모니터링"}
 
-##  Risk Management
+## 🛡️ 리스크 관리
 
-### Risk Management Strategy
-- **Risk Tolerance**: {risk_management.get('risk_tolerance', 'Medium')}
-- **Diversification**: {risk_management.get('diversification_strategy', 'Sector diversification')}
+### 리스크 관리 전략
+- **리스크 허용도**: {risk_management.get('risk_tolerance', '중간')}
+- **분산 투자**: {risk_management.get('diversification_strategy', '업종 분산')}
 
-### Risk Controls
-{chr(10).join([f"- {control.get('description', '')}" for control in risk_management.get('risk_controls', [])]) if risk_management.get('risk_controls') else "- Exclude high-risk companies"}
+### 리스크 통제 방안
+{chr(10).join([f"- {control.get('description', '')}" for control in risk_management.get('risk_controls', [])]) if risk_management.get('risk_controls') else "- 고위험 기업 제외"}
 
-### Monitoring Points
-{chr(10).join([f"- {point}" for point in risk_management.get('monitoring_points', [])]) if risk_management.get('monitoring_points') else "- Monitor major OEM disclosures"}
+### 모니터링 포인트
+{chr(10).join([f"- {point}" for point in risk_management.get('monitoring_points', [])]) if risk_management.get('monitoring_points') else "- 주요 OEM 공시 모니터링"}
 
-##  Investment Execution Guide
+## 📋 투자 실행 가이드
 
-### Phase 1: Portfolio Construction
-1. Buy recommended stocks according to target weights
-2. Use gradual accumulation to manage average cost
-3. Maintain cash reserves for opportunities
+### 1단계: 포트폴리오 구축
+1. 목표 비중에 따라 추천 종목 매수
+2. 분할 매수를 통한 평균 단가 관리
+3. 기회 포착을 위한 현금 보유
 
-### Phase 2: Ongoing Monitoring
-1. Monthly portfolio rebalancing review
-2. Quarterly stock performance evaluation
-3. Semi-annual investment strategy review
+### 2단계: 지속적 모니터링
+1. 월간 포트폴리오 리밸런싱 검토
+2. 분기별 종목 성과 평가
+3. 반기별 투자 전략 재검토
 
-### Phase 3: Risk Management
-1. Set and adhere to stop-loss criteria
-2. Limit high-risk stock exposure
-3. Develop market volatility response plan
+### 3단계: 리스크 관리
+1. 손절 기준 설정 및 준수
+2. 고위험 종목 비중 제한
+3. 시장 변동성 대응 계획 수립
 
-## [WARNING] Investment Precautions
+## ⚠️ 투자 유의사항
 
-1. **Principal Loss Risk**: All investments carry risk of principal loss
-2. **Market Volatility**: EV-related stocks may exhibit high volatility
-3. **Policy Risk**: Government policy changes may affect performance
-4. **Technology Risk**: Technology development may affect existing investments
+1. **원금 손실 위험**: 모든 투자는 원금 손실 위험이 있습니다
+2. **시장 변동성**: EV 관련 주식은 높은 변동성을 보일 수 있습니다
+3. **정책 리스크**: 정부 정책 변화가 실적에 영향을 미칠 수 있습니다
+4. **기술 리스크**: 기술 개발이 기존 투자에 영향을 미칠 수 있습니다
 
 ---
-*This investment strategy is for reference only. Investment decisions should be made at the investor's own judgment and responsibility.*
+*본 투자 전략은 참고용으로만 사용되어야 하며, 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 합니다.*
 """
         
         return analysis
@@ -742,65 +794,65 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
         Risk Disclaimer 생성 - 투자 위험 고지사항을 줄글로 작성
         """
         disclaimer = """
-# 8. Risk Disclaimer
+# 8. 투자 위험 고지
 
-## [WARNING] Investment Risk Warning
+## ⚠️ 투자 위험 경고
 
-### General Investment Risks
-1. **Principal Loss Risk**: All investments carry the risk of principal loss
-2. **Market Volatility**: EV-related stocks may exhibit high volatility
-3. **Policy Risk**: Government policy changes may affect investment performance
-4. **Technology Risk**: Technology development may pose risks to existing technologies
-5. **Competition Risk**: Intensifying competition may impact company performance
+### 일반 투자 리스크
+1. **원금 손실 위험**: 모든 투자에는 원금 손실 위험이 있습니다
+2. **시장 변동성**: EV 관련 주식은 높은 변동성을 보일 수 있습니다
+3. **정책 리스크**: 정부 정책 변화가 투자 성과에 영향을 미칠 수 있습니다
+4. **기술 리스크**: 기술 개발이 기존 기술에 위험을 초래할 수 있습니다
+5. **경쟁 리스크**: 경쟁 심화가 기업 실적에 영향을 미칠 수 있습니다
 
-### Specific EV Market Risks
-1. **Raw Material Price Volatility**: Fluctuations in battery raw material prices
-2. **Regulatory Changes**: Changes in environmental regulations and policies
-3. **Technology Disruption**: Emergence of new technologies affecting existing ones
-4. **Supply Chain Disruption**: Global supply chain issues affecting production
-5. **Consumer Adoption**: Uncertainty in consumer acceptance of EV technology
+### EV 시장 특화 리스크
+1. **원자재 가격 변동성**: 배터리 원자재 가격 변동 (리튬, 니켈 등)
+2. **규제 변화**: 환경 규제 및 정책 변화
+3. **기술 혁신**: 신기술 출현으로 인한 기존 기술 영향
+4. **공급망 교란**: 글로벌 공급망 문제로 인한 생산 차질
+5. **소비자 수용성**: EV 기술에 대한 소비자 수용 불확실성
 
-### Risk Management Recommendations
-1. **Diversification**: Spread investments across multiple companies and sectors
-2. **Position Sizing**: Limit individual stock positions to manage risk
-3. **Regular Monitoring**: Continuously monitor market conditions and company performance
-4. **Stop Loss**: Set clear stop-loss levels to limit potential losses
-5. **Due Diligence**: Conduct thorough research before making investment decisions
+### 리스크 관리 권장사항
+1. **분산 투자**: 여러 기업과 업종에 투자 분산
+2. **포지션 조정**: 개별 종목 비중 제한을 통한 리스크 관리
+3. **정기 모니터링**: 시장 상황 및 기업 실적 지속 추적
+4. **손절 기준**: 명확한 손절 수준 설정으로 손실 제한
+5. **실사**: 투자 결정 전 충분한 조사 수행
 
-##  Legal Disclaimer
+## 📋 법적 면책 조항
 
-### Investment Advisory Disclaimer
-- This report is for informational purposes only and does not constitute investment advice
-- Past performance does not guarantee future results
-- All investment decisions should be made based on individual risk tolerance and financial situation
-- Investors should consult with qualified financial advisors before making investment decisions
+### 투자 자문 면책
+- 본 보고서는 정보 제공 목적으로만 작성되었으며 투자 자문을 구성하지 않습니다
+- 과거 실적이 미래 수익을 보장하지 않습니다
+- 모든 투자 결정은 개인의 리스크 허용도와 재무 상황을 기반으로 이루어져야 합니다
+- 투자자는 투자 결정 전 전문 재무 상담사와 상담해야 합니다
 
-### Data Accuracy Disclaimer
-- While we strive for accuracy, we cannot guarantee the completeness or accuracy of all information
-- Market conditions and company information may change rapidly
-- Investors should verify information independently before making decisions
+### 데이터 정확성 면책
+- 정확성을 위해 노력하나 모든 정보의 완전성이나 정확성을 보장할 수 없습니다
+- 시장 상황 및 기업 정보는 빠르게 변할 수 있습니다
+- 투자자는 결정 전 독립적으로 정보를 검증해야 합니다
 
-### Limitation of Liability
-- We are not liable for any investment losses resulting from the use of this report
-- Investors assume full responsibility for their investment decisions
-- This report should not be the sole basis for investment decisions
+### 책임의 제한
+- 본 보고서 사용으로 인한 투자 손실에 대해 책임지지 않습니다
+- 투자자는 투자 결정에 대한 전적인 책임을 집니다
+- 본 보고서는 투자 결정의 유일한 근거가 되어서는 안 됩니다
 
-##  Investor Responsibilities
+## 👤 투자자 책임사항
 
-### Pre-Investment Considerations
-1. **Risk Assessment**: Evaluate your risk tolerance and investment objectives
-2. **Financial Situation**: Consider your financial capacity and investment horizon
-3. **Market Understanding**: Ensure understanding of EV market dynamics
-4. **Professional Advice**: Seek professional financial advice when needed
+### 투자 전 고려사항
+1. **리스크 평가**: 리스크 허용도 및 투자 목표 평가
+2. **재무 상황**: 재무 능력 및 투자 기간 고려
+3. **시장 이해**: EV 시장 역학에 대한 이해 확보
+4. **전문가 자문**: 필요시 전문 재무 조언 구하기
 
-### Ongoing Responsibilities
-1. **Portfolio Monitoring**: Regularly review and adjust your portfolio
-2. **Market Awareness**: Stay informed about market developments and company news
-3. **Risk Management**: Implement appropriate risk management strategies
-4. **Performance Review**: Periodically assess investment performance against objectives
+### 지속적 책임사항
+1. **포트폴리오 모니터링**: 정기적으로 포트폴리오 검토 및 조정
+2. **시장 인식**: 시장 동향 및 기업 뉴스 파악
+3. **리스크 관리**: 적절한 리스크 관리 전략 실행
+4. **성과 평가**: 목표 대비 투자 성과 주기적 평가
 
 ---
-*This disclaimer is effective as of the report generation date and may be updated periodically.*
+*본 면책 조항은 보고서 생성일 기준으로 유효하며 주기적으로 업데이트될 수 있습니다.*
 """
         return disclaimer
     
@@ -819,63 +871,66 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
             references_section = source_manager.generate_references_section()
         
         appendix = f"""
-# 9. References & Appendix
+# 9. 참고문헌 및 부록
 
-##  Data Sources Summary
+## 📚 데이터 출처 요약
 
-### News Articles ({len(news_articles)} articles)
-{chr(10).join([f"- {article.get('title', 'Untitled')}" for article in news_articles[:10]]) if news_articles else "No news articles available"}
+### 뉴스 기사 ({len(news_articles)}개 기사)
+{chr(10).join([f"- {article.get('title', '제목 없음')}" for article in news_articles[:10]]) if news_articles else "뉴스 기사 데이터 없음"}
 
-### Disclosure Data ({len(disclosure_data)} disclosures)
-{chr(10).join([f"- {disclosure.get('title', 'Untitled')}" for disclosure in disclosure_data[:10]]) if disclosure_data else "No disclosure data available"}
+### 공시 데이터 ({len(disclosure_data)}건 공시)
+{chr(10).join([f"- {disclosure.get('title', '제목 없음')}" for disclosure in disclosure_data[:10]]) if disclosure_data else "공시 데이터 없음"}
 
-##  Analysis Methodology
+## 🔬 분석 방법론
 
-### Market Trend Analysis
-- **Data Sources**: E-Daily, Hankyung, Money Today news
-- **Analysis Period**: Recent 7 days
-- **Keywords**: EV, electric vehicle, battery, charging
-- **Method**: Keyword extraction and categorization
+### 시장 트렌드 분석
+- **데이터 출처**: 이데일리, 한국경제, 머니투데이 등 주요 언론
+- **분석 기간**: 최근 7일
+- **키워드**: EV, electric vehicle, battery, charging
+- **방법**: 키워드 추출 및 카테고리화
 
-### Supply Chain Analysis
-- **Data Sources**: Web search and supplier database
-- **Method**: Keyword-based supplier discovery
-- **Relationship Classification**: Supply/Cooperation/Competition/Unclear
+### 공급망 분석
+- **데이터 출처**: 웹 검색 및 공급업체 데이터베이스
+- **방법**: 키워드 기반 공급업체 발견
+- **관계 분류**: 공급/협력/경쟁/불명확
 
-### Financial Analysis
-- **Qualitative (70%)**: Market trends, supplier relationships
-- **Quantitative (30%)**: DART financial data, analyst reports
+### 재무 분석
+- **정성적 (70%)**: 시장 트렌드, 공급업체 관계
+- **정량적 (30%)**: DART 재무 데이터, 증권사 리포트
 
-### Risk Analysis
-- **Quantitative (80%)**: Financial ratios, market indicators
-- **Qualitative (20%)**: Governance, legal risks
+### 리스크 분석
+- **정량적 (80%)**: 3가지 핵심 지표
+  - 기술투자 리스크 (40%): R&D 비용, 무형자산
+  - 운전자본 리스크 (35%): 운전자본/매출, CCC
+  - 성장단계 리스크 (25%): CapEx, 감가상각비
+- **정성적 (20%)**: 거버넌스, 법적, 경영 리스크
 
-##  Data Quality Assessment
+## 📊 데이터 품질 평가
 
-### Reliability Levels
-- **High**: Official DART disclosures, major securities reports
-- **Medium**: News articles, industry reports  
-- **Low**: Web search results, unverified sources
+### 신뢰도 수준
+- **높음**: 공식 DART 공시, 주요 증권사 리포트
+- **중간**: 뉴스 기사, 산업 리포트
+- **낮음**: 웹 검색 결과, 미검증 출처
 
-##  Additional Resources
+## 📖 추가 자료
 
-### Related Terms
-- **EV**: Electric Vehicle
-- **BEV**: Battery Electric Vehicle
-- **OEM**: Original Equipment Manufacturer
-- **Tier 1/2**: Supplier grade classification
+### 관련 용어
+- **EV**: 전기차 (Electric Vehicle)
+- **BEV**: 배터리 전기차 (Battery Electric Vehicle)
+- **OEM**: 완성차 제조사 (Original Equipment Manufacturer)
+- **Tier 1/2**: 공급업체 등급 분류
 
-### Reference Websites
-- DART (dart.fss.or.kr)
-- Korea Exchange (krx.co.kr)
-- Securities firm research centers
+### 참고 웹사이트
+- DART (dart.fss.or.kr) - 전자공시시스템
+- 한국거래소 (krx.co.kr)
+- 주요 증권사 리서치 센터
 
-##  Detailed References
+## 📝 상세 출처
 
-{references_section if references_section else "Citation system not available"}
+{references_section if references_section else "출처 시스템을 사용할 수 없습니다"}
 
 ---
-*This appendix provides detailed information for the investment report and should be used as reference material for investment decisions.*
+*본 부록은 투자 보고서에 대한 상세 정보를 제공하며 투자 결정을 위한 참고 자료로 사용되어야 합니다.*
 """
         
         return appendix
