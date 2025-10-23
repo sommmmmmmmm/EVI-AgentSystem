@@ -11,6 +11,7 @@ from workflow.state import create_initial_state
 from tools.web_tools import WebSearchTool
 from tools.llm_tools import OpenAILLM
 from tools.dart_tools import DARTTool
+from tools.report_converter import ReportConverter
 import json
 
 # UTF-8   (Windows cp949  )
@@ -157,17 +158,27 @@ def main():
                          ensure_ascii=False, indent=2)
             print(f"   [OK] JSON: {json_path}")
             
-            # Markdown 
+            # Markdown
             md_path = f"{output_dir}/report_{timestamp}.md"
             with open(md_path, 'w', encoding='utf-8') as f:
                 for section_name, section_content in final_state['final_report'].items():
-                    f.write(f"# {section_name}\n\n")
+                    # section_content에 이미 제목이 있는지 확인
+                    if not section_content.strip().startswith('#'):
+                        f.write(f"# {section_name}\n\n")
                     f.write(section_content)
                     f.write("\n\n---\n\n")
             print(f"   [OK] Markdown: {md_path}")
-            
-            print("\n[  !]")
-            print(f"    : {output_dir}/")
+
+            # HTML과 PDF 변환
+            try:
+                print("   HTML/PDF 변환 중...")
+                converter = ReportConverter()
+                converter.convert_markdown_file(md_path, generate_pdf=True)
+            except Exception as e:
+                print(f"   [WARNING] HTML/PDF 변환 실패: {e}")
+
+            print("\n[보고서 생성 완료!]")
+            print(f"    저장 위치: {output_dir}/")
         
         else:
             print("\n[  ]")

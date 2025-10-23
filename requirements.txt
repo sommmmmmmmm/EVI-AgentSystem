@@ -23,6 +23,10 @@ numpy>=1.24.0
 # Date/Time
 python-dateutil>=2.8.0
 
+# Report Generation
+markdown>=3.4.0
+pdfkit>=1.0.0  # Optional: For PDF generation (requires wkhtmltopdf)
+
 # Optional: If using these tools
 # tavily-python>=0.3.0  # For Tavily search
 # yfinance>=0.2.0  # For Yahoo Finance alternative
