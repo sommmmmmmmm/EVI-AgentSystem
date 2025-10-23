@@ -1,0 +1,28 @@
+# Core Dependencies
+langgraph==0.0.69
+langchain==0.2.15
+langchain-core==0.2.37
+langchain-community==0.2.15
+langchain-openai==0.1.23
+
+# OpenAI
+openai==1.43.0
+
+# Web Tools
+requests==2.32.3
+beautifulsoup4==4.12.3
+httpx==0.26.0
+
+# Environment
+python-dotenv==1.0.1
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Date/Time
+python-dateutil>=2.8.0
+
+# Optional: If using these tools
+# tavily-python>=0.3.0  # For Tavily search
+# yfinance>=0.2.0  # For Yahoo Finance alternative

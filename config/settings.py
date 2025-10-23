@@ -1,0 +1,192 @@
+# -*- coding: utf-8 -*-
+"""
+     
+"""
+
+import os
+from typing import Dict, List, Any
+from dataclasses import dataclass
+from dotenv import load_dotenv
+
+#   
+load_dotenv()
+
+@dataclass
+class EVMarketConfig:
+    """   """
+    #   
+    analysis_days: int = 7  #  7
+
+    #   
+    news_sources: List[str] = None
+
+    #  
+    securities_firms: List[str] = None
+
+    #    
+    ev_oems: List[str] = None
+
+    #   
+    keyword_categories: Dict[str, List[str]] = None
+
+    #    
+    financial_analysis_weights: Dict[str, float] = None
+
+    #    
+    risk_analysis_weights: Dict[str, float] = None
+
+    def __post_init__(self):
+        if self.news_sources is None:
+            self.news_sources = [
+                '',
+                '',
+                ''
+            ]
+
+        if self.securities_firms is None:
+            self.securities_firms = [
+                '',
+                '',
+                ''
+            ]
+
+        if self.ev_oems is None:
+            self.ev_oems = [
+                '',
+                '',
+                '',
+                'BYD',
+                'BMW',
+                '',
+                '',
+                'GM',
+                ''
+            ]
+
+        if self.keyword_categories is None:
+            self.keyword_categories = {
+                '_': [
+                    'LFP', 'NCM', 'NCA', '4680', '21700', '2170',
+                    '', '', '', 'BMS',
+                    '', 'DC', 'AC', '',
+                    '', 'ADAS', 'V2G', 'V2L'
+                ],
+                '_': [
+                    '', '', '', '',
+                    '', '', '', 'ESG',
+                    '', '', '', ''
+                ],
+                '_': [
+                    '', '', '', 'OBC',
+                    'BMS', '', '', 'DC-DC',
+                    '', 'PTC', '', ''
+                ],
+                '_': [
+                    '', '', '', '', '',
+                    '', 'LFP', 'NCM', 'NCA', 'LCO',
+                    '', '', '', '',
+                    '', '', '', ''
+                ],
+                '_': [
+                    '', '', '', '',
+                    '', '', '',
+                    '', '', ''
+                ],
+                '_': [
+                    '', 'R&D', '', '',
+                    '', 'M&A', '', '',
+                    '', '', ''
+                ]
+            }
+
+        if self.financial_analysis_weights is None:
+            self.financial_analysis_weights = {
+                'qualitative': 0.7,  #   70%
+                'quantitative': 0.3   #   30%
+            }
+
+        if self.risk_analysis_weights is None:
+            self.risk_analysis_weights = {
+                'quantitative': 0.8,  #   80%
+                'qualitative': 0.2    #   20%
+            }
+
+#   
+config = EVMarketConfig()
+
+# Ensure sodium-related materials are included in the materials keyword category
+try:
+    kc = config.keyword_categories or {}
+    sodium_terms = ['', '', '', '', 'Na-ion', 'SIB', ' ']
+    target_key = None
+    for k, v in kc.items():
+        if isinstance(v, list) and any(x in v for x in ['LFP', 'NCM', 'NCA', 'LCO']):
+            target_key = k
+            break
+    if target_key:
+        for t in sodium_terms:
+            if t not in kc[target_key]:
+                kc[target_key].append(t)
+except Exception:
+    pass
+
+#    
+SUPPLIER_RELATIONSHIP_MAPPING = {
+    '': {
+        'keywords': ['', '', '', '', ''],
+        'confidence_threshold': 0.7
+    },
+    '': {
+        'keywords': ['', '', '', '', ''],
+        'confidence_threshold': 0.6
+    },
+    '': {
+        'keywords': ['', '', '', ''],
+        'confidence_threshold': 0.8
+    },
+    '': {
+        'keywords': [],
+        'confidence_threshold': 0.0
+    }
+}
+
+#    
+RISK_ANALYSIS_CRITERIA = {
+    'quantitative': {
+        'financial_ratios': {
+            'debt_ratio': {'threshold': 0.5, 'weight': 0.2},
+            'current_ratio': {'threshold': 1.0, 'weight': 0.15},
+            'roe': {'threshold': 0.1, 'weight': 0.15},
+            'operating_margin': {'threshold': 0.05, 'weight': 0.15}
+        },
+        'market_metrics': {
+            'beta': {'threshold': 1.2, 'weight': 0.1},
+            'volatility': {'threshold': 0.3, 'weight': 0.1},
+            'market_cap': {'threshold': 1000, 'weight': 0.15}  # 
+        }
+    },
+    'qualitative': {
+        'governance': {
+            'management_stability': {'weight': 0.3},
+            'board_composition': {'weight': 0.2},
+            'audit_quality': {'weight': 0.2}
+        },
+        'legal': {
+            'litigation_risk': {'weight': 0.15},
+            'regulatory_compliance': {'weight': 0.15}
+        }
+    }
+}
+
+#   
+INVESTMENT_STRATEGY_CONFIG = {
+    'target_audience': '',
+    'investment_horizon': '',  # 3-12
+    'risk_tolerance': '',
+    'focus_areas': [
+        '  ',
+        ' ',
+        '   ',
+        ' '
+    ]
+}
