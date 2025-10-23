@@ -39,10 +39,11 @@ def main():
     
     config = {
         'report_month': datetime.now().strftime('%Y-%m'),
-        'days_ago': 7,  # 최근 7일 이내 뉴스만 수집
+        'days_ago': 30,  # 최근 30일 이내 뉴스만 수집 (더 많은 결과 확보)
         'max_news_articles': 10,  # 최대 10개 뉴스 기사로 제한
-        'keywords': ['전기차', 'EV', '배터리', '충전'],
-        'target_audience': '개인 투자자'
+        'keywords': ['EV', 'electric vehicle', 'battery', 'charging'],  # 영어 키워드로 변경
+        'target_audience': 'individual investors',  # 영어로 변경
+        'language': 'en'  # 영어 보고서 생성
     }
     
     print("[설정 정보]")

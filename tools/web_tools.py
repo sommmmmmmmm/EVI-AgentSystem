@@ -58,22 +58,17 @@ class WebSearchTool:
             return cached_result
         
         try:
-            # 여러 검색 엔진을 순차적으로 시도 (재시도 로직 포함)
+            # 검색 엔진 하나만 시도하여 속도 개선 (Google 우선)
             results = []
             
-            # 1. Google 검색 시도 (재시도 포함)
+            # 1. Google 검색 시도 (재시도 1회만)
             google_results = self._search_with_retry(self._google_search, query, num_results, "Google")
             if google_results:
                 results.extend(google_results)
             
-            # 2. Bing 검색 시도 (결과가 부족한 경우)
-            if len(results) < num_results:
-                bing_results = self._search_with_retry(self._bing_search, query, num_results - len(results), "Bing")
-                results.extend(bing_results)
-            
-            # 3. DuckDuckGo 검색 시도 (결과가 부족한 경우)
-            if len(results) < num_results:
-                ddg_results = self._search_with_retry(self._duckduckgo_search, query, num_results - len(results), "DuckDuckGo")
+            # Google 실패 시에만 DuckDuckGo 시도 (Bing은 느려서 제외)
+            if not results:
+                ddg_results = self._search_with_retry(self._duckduckgo_search, query, num_results, "DuckDuckGo")
                 results.extend(ddg_results)
             
             if results:
@@ -142,15 +137,15 @@ class WebSearchTool:
         
         return True
     
-    def _search_with_retry(self, search_func, query: str, num_results: int, engine_name: str, max_retries: int = 3) -> List[Dict[str, Any]]:
+    def _search_with_retry(self, search_func, query: str, num_results: int, engine_name: str, max_retries: int = 1) -> List[Dict[str, Any]]:
         """
-        재시도 로직이 포함된 검색 실행
+        재시도 로직이 포함된 검색 실행 (재시도 1회로 감소)
         """
         for attempt in range(max_retries + 1):
             try:
                 if attempt > 0:
                     print(f"    [{engine_name}] 재시도 {attempt}/{max_retries}...")
-                    time.sleep(2)  # 재시도 전 대기
+                    time.sleep(1)  # 재시도 전 대기 시간 감소
                 
                 results = search_func(query, num_results)
                 if results:
@@ -158,9 +153,8 @@ class WebSearchTool:
                     
             except Exception as e:
                 if attempt == max_retries:
-                    print(f"    [{engine_name}] 최종 실패: {e}")
-                else:
-                    print(f"    [{engine_name}] 시도 {attempt + 1} 실패: {e}")
+                    print(f"[WARNING] {engine_name} 검색 실패: {str(e)[:50]}...")
+                continue
         
         return []
     
@@ -170,7 +164,7 @@ class WebSearchTool:
             # Google 검색 URL
             search_url = f"https://www.google.com/search?q={quote_plus(query)}&num={min(num_results, 10)}"
             
-            response = self.session.get(search_url, timeout=15)  # 타임아웃 연장
+            response = self.session.get(search_url, timeout=5)  # 타임아웃 단축
             response.raise_for_status()
             
             # 간단한 HTML 파싱으로 결과 추출
@@ -187,7 +181,7 @@ class WebSearchTool:
             # Bing 검색 URL
             search_url = f"https://www.bing.com/search?q={quote_plus(query)}&count={min(num_results, 10)}"
             
-            response = self.session.get(search_url, timeout=15)  # 타임아웃 연장
+            response = self.session.get(search_url, timeout=5)  # 타임아웃 단축
             response.raise_for_status()
             
             # 간단한 HTML 파싱으로 결과 추출
@@ -204,7 +198,7 @@ class WebSearchTool:
             # DuckDuckGo 검색 URL
             search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
             
-            response = self.session.get(search_url, timeout=15)  # 타임아웃 연장
+            response = self.session.get(search_url, timeout=5)  # 타임아웃 단축
             response.raise_for_status()
             
             # 간단한 HTML 파싱으로 결과 추출

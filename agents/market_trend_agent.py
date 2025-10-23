@@ -69,15 +69,14 @@ class MarketTrendAgent:
         except Exception as e:
             print(f"    [WARNING] GNews 검색 실패: {e}")
         
-        # 2. GNews가 실패하거나 결과가 부족한 경우 웹 검색 사용
+        # 2. GNews가 실패하거나 결과가 부족한 경우 웹 검색 사용 (영어 검색어로 변경, 쿼리 수 감소)
         if len(articles) < 5:
             print("    웹 검색으로 추가 뉴스 수집 중...")
+            # 쿼리 수를 5개에서 3개로 줄여서 속도 개선
             seed_queries = [
-                "전기차 시장 동향 2024",
-                "EV 배터리 기술 뉴스", 
-                "Tesla stock news",
-                "전기차 최신 뉴스",
-                "EV 시장 트렌드"
+                "EV market trends 2024",
+                "electric vehicle battery news", 
+                "Tesla stock news latest"
             ]
             
             for i, q in enumerate(seed_queries):
@@ -86,7 +85,7 @@ class MarketTrendAgent:
                     
                 try:
                     remaining = max_articles - len(articles)
-                    results_needed = min(2, remaining)
+                    results_needed = min(3, remaining)  # 2개에서 3개로 증가하여 효율성 개선
                     
                     print(f"    [{i+1}/{len(seed_queries)}] '{q}' 웹 검색 중... (남은 자리: {remaining}개)")
                     results = self.web_search_tool.search(q, num_results=results_needed)

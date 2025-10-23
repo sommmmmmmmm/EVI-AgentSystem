@@ -91,6 +91,7 @@ class OpenAILLM:
                     return self._fallback_response(prompt)
 
             except Exception as e:
+                print(f"[오류] {e}")
                 print(f"[오류] OpenAI API 호출 실패 (시도 {attempt + 1}/{max_attempts}): {e}")
                 if attempt < max_attempts - 1:
                     time.sleep(2)

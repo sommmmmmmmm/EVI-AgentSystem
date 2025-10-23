@@ -311,7 +311,11 @@ def create_workflow(web_search_tool, llm_tool, dart_tool):
     workflow.add_node("investment_strategy_node", investment_strategy_node)
     workflow.add_node("report_generation_node", report_generation_node)
 
-    #   ( )
+    #   (일부 병렬 처리 가능하도록 개선)
+    # 시작점은 market_trend와 supplier_matching을 병렬로 실행할 수 없음 (supplier가 market 결과 필요)
+    # 하지만 financial_analysis와 risk_assessment는 병렬 실행 불가 (risk가 financial 필요)
+    # 현재 LangGraph 구조상 완전한 병렬화는 어려우므로 순차 유지
+    # 대신 각 에이전트 내부에서 병렬 처리 최적화
     workflow.set_entry_point("market_trend_node")
 
     workflow.add_edge("market_trend_node", "supplier_matching_node")
