@@ -37,16 +37,13 @@ LangGraph 기반 멀티 에이전트 구조를 활용해, 전기차 산업의 **
 
 | Category   | Details |
 |-------------|--------------------------------|
-| **Framework** | LangGraph, LangChain, Python 3.10+ |
+| **Framework** | LangGraph, LangChain, Python 3.11+ |
 | **LLM** | GPT-4o via OpenAI API |
-| **Retrieval** | FAISS, ChromaDB |
-| **Embedding** | OpenAIEmbeddings, E5-Mistral |
-| **DB** | PostgreSQL + pgvector |
-| **Visualization** | Mermaid, Plotly, ReportLab |
-| **API** | OpenDART, yFinance, Alpha Vantage, DuckDuckGoSearch |
-| **Financial Data** | Yahoo Finance (실시간 주가), Alpha Vantage (해외 재무) |
-| **Expert Analysis** | 투자은행, 증권사, 연구기관 전문가 의견 통합 |
-| **Risk Assessment** | 시간 가중치, 리스크 심각도, 의견 분산도 고려 |
+| **API** | OpenAI, Tavily (Web Search), DART (Korea Financial Data), Yahoo Finance, Alpha Vantage (Optional) |
+| **Financial Data** | DART (국내 기업), Yahoo Finance (실시간 주가 및 해외 기업) |
+| **Web Search** | Tavily API, DuckDuckGo (Fallback) |
+| **Data Processing** | Pandas, NumPy |
+| **Output** | JSON, Markdown Reports |
 
 ---
 
