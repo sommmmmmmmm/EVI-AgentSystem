@@ -174,7 +174,7 @@ GNEWS_API_KEY=your_gnews_api_key_here
 ---
 
 ## 🏗️ Architecture
-
+ARCHITECTURE.md 파일 참고
 ```mermaid
 # 시스템 아키텍처
 ```mermaid
