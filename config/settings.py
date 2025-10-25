@@ -15,7 +15,7 @@ load_dotenv()
 class EVMarketConfig:
     """   """
     #   
-    analysis_days: int = 7  #  7
+    analysis_days: int = 30  #  30
 
     #   
     news_sources: List[str] = None
@@ -34,6 +34,17 @@ class EVMarketConfig:
 
     #    
     risk_analysis_weights: Dict[str, float] = None
+    
+    # 데이터 수집 설정
+    max_news_articles: int = 50  # 최대 뉴스 기사 수
+    max_disclosures_per_company: int = 10  # 기업당 최대 공시 수
+    max_sec_filings_per_company: int = 8  # 기업당 최대 SEC 공시 수
+    days_ago: int = 30  # 최근 N일 이내 데이터
+    
+    # 웹 서치 및 에러 핸들링 설정
+    relaxed_mode: bool = True  # 에러 시에도 계속 진행 (기준 완화)
+    fallback_enabled: bool = True  # 웹 서치 실패 시 fallback 전략 사용
+    default_companies_enabled: bool = True  # 기본 기업 리스트 사용 여부
 
     def __post_init__(self):
         if self.news_sources is None:
@@ -189,4 +200,33 @@ INVESTMENT_STRATEGY_CONFIG = {
         '   ',
         ' '
     ]
+}
+
+# 데이터 소스별 fallback 전략
+DATA_SOURCE_FALLBACK = {
+    'korea': {
+        'primary': 'DART',  # 한국 기업: DART 공시
+        'fallback': 'Yahoo Finance',  # DART 실패 시 Yahoo Finance
+        'default_companies': [
+            'LG에너지솔루션', '삼성SDI', 'SK온', 
+            '현대자동차', '기아', '에코프로비엠',
+            '포스코케미칼', 'LG화학'
+        ]
+    },
+    'us': {
+        'primary': 'SEC EDGAR',  # 미국 기업: SEC 공시
+        'fallback': 'Yahoo Finance',  # SEC 실패 시 Yahoo Finance
+        'default_companies': [
+            'Tesla', 'GM', 'Ford', 
+            'Rivian', 'Lucid', 'Albemarle'
+        ]
+    },
+    'others': {
+        'primary': 'Yahoo Finance',  # 그 외 국가: Yahoo Finance
+        'fallback': None,  # fallback 없음
+        'default_companies': [
+            'BMW', 'Mercedes', 'Volkswagen',
+            'BYD', 'Panasonic', 'CATL'
+        ]
+    }
 }

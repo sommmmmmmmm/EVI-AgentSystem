@@ -11,13 +11,74 @@ import os
 
 class RealExpertAnalysisTool:
     """
-         
+    Real Expert Analysis Tool with company name alias mapping
+    전문가 의견 분석 도구 (회사명 별칭 매핑 포함)
     """
     
     def __init__(self):
         self.expert_sources = self._load_expert_sources()
         self.analysis_database = self._load_analysis_database()
         self.credibility_weights = self._load_credibility_weights()
+        self.company_aliases = self._load_company_aliases()
+    
+    def _load_company_aliases(self) -> Dict[str, str]:
+        """
+        회사명 별칭 매핑 (영어 ↔ 한글, 약어 ↔ 전체명)
+        """
+        return {
+            # Tesla
+            'Tesla': 'Tesla',
+            'tesla': 'Tesla',
+            'TSLA': 'Tesla',
+            '테슬라': 'Tesla',
+            
+            # LG Energy Solution
+            'LG Energy Solution': 'LG Energy Solution',
+            'LG에너지솔루션': 'LG Energy Solution',
+            'LG에너지': 'LG Energy Solution',
+            'LGES': 'LG Energy Solution',
+            'LG Energy': 'LG Energy Solution',
+            
+            # Samsung SDI
+            'Samsung SDI': 'Samsung SDI',
+            '삼성SDI': 'Samsung SDI',
+            'SDI': 'Samsung SDI',
+            
+            # SK On
+            'SK On': 'SK On',
+            'SK온': 'SK On',
+            'SKOn': 'SK On',
+            
+            # BYD
+            'BYD': 'BYD',
+            'byd': 'BYD',
+            '비야디': 'BYD',
+            
+            # BMW
+            'BMW': 'BMW',
+            'bmw': 'BMW',
+            
+            # GM
+            'GM': 'GM',
+            'General Motors': 'GM',
+            'gm': 'GM',
+            
+            # Ford
+            'Ford': 'Ford',
+            'Ford Motor': 'Ford',
+            'ford': 'Ford',
+            
+            # Mercedes-Benz
+            'Mercedes': 'Mercedes-Benz',
+            'Mercedes-Benz': 'Mercedes-Benz',
+            'Benz': 'Mercedes-Benz',
+            '벤츠': 'Mercedes-Benz',
+            
+            # Volkswagen
+            'Volkswagen': 'Volkswagen',
+            'VW': 'Volkswagen',
+            '폭스바겐': 'Volkswagen',
+        }
     
     def _load_expert_sources(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -69,10 +130,10 @@ class RealExpertAnalysisTool:
     
     def _load_analysis_database(self) -> Dict[str, List[Dict[str, Any]]]:
         """
-            ( )
+        전문가 의견 데이터베이스 (영어 키 사용)
         """
         return {
-            '': [
+            'Tesla': [
                 {
                     'source': 'Morgan Stanley',
                     'analyst': 'Adam Jonas',
@@ -82,13 +143,13 @@ class RealExpertAnalysisTool:
                     'upside': 12.9,
                     'analysis_date': '2024-01-20',
                     'key_points': [
-                        '     ',
-                        '     ',
-                        '   '
+                        'FSD (Full Self-Driving) technology leadership',
+                        'Energy storage business growth potential',
+                        'Cybertruck production ramp-up'
                     ],
                     'risks': [
-                        '     ',
-                        '    '
+                        'Valuation concerns at current levels',
+                        'Increased competition in EV market'
                     ],
                     'confidence': 0.85,
                     'category': 'growth_potential',
@@ -103,103 +164,103 @@ class RealExpertAnalysisTool:
                     'upside': 1.7,
                     'analysis_date': '2024-01-18',
                     'key_points': [
-                        'EV       ',
-                        '  ',
-                        '  '
+                        'EV market share declining in some regions',
+                        'Model lineup refresh needed',
+                        'Margin pressure from price cuts'
                     ],
                     'risks': [
-                        '    ',
-                        '   '
+                        'Execution risk on new models',
+                        'Regulatory uncertainties'
                     ],
                     'confidence': 0.75,
                     'category': 'valuation_concern',
                     'time_horizon': '6M'
                 }
             ],
-            'LG': [
+            'LG Energy Solution': [
                 {
-                    'source': 'KB',
-                    'analyst': '',
+                    'source': 'KB Securities',
+                    'analyst': 'Kim Dong-won',
                     'rating': 'Buy',
                     'target_price': 500000,
                     'current_price': 454500,
                     'upside': 10.0,
                     'analysis_date': '2024-01-22',
                     'key_points': [
-                        '    ',
-                        '   ',
-                        ',    '
+                        'Leading position in global EV battery market',
+                        'Strong partnerships with major OEMs',
+                        'IRA benefits driving US capacity expansion'
                     ],
                     'risks': [
-                        '    ',
-                        '   '
+                        'Intense competition from Chinese rivals',
+                        'Margin pressure from raw material costs'
                     ],
                     'confidence': 0.9,
                     'category': 'market_leadership',
                     'time_horizon': '12M'
                 },
                 {
-                    'source': 'NH',
-                    'analyst': '',
+                    'source': 'NH Investment',
+                    'analyst': 'Lee Jae-il',
                     'rating': 'Hold',
                     'target_price': 450000,
                     'current_price': 454500,
                     'upside': -1.0,
                     'analysis_date': '2024-01-19',
                     'key_points': [
-                        '    ',
-                        '    ',
-                        'R&D   '
+                        'Near-term margin headwinds',
+                        'Capacity expansion costs weighing on profitability',
+                        'R&D investment in next-gen batteries'
                     ],
                     'risks': [
-                        ' CATL  ',
-                        '  '
+                        'CATL price competition intensifying',
+                        'Customer concentration risk'
                     ],
                     'confidence': 0.7,
                     'category': 'competition_risk',
                     'time_horizon': '6M'
                 }
             ],
-            'SDI': [
+            'Samsung SDI': [
                 {
-                    'source': '',
-                    'analyst': '',
+                    'source': 'Mirae Asset Securities',
+                    'analyst': 'Park Sang-jun',
                     'rating': 'Buy',
                     'target_price': 300000,
                     'current_price': 262500,
                     'upside': 14.3,
                     'analysis_date': '2024-01-21',
                     'key_points': [
-                        '   ',
-                        ' OEM  ',
-                        'ESS   '
+                        'Premium battery technology leadership',
+                        'Strong OEM partnerships (BMW, Stellantis)',
+                        'ESS business growth accelerating'
                     ],
                     'risks': [
-                        '   ',
-                        '  '
+                        'Profitability concerns in short-term',
+                        'Competition from LG and SK'
                     ],
                     'confidence': 0.8,
                     'category': 'technology_advantage',
                     'time_horizon': '12M'
                 }
             ],
-            '': [
+            'SK On': [
                 {
-                    'source': '',
-                    'analyst': '',
+                    'source': 'Samsung Securities',
+                    'analyst': 'Choi Woo-jin',
                     'rating': 'Buy',
                     'target_price': 350000,
                     'current_price': 314500,
                     'upside': 11.3,
                     'analysis_date': '2024-01-20',
                     'key_points': [
-                        '   ',
-                        '  ',
-                        '  '
+                        'Hyundai/Kia partnership strengthening',
+                        'US JV with Ford gaining traction',
+                        'NCM battery technology improving'
                     ],
                     'risks': [
-                        '   ',
-                        '    '
+                        'Loss-making operations continuing',
+                        'Delayed profitability timeline'
                     ],
                     'confidence': 0.8,
                     'category': 'business_expansion',
@@ -216,39 +277,39 @@ class RealExpertAnalysisTool:
                     'upside': 12.9,
                     'analysis_date': '2024-01-17',
                     'key_points': [
-                        '    ',
-                        '    ',
-                        '    '
+                        'Leading position in China EV market',
+                        'Vertical integration advantage',
+                        'International expansion accelerating'
                     ],
                     'risks': [
-                        '   ',
-                        '   '
+                        'Geopolitical tensions affecting exports',
+                        'Margin pressure from price competition'
                     ],
                     'confidence': 0.85,
                     'category': 'global_expansion',
                     'time_horizon': '12M'
                 }
             ],
-            '': [
+            'Ford': [
                 {
-                    'source': '',
-                    'analyst': '',
+                    'source': 'Credit Suisse',
+                    'analyst': 'Dan Levy',
                     'rating': 'Hold',
-                    'target_price': 40000,
-                    'current_price': 37600,
-                    'upside': 6.4,
-                    'analysis_date': '2024-01-18',
+                    'target_price': 15,
+                    'current_price': 14,
+                    'upside': 7.1,
+                    'analysis_date': '2024-01-17',
                     'key_points': [
-                        '   ',
-                        '  ',
-                        '   '
+                        'F-150 Lightning strong demand',
+                        'EV strategy execution improving',
+                        'Profitability challenges remain'
                     ],
                     'risks': [
-                        '   ',
-                        '   '
+                        'EV margin pressure continuing',
+                        'Legacy business cyclical risks'
                     ],
                     'confidence': 0.65,
-                    'category': 'cautious_growth',
+                    'category': 'ev_ramp_up',
                     'time_horizon': '6M'
                 }
             ],
@@ -262,13 +323,13 @@ class RealExpertAnalysisTool:
                     'upside': 20.0,
                     'analysis_date': '2024-01-19',
                     'key_points': [
-                        '     ',
-                        '   ',
-                        '   '
+                        'Strong premium EV lineup (iX, i4, i7)',
+                        'Solid-state battery development progressing',
+                        'China market performance resilient'
                     ],
                     'risks': [
-                        '  ',
-                        '   '
+                        'Software development challenges',
+                        'Competition from Tesla and Chinese brands'
                     ],
                     'confidence': 0.8,
                     'category': 'premium_position',
@@ -283,12 +344,12 @@ class RealExpertAnalysisTool:
                     'upside': 5.0,
                     'analysis_date': '2024-01-16',
                     'key_points': [
-                        '   ',
-                        '    '
+                        'EV transition progressing steadily',
+                        'Valuation reasonable but not cheap'
                     ],
                     'risks': [
-                        '   ',
-                        '   '
+                        'Margin pressure from EV ramp-up',
+                        'Software development delays'
                     ],
                     'confidence': 0.7,
                     'category': 'transition_challenge',
@@ -305,42 +366,20 @@ class RealExpertAnalysisTool:
                     'upside': 12.5,
                     'analysis_date': '2024-01-21',
                     'key_points': [
-                        '    ',
-                        '   ',
-                        '   '
+                        'Ultium platform rollout accelerating',
+                        'Strong traditional business supporting EV investments',
+                        'China JV profitability improving'
                     ],
                     'risks': [
-                        '   ',
-                        '    '
+                        'EV profitability timeline uncertain',
+                        'Software development challenges'
                     ],
                     'confidence': 0.75,
                     'category': 'ev_transition',
                     'time_horizon': '12M'
                 }
             ],
-            '': [
-                {
-                    'source': 'Credit Suisse',
-                    'analyst': 'Dan Levy',
-                    'rating': 'Hold',
-                    'target_price': 15,
-                    'current_price': 14,
-                    'upside': 7.1,
-                    'analysis_date': '2024-01-17',
-                    'key_points': [
-                        'F-150     ',
-                        '   '
-                    ],
-                    'risks': [
-                        '   ',
-                        '  '
-                    ],
-                    'confidence': 0.65,
-                    'category': 'ev_ramp_up',
-                    'time_horizon': '6M'
-                }
-            ],
-            '': [
+            'Mercedes-Benz': [
                 {
                     'source': 'Barclays',
                     'analyst': 'Henning Cosman',
@@ -350,20 +389,20 @@ class RealExpertAnalysisTool:
                     'upside': 14.3,
                     'analysis_date': '2024-01-20',
                     'key_points': [
-                        'EQS, EQE    ',
-                        '   ',
-                        '   '
+                        'EQS, EQE premium EV lineup strong',
+                        'Profitability focus paying off',
+                        'Software development improving'
                     ],
                     'risks': [
-                        '   ',
-                        '   '
+                        'China market headwinds',
+                        'EV competition intensifying'
                     ],
                     'confidence': 0.8,
                     'category': 'luxury_ev',
                     'time_horizon': '12M'
                 }
             ],
-            '': [
+            'Volkswagen': [
                 {
                     'source': 'JP Morgan',
                     'analyst': 'Jose Asumendi',
@@ -373,12 +412,12 @@ class RealExpertAnalysisTool:
                     'upside': 3.4,
                     'analysis_date': '2024-01-18',
                     'key_points': [
-                        'ID    ',
-                        '   '
+                        'ID family EV lineup expanding',
+                        'Software improvements ongoing'
                     ],
                     'risks': [
-                        '  ',
-                        '   '
+                        'Legacy cost structure challenges',
+                        'Competition from Chinese brands'
                     ],
                     'confidence': 0.6,
                     'category': 'ev_improvement',
@@ -401,9 +440,20 @@ class RealExpertAnalysisTool:
     
     def get_expert_analyses(self, company_name: str) -> List[Dict[str, Any]]:
         """
-            
+        Get expert analyses for a company (with alias mapping)
+        회사 이름으로 전문가 의견 조회 (별칭 매핑 포함)
         """
-        return self.analysis_database.get(company_name, [])
+        # Try direct lookup first
+        if company_name in self.analysis_database:
+            return self.analysis_database[company_name]
+        
+        # Try alias mapping
+        canonical_name = self.company_aliases.get(company_name)
+        if canonical_name and canonical_name in self.analysis_database:
+            return self.analysis_database[canonical_name]
+        
+        # No data found
+        return []
     
     def calculate_expert_consensus(self, company_name: str) -> Dict[str, Any]:
         """

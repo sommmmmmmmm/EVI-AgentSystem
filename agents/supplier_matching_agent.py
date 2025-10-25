@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 from config.settings import config, SUPPLIER_RELATIONSHIP_MAPPING
 from datetime import datetime
 import re
+from tools.supplier_scoring_tools import SupplierScorer  # 🆕 공급망 스코어링 도구
 
 
 class SupplierMatchingAgent:
@@ -15,6 +16,7 @@ class SupplierMatchingAgent:
     def __init__(self, web_search_tool, llm_tool):
         self.web_search_tool = web_search_tool
         self.llm_tool = llm_tool
+        self.supplier_scorer = SupplierScorer()  # 🆕 공급망 스코어링
 
     def match_suppliers(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """     """
@@ -43,10 +45,15 @@ class SupplierMatchingAgent:
             
             print(f"[OK]    -  {len(structured_result)}  ")
             
+            # 신규 발견 기업 수 계산 (웹 검색으로 발견된 기업)
+            new_discoveries = len([s for s in structured_result if s.get('discovery_source') == 'web_search'])
+            
             return {
                 'suppliers': structured_result,
                 'discovery_summary': {
                     'total_suppliers': len(structured_result),
+                    'new_discoveries': new_discoveries,
+                    'existing_suppliers': len(structured_result) - new_discoveries,
                     'high_confidence': len([s for s in structured_result if s.get('overall_confidence', 0) > 0.7]),
                     'medium_confidence': len([s for s in structured_result if 0.4 <= s.get('overall_confidence', 0) <= 0.7]),
                     'low_confidence': len([s for s in structured_result if s.get('overall_confidence', 0) < 0.4])
@@ -155,20 +162,44 @@ class SupplierMatchingAgent:
                     title = result.get('title', '').lower()
                     content = result.get('content', '').lower()
                     
-                    # 회사명 추출 (간단한 패턴 매칭)
-                    company_names = self._extract_company_names(title, content)
+                    # 회사명 추출 (OEM/공급업체 분류 포함)
+                    company_infos = self._extract_company_names(title, content)
                     
-                    for company_name in company_names:
-                        if company_name and len(company_name) > 2:
-                            supplier = {
-                                'name': company_name,
-                                'category': category,
-                                'confidence': 0.6,  # 웹 검색은 중간 신뢰도
-                                'source': 'web_search',
-                                'query': query,
-                                'url': result.get('url', '')
-                            }
-                            suppliers.append(supplier)
+                    for company_info in company_infos:
+                        if isinstance(company_info, dict):
+                            company_name = company_info['name']
+                            company_type = company_info['type']
+                            
+                            if company_name and len(company_name) > 2:
+                                # OEM은 공급업체 목록에서 제외
+                                if company_type == 'oem':
+                                    print(f"   [FILTER] {company_name}는 OEM이므로 공급업체 목록에서 제외")
+                                    continue
+                                
+                                supplier = {
+                                    'name': company_name,
+                                    'category': category,
+                                    'company_type': company_type,
+                                    'confidence': 0.6,  # 웹 검색은 중간 신뢰도
+                                    'source': 'web_search',
+                                    'query': query,
+                                    'url': result.get('url', '')
+                                }
+                                suppliers.append(supplier)
+                        else:
+                            # 기존 문자열 형태인 경우 (호환성)
+                            company_name = company_info
+                            if company_name and len(company_name) > 2:
+                                supplier = {
+                                    'name': company_name,
+                                    'category': category,
+                                    'company_type': 'supplier',
+                                    'confidence': 0.6,
+                                    'source': 'web_search',
+                                    'query': query,
+                                    'url': result.get('url', '')
+                                }
+                                suppliers.append(supplier)
                 
                 print(f"    [OK] '{query}'에서 {len(results)}개 결과 처리")
                 
@@ -181,25 +212,85 @@ class SupplierMatchingAgent:
     def _extract_company_names(self, title: str, content: str) -> List[str]:
         """제목과 내용에서 회사명 추출"""
         company_names = []
-        text = f"{title} {content}"
+        text = f"{title} {content}".lower()
         
-        # 알려진 EV 관련 회사명 패턴
-        known_companies = [
-            'tesla', 'byd', 'bmw', 'mercedes', 'volkswagen', 'audi', 'ford', 'gm', 'hyundai', 'kia',
-            'lg', 'samsung', 'sdi', 'sk', 'catl', 'panasonic', 'bosch', 'continental', 'magna',
-            'hyundai mobis', 'mando', 'ls cable', 'hyosung', 'posco', 'lg chem'
+        # 알려진 EV OEM (완성체 제조사) 리스트
+        known_oems = [
+            'tesla', 'byd', 'bmw', 'mercedes', 'mercedes-benz', 'volkswagen', 'audi', 'ford', 'gm', 
+            'hyundai', 'kia', 'nio', 'rivian', 'lucid', 'xpeng', 'li auto', 'geely', 'great wall', 
+            'dongfeng', 'changan', 'porsche', 'jaguar', 'land rover', 'volvo', 'polestar'
         ]
+        
+        # 알려진 EV 공급업체 리스트
+        known_suppliers = [
+            'lg', 'samsung', 'sdi', 'sk', 'catl', 'panasonic', 'bosch', 'continental', 'magna',
+            'hyundai mobis', 'mando', 'ls cable', 'hyosung', 'posco', 'lg chem', 'lg energy solution',
+            'samsung sdi', 'sk innovation', 'sk on', 'lg electronics', 'magna international',
+            'continental ag', 'bosch', 'denso', 'valeo', 'aptiv', 'zffriedrichshafen'
+        ]
+        
+        # 모든 알려진 회사명 (OEM + 공급업체)
+        known_companies = known_oems + known_suppliers
         
         for company in known_companies:
             if company in text:
-                company_names.append(company.upper())
+                # 적절한 형태로 변환
+                if ' ' in company:
+                    # 공백이 있는 경우 (예: "hyundai mobis" -> "Hyundai Mobis")
+                    formatted_name = ' '.join(word.capitalize() for word in company.split())
+                else:
+                    # 단일 단어인 경우 (예: "tesla" -> "Tesla")
+                    formatted_name = company.capitalize()
+                
+                # OEM vs 공급업체 분류
+                company_type = 'oem' if company in known_oems else 'supplier'
+                company_names.append({
+                    'name': formatted_name,
+                    'type': company_type,
+                    'original': company
+                })
         
-        # 일반적인 회사명 패턴 (대문자 + 공백)
+        # 일반적인 회사명 패턴 (대문자 + 공백) - 더 엄격한 필터링
         import re
-        patterns = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
-        company_names.extend(patterns[:5])  # 최대 5개만
+        # 2-4단어로 구성된 회사명만 추출 (단일 단어 제외)
+        patterns = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b', text)
         
-        return list(set(company_names))  # 중복 제거
+        # 의미있는 회사명만 필터링
+        meaningful_patterns = []
+        for pattern in patterns:
+            # 너무 일반적인 단어들 제외
+            if not any(word.lower() in ['the', 'and', 'or', 'for', 'with', 'from', 'this', 'that', 'news', 'report', 'article'] 
+                      for word in pattern.split()):
+                if len(pattern) > 5:  # 최소 길이 체크
+                    # 일반 패턴은 기본적으로 공급업체로 분류 (OEM은 이미 위에서 처리됨)
+                    meaningful_patterns.append({
+                        'name': pattern,
+                        'type': 'supplier',
+                        'original': pattern.lower()
+                    })
+        
+        company_names.extend(meaningful_patterns[:3])  # 최대 3개만
+        
+        # 중복 제거 (이름 기준)
+        unique_names = []
+        seen = set()
+        for company_info in company_names:
+            if isinstance(company_info, dict):
+                name = company_info['name']
+                if name and name.strip() and name not in seen:
+                    unique_names.append(company_info)
+                    seen.add(name)
+            else:
+                # 기존 문자열 형태인 경우 (호환성)
+                if company_info and company_info.strip() and company_info not in seen:
+                    unique_names.append({
+                        'name': company_info.strip(),
+                        'type': 'supplier',
+                        'original': company_info.lower()
+                    })
+                    seen.add(company_info)
+        
+        return unique_names
 
     def _find_suppliers_by_keyword(self, keyword: str, category: str, state: Dict[str, Any]) -> List[Dict[str, Any]]:
         """키워드로 공급업체 검색 - 웹 검색 + 데이터베이스"""
@@ -367,34 +458,59 @@ class SupplierMatchingAgent:
         """공급업체 결과 구조화"""
         structured_suppliers = []
         
+        print(f"   [DEBUG] 구조화할 공급업체 수: {len(suppliers)}")
+        
         for i, supplier in enumerate(suppliers, 1):
             # 기본 정보 추출
-            name = supplier.get('name', f'Supplier_{i}')
+            raw_name = supplier.get('name', '')
+            company_type = supplier.get('company_type', 'supplier')
+            print(f"   [DEBUG] 공급업체 {i}: raw_name='{raw_name}', type='{company_type}' (길이: {len(raw_name)})")
+            
+            # 빈 문자열이나 None 처리
+            if not raw_name or not raw_name.strip():
+                name = f'Supplier_{i}'
+                print(f"   [WARNING] 공급업체 {i} 이름이 비어있음, '{name}'으로 대체")
+            else:
+                name = raw_name.strip()
+            
             category = supplier.get('category', 'Unknown')
             products = supplier.get('products', [])
             confidence = supplier.get('confidence', 0.5)
             source = supplier.get('source', 'Database')
             
-            # 제품 정보가 비어있는 경우 기본값 설정
-            if not products:
-                products = [f"{category} components", f"{category} systems"]
+            # OEM vs 공급업체에 따른 제품 정보 설정
+            if company_type == 'oem':
+                products = ['Electric Vehicles', 'EV Systems']
+                category = 'oem'
+            else:
+                # 제품 정보가 비어있는 경우 기본값 설정
+                if not products:
+                    products = [f"{category} components", f"{category} systems"]
             
             # OEM 관계 정보
             oem_relationships = supplier.get('oem_relationships', [])
             if not oem_relationships:
                 oem_relationships = []
             
+            # 발견 소스 결정
+            if company_type == 'oem':
+                discovery_source = 'Web Search (OEM Discovery)'
+            else:
+                discovery_source = 'Web Search (New Discovery)' if source == 'web_search' else 'Database'
+            
             structured_supplier = {
                 'name': name,
                 'category': category,
                 'products': products,
-                'oem_relationships': oem_relationships,
+                'oem_relationships': 1 if company_type == 'oem' else len(oem_relationships),
                 'confidence_score': confidence,
-                'discovery_source': source,
+                'discovery_source': discovery_source,
                 'supplier_id': f"SUP_{i:03d}",
-                'analysis_date': datetime.now().isoformat()
+                'analysis_date': datetime.now().isoformat(),
+                'company_type': company_type
             }
             
             structured_suppliers.append(structured_supplier)
+            print(f"   [OK] 공급업체 {i} 구조화 완료: {name} ({company_type})")
         
         return structured_suppliers

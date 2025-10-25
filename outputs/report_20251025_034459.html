@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Investment Analysis Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .header .date {
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            margin-top: 40px;
+        }
+
+        h1:first-child {
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #764ba2;
+            font-size: 1.6em;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 4px solid #764ba2;
+        }
+
+        h3 {
+            color: #555;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 5px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning {
+            background: #f8d7da;
+            padding: 20px;
+            border-left: 5px solid #dc3545;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success {
+            background: #d4edda;
+            padding: 20px;
+            border-left: 5px solid #28a745;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info {
+            background: #d1ecf1;
+            padding: 20px;
+            border-left: 5px solid #17a2b8;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            margin: 50px 0;
+            opacity: 0.3;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .header {
+                page-break-after: always;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>EV Investment Analysis Report</h1>
+            <div class="subtitle">전기차 산업 투자 분석 보고서</div>
+            <div class="date">2025년 10월</div>
+        </div>
+
+        <div class="content">
+            <div class="section"><h1 id="1-executive-summary">1. Executive Summary</h1>
+<h2 id="_1">핵심 투자 하이라이트</h2>
+<p>본 보고서는 전기차(EV) 산업의 밸류체인을 종합적으로 분석하여 개인 투자자에게 중장기 투자 기회를 제시합니다. 분석 결과, GM, BYD이 핵심 투자 대상으로 선정되었으며, 균형형 포트폴리오 전략을 통해  투자 기간 동안 안정적인 수익을 추구할 수 있습니다.</p>
+<h2 id="_2">시장 동향 요약</h2>
+<p>전기차 시장은 지속적인 성장세를 보이고 있으며, EV 시장 확대, battery 기술 혁신, electric 기술 혁신 등의 주요 트렌드가 시장 확장을 견인하고 있습니다. 특히 중국과 유럽을 중심으로 한 글로벌 시장의 성장이 두드러지며, 한국 기업들의 기술 경쟁력 확보를 통한 시장 점유율 확대가 기대됩니다.</p>
+<h2 id="_3">리스크 관리 전략</h2>
+<p>분석 결과 0개의 저위험 기업이 식별되었으며, 이를 바탕으로 분산투자 전략을 적용하여 포트폴리오의 안정성을 확보했습니다. 원자재 가격 변동성, 정부 정책 변화, 기술 개발 속도, 경쟁 심화 등의 주요 리스크 요인에 대해서는 지속적인 모니터링을 통해 대응할 계획입니다.</p>
+<h2 id="_4">공급망 분석 결과</h2>
+<p>총 22개의 공급업체를 분석한 결과, 전기차 부품 공급망의 핵심 기업들이 명확히 식별되었습니다. 특히 배터리, 모터, 전자제어장치 등 핵심 부품 분야에서 강력한 경쟁력을 보유한 기업들이 투자 매력도가 높은 것으로 평가되었습니다.</p>
+<h2 id="_5">투자 권고사항</h2>
+<ol>
+<li>
+<p><strong>핵심 부품 기업 집중 투자</strong>: 전기차 밸류체인의 핵심 부품을 담당하는 기업들에 집중 투자하여 시장 성장의 혜택을 최대화합니다.</p>
+</li>
+<li>
+<p><strong>중장기 투자 관점</strong>: 3-12개월의 투자 기간을 설정하여 단기 변동성에 흔들리지 않고 장기적 가치 창출에 집중합니다.</p>
+</li>
+<li>
+<p><strong>리스크 관리</strong>: 고위험 기업을 배제하고 분산투자를 통해 포트폴리오의 안정성을 확보합니다.</p>
+</li>
+<li>
+<p><strong>지속적 모니터링</strong>: 시장 트렌드와 공급업체 관계 변화를 지속적으로 추적하여 투자 전략을 조정합니다.</p>
+</li>
+</ol>
+<h2 id="_6">주요 위험 요소</h2>
+<p>원자재 가격 변동성, 정부 정책 변화, 기술 개발 속도, 경쟁 심화 등의 요인들이 투자 성과에 영향을 미칠 수 있으므로, 이러한 리스크 요인들을 면밀히 관찰하고 적절한 대응 방안을 마련해야 합니다.</p>
+<h2 id="_7">기대 성과</h2>
+<p>시장 트렌드, 공급망 관계, 재무 성과, 리스크 평가를 종합적으로 분석한 결과를 바탕으로, 성장하는 전기차 시장에 노출을 원하는 개인 투자자들에게 실행 가능한 투자 전략을 제시합니다. 이를 통해 안정적이면서도 수익성 있는 투자 기회를 제공할 것으로 기대됩니다.</p>
+<hr />
+<p><em>본 보고서는 참고용으로만 사용되어야 하며, 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 합니다.</em></p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="2-ev-market-trends">2. EV Market Trends</h1>
+<h2 id="_8">시장 동향 분석</h2>
+<p>전기차 시장은 현재 급속한 성장 단계에 있으며, 여러 핵심 트렌드가 시장의 발전을 견인하고 있습니다. 최근 7일간 분석된 100개의 뉴스 기사를 바탕으로 한 분석 결과, 시장은 지속적인 성장 모멘텀을 보이고 있으며 배터리 기술과 충전 인프라가 주요 동력으로 작용하고 있습니다.</p>
+<h3 id="1-ev">1. EV 시장 확대</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Impact Score</strong>: 0.7/1.0</li>
+<li><strong>Description</strong>: EV 관련 시장 동향 및 발전 방향</li>
+<li><strong>Keywords</strong>: EV</li>
+</ul>
+<h3 id="2-battery">2. battery 기술 혁신</h3>
+<ul>
+<li><strong>Category</strong>: tech</li>
+<li><strong>Impact Score</strong>: 0.7/1.0</li>
+<li><strong>Description</strong>: battery 관련 시장 동향 및 발전 방향</li>
+<li><strong>Keywords</strong>: battery</li>
+</ul>
+<h3 id="3-electric">3. electric 기술 혁신</h3>
+<ul>
+<li><strong>Category</strong>: tech</li>
+<li><strong>Impact Score</strong>: 0.7/1.0</li>
+<li><strong>Description</strong>: electric 관련 시장 동향 및 발전 방향</li>
+<li><strong>Keywords</strong>: electric</li>
+</ul>
+<h2 id="_9">키워드 분석</h2>
+<p>시장 동향을 더욱 정확히 파악하기 위해 뉴스 기사에서 추출된 키워드를 카테고리별로 분석한 결과, 다음과 같은 패턴을 확인할 수 있습니다:</p>
+<h4 id="companies">companies</h4>
+<p>Top keywords: EV, Battery, Tesla, News, Electric, Energy, LG, Ford (20 total identified)</p>
+<h4 id="tech">tech</h4>
+<p>Top keywords: battery, electric, new, vehicle, year, vehicles, production, batteries (20 total identified)</p>
+<h4 id="market">market</h4>
+<p>Top keywords: sales, market, growth, markets, prices, marketing, price (7 total identified)</p>
+<h4 id="investment">investment</h4>
+<p>Top keywords: stocks, investment, stock, revenue, funding, fundamental, investments, invest (13 total identified)</p>
+<h2 id="_10">뉴스 분석 결과</h2>
+<p>Total 100 news articles analyzed from recent 7 days</p>
+<h3 id="_11">뉴스에서 도출된 주요 인사이트</h3>
+<ul>
+<li>시장이 지속적인 성장 모멘텀을 보이고 있음</li>
+<li>배터리 기술과 충전 인프라가 핵심 동력으로 작용</li>
+<li>주요 시장에서 정부 정책 지원이 강력하게 유지됨</li>
+<li>핵심 인구층에서 소비자 채택이 가속화되고 있음</li>
+</ul>
+<h2 id="_12">시장 전망</h2>
+<p>전기차 시장은 배터리 기술과 충전 인프라 개발을 핵심 동력으로 하여 지속적인 성장을 보이고 있습니다. 정부의 친환경 정책과 소비자의 환경 인식 증가가 시장 성장을 뒷받침하고 있으며, 특히 중국과 유럽을 중심으로 한 글로벌 시장의 성장이 두드러집니다.</p>
+<h3 id="_13">주요 성장 동력</h3>
+<ol>
+<li><strong>기술 혁신</strong>: 배터리 성능 향상과 충전 속도 개선</li>
+<li><strong>정책 지원</strong>: 정부 보조금 및 인센티브 확대</li>
+<li><strong>인프라 확충</strong>: 충전소 네트워크 성장</li>
+<li><strong>소비자 수용성</strong>: 환경 인식 증가와 경제성 개선</li>
+</ol>
+<h3 id="_14">시장 리스크</h3>
+<ol>
+<li><strong>원자재 가격</strong>: 배터리 원자재 가격 변동성 (리튬, 니켈 등)</li>
+<li><strong>경쟁 심화</strong>: 신규 진입자들의 경쟁 압박 증가</li>
+<li><strong>기술 변화</strong>: 기존 기술에 영향을 미치는 신기술 출현 리스크</li>
+<li><strong>정책 변화</strong>: 정부 정책 수정 가능성</li>
+</ol>
+<h2 id="_15">결론</h2>
+<p>전기차 시장은 기술 혁신, 정책 지원, 인프라 확충, 소비자 수용성 향상 등의 요인들이 상호 작용하며 지속적인 성장을 이어가고 있습니다. 다만 원자재 가격 변동성, 경쟁 심화, 기술 변화, 정책 변화 등의 리스크 요인들도 존재하므로, 투자 시 이러한 요소들을 종합적으로 고려해야 합니다.</p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="3-supply-chain-analysis">3. Supply Chain Analysis</h1>
+<h2 id="_16">공급망 구조 개요</h2>
+<p>전기차 공급망은 복잡하고 다층적인 구조를 가지고 있으며, 각 계층별로 핵심 역할을 담당하는 기업들이 존재합니다. 본 분석을 통해 총 <strong>22개의 공급업체</strong>를 식별했으며, 이 중 <strong>21개는 신규 발견된 기업</strong>입니다.</p>
+<h3 id="1-tesla">1. Tesla</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="2-byd">2. Byd</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="3-panasonic">3. Panasonic</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="4-bosch">4. Bosch</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="5-sk">5. SK</h3>
+<ul>
+<li><strong>Category</strong>: </li>
+<li><strong>Products</strong>:  components,  systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.70/1.0</li>
+<li><strong>Discovery Source</strong>: Database</li>
+</ul>
+<h3 id="6-mercedes">6. Mercedes</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="7-catl">7. Catl</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="8-magna">8. Magna</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="9-ford">9. Ford</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h3 id="10-bmw">10. Bmw</h3>
+<ul>
+<li><strong>Category</strong>: companies</li>
+<li><strong>Products</strong>: companies components, companies systems</li>
+<li><strong>OEM Relationships</strong>: 0 identified</li>
+<li><strong>Confidence Score</strong>: 0.60/1.0</li>
+<li><strong>Discovery Source</strong>: Web Search (New Discovery)</li>
+</ul>
+<h2 id="_17">공급망 계층 구조</h2>
+<p>전기차 공급망은 다음과 같은 계층 구조로 구성되어 있습니다:</p>
+<h3 id="1-tier-1-suppliers">1차 공급업체 (Tier 1 Suppliers)</h3>
+<ul>
+<li><strong>배터리</strong>: LG에너지솔루션, 삼성SDI, SK온, CATL</li>
+<li><strong>모터</strong>: 현대모비스, LG마그나</li>
+<li><strong>충전</strong>: LS전선, 효성</li>
+</ul>
+<h3 id="2-tier-2-suppliers">2차 공급업체 (Tier 2 Suppliers)</h3>
+<ul>
+<li><strong>소재</strong>: POSCO케미컬, LG화학</li>
+<li><strong>부품</strong>: 각종 전자 및 기계 부품 공급업체</li>
+</ul>
+<h3 id="oems">완성차 제조사 (OEMs)</h3>
+<ul>
+<li><strong>국내</strong>: 현대자동차, 기아</li>
+<li><strong>해외</strong>: 테슬라, BMW, 폭스바겐, GM, 포드</li>
+</ul>
+<h2 id="_18">핵심 공급업체 분석</h2>
+<p>공급망 분석을 통해 식별된 주요 공급업체들은 각각의 전문 분야에서 핵심 역할을 담당하고 있습니다. 특히 배터리, 모터, 전자제어장치 등 전기차의 핵심 부품을 담당하는 기업들이 높은 투자 매력도를 보이고 있습니다.</p>
+<h2 id="_19">투자 기회 분석</h2>
+<h3 id="_20">신규 발견 기업</h3>
+<p>공급망 분석을 통해 다음과 같은 투자 기회를 식별했습니다:</p>
+<ol>
+<li><strong>안정적 공급업체</strong>: 주요 OEM과 강력한 공급 관계를 맺고 있는 기업들</li>
+<li><strong>성장 잠재력</strong>: EV 시장 성장의 혜택을 받을 것으로 예상되는 기업들</li>
+<li><strong>기술 리더십</strong>: 핵심 기술 우위를 보유한 공급업체들</li>
+</ol>
+<h3 id="_21">공급업체 투자 매력도</h3>
+<ul>
+<li><strong>높음</strong>: 주요 OEM과 직접 공급 관계를 맺고 있는 기업</li>
+<li><strong>중간</strong>: 간접 공급 관계 또는 성장 잠재력을 보유한 기업</li>
+<li><strong>낮음</strong>: 공급 관계가 불분명하거나 경쟁력이 부족한 기업</li>
+</ul>
+<h2 id="_22">공급망 리스크 분석</h2>
+<p>공급망의 안정성을 위해 다음과 같은 리스크 요인들을 고려해야 합니다:</p>
+<ol>
+<li><strong>단일 공급업체 의존도</strong>: 특정 공급업체에 과도하게 의존하는 경우</li>
+<li><strong>지리적 집중도</strong>: 특정 지역에 공급업체가 집중된 경우</li>
+<li><strong>기술 의존도</strong>: 특정 기술에 과도하게 의존하는 경우</li>
+<li><strong>정치적 리스크</strong>: 국제 관계나 정책 변화에 따른 공급 중단 위험</li>
+</ol>
+<h2 id="_23">결론</h2>
+<p>전기차 공급망은 복잡하지만 체계적인 구조를 가지고 있으며, 각 계층별로 핵심 역할을 담당하는 기업들이 명확히 식별되었습니다. 투자 시에는 공급업체의 기술력, OEM과의 관계, 시장 지위 등을 종합적으로 고려하여 안정적이면서도 성장 잠재력이 높은 기업들을 선별하는 것이 중요합니다.</p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="4-financial-performance">4. Financial Performance</h1>
+<h2 id="_24">재무 성과 분석 개요</h2>
+<p>본 섹션에서는 전기차 관련 기업들의 재무 성과를 종합적으로 분석하여 투자 매력도를 평가했습니다. 정량적 분석(30%)과 정성적 분석(70%)을 결합하여 각 기업의 투자 가치를 객관적으로 평가했습니다.</p>
+<h3 id="_25">분석 방법론</h3>
+<ul>
+<li><strong>정성적 분석 (70%)</strong>: 시장 트렌드, 공급업체 관계, 기술 경쟁력</li>
+<li><strong>정량적 분석 (30%)</strong>: DART 재무 데이터, 증권사 분석가 리포트</li>
+</ul>
+<h3 id="_26">주요 투자 추천 기업</h3>
+<h3 id="1-gm">1. GM</h3>
+<ul>
+<li><strong>Total Score</strong>: 0.38/1.0</li>
+<li><strong>Qualitative Score</strong>: 0.33 (70% weight)</li>
+<li><strong>Quantitative Score</strong>: 0.50 (30% weight)</li>
+<li><strong>Investment Appeal</strong>: Low</li>
+<li><strong>Data Source</strong>: DART_API</li>
+</ul>
+<h3 id="2">2.</h3>
+<ul>
+<li><strong>Total Score</strong>: 0.37/1.0</li>
+<li><strong>Qualitative Score</strong>: 0.46 (70% weight)</li>
+<li><strong>Quantitative Score</strong>: 0.15 (30% weight)</li>
+<li><strong>Investment Appeal</strong>: Low</li>
+<li><strong>Data Source</strong>: DART_API</li>
+</ul>
+<h3 id="3-byd">3. BYD</h3>
+<ul>
+<li><strong>Total Score</strong>: 0.28/1.0</li>
+<li><strong>Qualitative Score</strong>: 0.33 (70% weight)</li>
+<li><strong>Quantitative Score</strong>: 0.15 (30% weight)</li>
+<li><strong>Investment Appeal</strong>: Low</li>
+<li><strong>Data Source</strong>: DART_API</li>
+</ul>
+<h3 id="4-bmw">4. BMW</h3>
+<ul>
+<li><strong>Total Score</strong>: 0.24/1.0</li>
+<li><strong>Qualitative Score</strong>: 0.28 (70% weight)</li>
+<li><strong>Quantitative Score</strong>: 0.15 (30% weight)</li>
+<li><strong>Investment Appeal</strong>: Low</li>
+<li><strong>Data Source</strong>: DART_API</li>
+</ul>
+<h2 id="_27">재무 지표 분석</h2>
+<h3 id="_28">핵심 평가 기준</h3>
+<ol>
+<li><strong>성장성</strong>: 매출 증가율, 영업이익률</li>
+<li><strong>수익성</strong>: ROE, ROA</li>
+<li><strong>안정성</strong>: 부채비율, 유동비율</li>
+<li><strong>밸류에이션</strong>: PER, PBR (가능한 경우)</li>
+</ol>
+<h3 id="_29">투자 점수 계산 방법</h3>
+<ul>
+<li><strong>시장 트렌드 영향 (40%)</strong>: EV 시장 트렌드와의 상관관계</li>
+<li><strong>공급업체 관계 (40%)</strong>: 주요 OEM과의 공급 관계</li>
+<li><strong>재무 건전성 (20%)</strong>: DART 기반 재무 지표</li>
+</ul>
+<h2 id="_30">투자 권고사항</h2>
+<h3 id="_31">권장 투자 배분</h3>
+<ul>
+<li><strong>핵심 종목</strong>: 포트폴리오의 60-70%</li>
+<li><strong>지원 종목</strong>: 포트폴리오의 20-30%</li>
+<li><strong>현금</strong>: 포트폴리오의 10-20%</li>
+</ul>
+<h3 id="_32">투자 기간</h3>
+<ul>
+<li><strong>단기 (3-6개월)</strong>: 시장 변동성 활용</li>
+<li><strong>중기 (6-12개월)</strong>: 성장 스토리 실현</li>
+<li><strong>장기 (12개월 이상)</strong>: 구조적 성장 기대</li>
+</ul>
+<h3 id="_33">중요 사항</h3>
+<ul>
+<li>DART 데이터가 있는 기업의 신뢰도가 높음</li>
+<li>신규 발견 기업은 추가 실사 필요</li>
+<li>재무 성과 정기적 모니터링 권장</li>
+</ul>
+<h2 id="_34">결론</h2>
+<p>재무 성과 분석을 통해 전기차 관련 기업들의 투자 매력도를 객관적으로 평가했습니다. 투자 시에는 단순히 재무 지표만을 고려하는 것이 아니라, 시장 동향, 기술 경쟁력, 공급망 지위 등을 종합적으로 고려하여 안정적이면서도 성장 잠재력이 높은 기업들을 선별하는 것이 중요합니다.</p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="5-risk-assessment">5. Risk Assessment</h1>
+<h2 id="warning-risk-grade-analysis">[WARNING] Risk Grade Analysis</h2>
+<p>No risk analysis results available.</p>
+<h2 id="risk-distribution">Risk Distribution</h2>
+<h3 id="high-risk-companies-0">High Risk Companies (0)</h3>
+<p>None identified</p>
+<h3 id="low-risk-companies-0">Low Risk Companies (0)</h3>
+<p>None identified</p>
+<h2 id="_35">📊 주요 리스크 요인</h2>
+<h3 id="80">정량적 리스크 (80% 가중치)</h3>
+<h4 id="1-40">1. 기술투자 리스크 (40%)</h4>
+<ul>
+<li><strong>R&amp;D 비용 비중</strong>: R&amp;D / 매출</li>
+<li>Critical: 25% 이상 (매출 대비 과도한 투자)</li>
+<li>High: 20% 이상</li>
+<li>Medium: 15% 이상 (혁신 기업 수준)</li>
+<li>
+<p>Low: 10% 이상</p>
+</li>
+<li>
+<p><strong>무형자산 비중</strong>: 무형자산 / 총자산</p>
+</li>
+<li>Critical: 50% 이상 (과도한 무형자산 의존)</li>
+<li>High: 40% 이상</li>
+<li>Medium: 30% 이상</li>
+<li>Low: 20% 이상</li>
+</ul>
+<h4 id="2-35">2. 운전자본 리스크 (35%)</h4>
+<ul>
+<li><strong>운전자본/매출 비율</strong>: (유동자산 - 유동부채) / 매출</li>
+<li>Critical: 40% 이상 (과다 운전자본)</li>
+<li>High: 30% 이상</li>
+<li>Medium: 20% 이상</li>
+<li>
+<p>Low: 10% 이상 (적정 수준)</p>
+</li>
+<li>
+<p><strong>현금전환주기 (CCC)</strong>: 재고회전일수 + 매출채권회전일수 - 매입채무회전일수</p>
+</li>
+<li>Critical: 120일 이상 (현금 유동성 리스크)</li>
+<li>High: 90일 이상</li>
+<li>Medium: 60일 이상</li>
+<li>Low: 30일 이상 (양호)</li>
+</ul>
+<h4 id="3-25">3. 성장단계 리스크 (25%)</h4>
+<ul>
+<li><strong>설비투자 비중</strong>: CapEx / 매출</li>
+<li>Critical: 30% 이상 (과도한 투자 부담)</li>
+<li>High: 20% 이상</li>
+<li>Medium: 15% 이상</li>
+<li>
+<p>Low: 10% 이상 (성장단계)</p>
+</li>
+<li>
+<p><strong>감가상각비 증가율</strong>: 전년 대비 증가율</p>
+</li>
+<li>Critical: 50% 이상 증가</li>
+<li>High: 30% 이상 증가</li>
+<li>Medium: 20% 이상 증가</li>
+<li>Low: 10% 이상 증가</li>
+</ul>
+<h3 id="20">정성적 리스크 (20% 가중치)</h3>
+<h4 id="1">1. 거버넌스 리스크</h4>
+<ul>
+<li>경영진 안정성 문제</li>
+<li>이사회 구성 불균형</li>
+<li>감사 품질 이슈</li>
+</ul>
+<h4 id="2_1">2. 법적 리스크</h4>
+<ul>
+<li>소송 노출</li>
+<li>규제 준수 문제</li>
+<li>법규 위반 이력</li>
+</ul>
+<h4 id="3">3. 경영 리스크</h4>
+<ul>
+<li>전략 실행력 부족</li>
+<li>리더십 변화</li>
+<li>핵심 인력 유출</li>
+</ul>
+<h2 id="_36">🛡️ 리스크 완화 전략</h2>
+<h3 id="_37">포트폴리오 레벨</h3>
+<ol>
+<li><strong>분산투자</strong>: 업종 및 기업 분산으로 리스크 분산</li>
+<li><strong>리스크 한도</strong>: 고위험 기업 노출 제한</li>
+<li><strong>현금 보유</strong>: 기회 포착 및 유동성 확보를 위한 현금 보유</li>
+</ol>
+<h3 id="_38">개별 종목 레벨</h3>
+<ol>
+<li><strong>정기 모니터링</strong>: 재무 지표 및 리스크 요인 추적</li>
+<li><strong>이벤트 추적</strong>: 주요 공시 및 뉴스 모니터링</li>
+<li><strong>손절 기준</strong>: 명확한 손절 기준 설정 및 준수</li>
+</ol>
+<h2 id="_39">📈 모니터링 포인트</h2>
+<h3 id="1-oem">1. 주요 OEM 공시</h3>
+<ul>
+<li>공급 계약 변경 사항 추적</li>
+<li>수주 규모 및 단가 변화 모니터링</li>
+</ul>
+<h3 id="2_2">2. 배터리 원자재 가격</h3>
+<ul>
+<li>리튬, 니켈 등 핵심 원자재 가격 추이</li>
+<li>원자재 가격 변동이 마진에 미치는 영향</li>
+</ul>
+<h3 id="3_1">3. 정부 정책 변화</h3>
+<ul>
+<li>친환경 정책 및 보조금 변화</li>
+<li>규제 강화/완화 동향</li>
+</ul>
+<h3 id="4">4. 경쟁사 동향</h3>
+<ul>
+<li>경쟁사 전략 및 실적 분석</li>
+<li>시장 점유율 변화 추적</li>
+</ul>
+<h3 id="5">5. 재무지표 변화</h3>
+<ul>
+<li>기술투자 비중 변화 (R&amp;D, 무형자산)</li>
+<li>운전자본 효율성 변화 (CCC 개선/악화)</li>
+<li>성장 투자 강도 변화 (CapEx, 감가상각)</li>
+</ul>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="6">6. 투자 전략</h1>
+<h2 id="_40">📊 포트폴리오 전략</h2>
+<h3 id="_41">전략 개요</h3>
+<ul>
+<li><strong>전략명</strong>: 균형형 전략</li>
+<li><strong>전략 설명</strong>: </li>
+<li><strong>기대 수익률</strong>: 0.00</li>
+</ul>
+<h3 id="_42">추천 포트폴리오 구성</h3>
+<h3 id="_43">기본 포트폴리오 구성 (공급업체 기반)</h3>
+<h3 id="1-tesla_1">1. Tesla</h3>
+<ul>
+<li><strong>Target Weight</strong>: 15.0%</li>
+<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
+<li><strong>Rationale</strong>: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상</li>
+</ul>
+<h3 id="2-byd_1">2. Byd</h3>
+<ul>
+<li><strong>Target Weight</strong>: 20.0%</li>
+<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
+<li><strong>Rationale</strong>: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상</li>
+</ul>
+<h3 id="3-panasonic_1">3. Panasonic</h3>
+<ul>
+<li><strong>Target Weight</strong>: 25.0%</li>
+<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
+<li><strong>Rationale</strong>: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상</li>
+</ul>
+<h3 id="4-bosch_1">4. Bosch</h3>
+<ul>
+<li><strong>Target Weight</strong>: 30.0%</li>
+<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
+<li><strong>Rationale</strong>: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상</li>
+</ul>
+<h3 id="5-sk_1">5. SK</h3>
+<ul>
+<li><strong>Target Weight</strong>: 35.0%</li>
+<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
+<li><strong>Rationale</strong>: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상</li>
+</ul>
+<h3 id="_44">자산 배분</h3>
+<ul>
+<li><strong>성장주</strong>: 50.0%</li>
+<li><strong>가치주</strong>: 40.0%</li>
+<li><strong>현금</strong>: 10.0%</li>
+</ul>
+<h2 id="_45">🎯 투자 기회</h2>
+<h3 id="_46">주요 투자 기회 (공급업체 기반)</h3>
+<ol>
+<li>
+<p><strong>Tesla</strong>: companies 분야 전문 기업 (신뢰도: 0.60)</p>
+</li>
+<li>
+<p><strong>Byd</strong>: companies 분야 전문 기업 (신뢰도: 0.60)</p>
+</li>
+<li>
+<p><strong>Panasonic</strong>: companies 분야 전문 기업 (신뢰도: 0.60)</p>
+</li>
+<li>
+<p><strong>Bosch</strong>: companies 분야 전문 기업 (신뢰도: 0.60)</p>
+</li>
+<li>
+<p><strong>SK</strong>:  분야 전문 기업 (신뢰도: 0.70)</p>
+</li>
+</ol>
+<h2 id="_47">⏰ 투자 타이밍</h2>
+<h3 id="_48">진입 전략</h3>
+<ul>
+<li><strong>접근 방법</strong>: 점진적 매수</li>
+<li><strong>시장 전망</strong>: 긍정적</li>
+</ul>
+<h3 id="_49">타이밍 고려 요소</h3>
+<ul>
+<li>EV 시장 성장률 모니터링</li>
+</ul>
+<h2 id="_50">🛡️ 리스크 관리</h2>
+<h3 id="_51">리스크 관리 전략</h3>
+<ul>
+<li><strong>리스크 허용도</strong>: 중간</li>
+<li><strong>분산 투자</strong>: 업종 분산</li>
+</ul>
+<h3 id="_52">리스크 통제 방안</h3>
+<ul>
+<li>고위험 기업 제외</li>
+</ul>
+<h3 id="_53">모니터링 포인트</h3>
+<ul>
+<li>주요 OEM 공시 모니터링</li>
+</ul>
+<h2 id="_54">📋 투자 실행 가이드</h2>
+<h3 id="1_1">1단계: 포트폴리오 구축</h3>
+<ol>
+<li>목표 비중에 따라 추천 종목 매수</li>
+<li>분할 매수를 통한 평균 단가 관리</li>
+<li>기회 포착을 위한 현금 보유</li>
+</ol>
+<h3 id="2_3">2단계: 지속적 모니터링</h3>
+<ol>
+<li>월간 포트폴리오 리밸런싱 검토</li>
+<li>분기별 종목 성과 평가</li>
+<li>반기별 투자 전략 재검토</li>
+</ol>
+<h3 id="3_2">3단계: 리스크 관리</h3>
+<ol>
+<li>손절 기준 설정 및 준수</li>
+<li>고위험 종목 비중 제한</li>
+<li>시장 변동성 대응 계획 수립</li>
+</ol>
+<h2 id="_55">⚠️ 투자 유의사항</h2>
+<ol>
+<li><strong>원금 손실 위험</strong>: 모든 투자는 원금 손실 위험이 있습니다</li>
+<li><strong>시장 변동성</strong>: EV 관련 주식은 높은 변동성을 보일 수 있습니다</li>
+<li><strong>정책 리스크</strong>: 정부 정책 변화가 실적에 영향을 미칠 수 있습니다</li>
+<li><strong>기술 리스크</strong>: 기술 개발이 기존 투자에 영향을 미칠 수 있습니다</li>
+</ol>
+<hr />
+<p><em>본 투자 전략은 참고용으로만 사용되어야 하며, 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 합니다.</em></p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="7-glossary">7. Glossary</h1>
+<h2 id="ev-terms">EV Terms</h2>
+<ul>
+<li><strong>EV</strong>: Electric Vehicle - 전기로 구동되는 자동차</li>
+<li><strong>BEV</strong>: Battery Electric Vehicle - 배터리만으로 구동되는 순수 전기차</li>
+<li><strong>PHEV</strong>: Plug-in Hybrid Electric Vehicle - 플러그인 하이브리드 전기차</li>
+<li><strong>HEV</strong>: Hybrid Electric Vehicle - 하이브리드 전기차</li>
+<li><strong>FCEV</strong>: Fuel Cell Electric Vehicle - 연료전지 전기차</li>
+</ul>
+<h2 id="battery-terms">Battery Terms</h2>
+<ul>
+<li><strong>Battery</strong>: 배터리 - 전기차의 동력원이 되는 에너지 저장 장치</li>
+<li><strong>Cell</strong>: 셀 - 배터리의 기본 단위</li>
+<li><strong>BMS</strong>: Battery Management System - 배터리 관리 시스템</li>
+<li><strong>LFP</strong>: Lithium Iron Phosphate - 리튬인산철 배터리</li>
+<li><strong>NCM</strong>: Nickel Cobalt Manganese - 니켈 코발트 망간 배터리</li>
+<li><strong>NCA</strong>: Nickel Cobalt Aluminum - 니켈 코발트 알루미늄 배터리</li>
+</ul>
+<h2 id="charging-terms">Charging Terms</h2>
+<ul>
+<li><strong>Charging</strong>: 충전 - 전기차 배터리에 전기를 공급하는 과정</li>
+<li><strong>DC</strong>: Direct Current - 직류 충전</li>
+<li><strong>AC</strong>: Alternating Current - 교류 충전</li>
+<li><strong>Supercharger</strong>: Tesla 슈퍼차저 - 고속 충전소</li>
+</ul>
+<h2 id="supply-chain">Supply Chain</h2>
+<ul>
+<li><strong>OEM</strong>: Original Equipment Manufacturer - 완성차 제조사</li>
+<li><strong>Tier 1</strong>: 1차 공급업체 - OEM에 직접 공급하는 업체</li>
+<li><strong>Tier 2</strong>: 2차 공급업체 - Tier 1에 공급하는 업체</li>
+<li><strong>Supplier</strong>: 공급업체 - 자동차 부품을 공급하는 기업</li>
+</ul>
+<h2 id="financial-terms">Financial Terms</h2>
+<ul>
+<li><strong>PER</strong>: Price-to-Earnings Ratio - 주가수익비율</li>
+<li><strong>PBR</strong>: Price-to-Book Ratio - 주가순자산비율</li>
+<li><strong>ROE</strong>: Return on Equity - 자기자본이익률</li>
+<li><strong>ROA</strong>: Return on Assets - 총자산이익률</li>
+<li><strong>EBITDA</strong>: Earnings Before Interest, Taxes, Depreciation and Amortization - 세전이자비용차감전이익</li>
+<li><strong>FCF</strong>: Free Cash Flow - 잉여현금흐름</li>
+</ul>
+<h2 id="investment-terms">Investment Terms</h2>
+<ul>
+<li><strong>Portfolio</strong>: 포트폴리오 - 투자자산의 조합</li>
+<li><strong>Diversification</strong>: 분산투자 - 리스크 분산을 위한 투자 전략</li>
+<li><strong>Risk</strong>: 리스크 - 투자 손실 가능성</li>
+<li><strong>Return</strong>: 수익률 - 투자 수익의 비율</li>
+</ul>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="8">8. 투자 위험 고지</h1>
+<h2 id="_56">⚠️ 투자 위험 경고</h2>
+<h3 id="_57">일반 투자 리스크</h3>
+<ol>
+<li><strong>원금 손실 위험</strong>: 모든 투자에는 원금 손실 위험이 있습니다</li>
+<li><strong>시장 변동성</strong>: EV 관련 주식은 높은 변동성을 보일 수 있습니다</li>
+<li><strong>정책 리스크</strong>: 정부 정책 변화가 투자 성과에 영향을 미칠 수 있습니다</li>
+<li><strong>기술 리스크</strong>: 기술 개발이 기존 기술에 위험을 초래할 수 있습니다</li>
+<li><strong>경쟁 리스크</strong>: 경쟁 심화가 기업 실적에 영향을 미칠 수 있습니다</li>
+</ol>
+<h3 id="ev">EV 시장 특화 리스크</h3>
+<ol>
+<li><strong>원자재 가격 변동성</strong>: 배터리 원자재 가격 변동 (리튬, 니켈 등)</li>
+<li><strong>규제 변화</strong>: 환경 규제 및 정책 변화</li>
+<li><strong>기술 혁신</strong>: 신기술 출현으로 인한 기존 기술 영향</li>
+<li><strong>공급망 교란</strong>: 글로벌 공급망 문제로 인한 생산 차질</li>
+<li><strong>소비자 수용성</strong>: EV 기술에 대한 소비자 수용 불확실성</li>
+</ol>
+<h3 id="_58">리스크 관리 권장사항</h3>
+<ol>
+<li><strong>분산 투자</strong>: 여러 기업과 업종에 투자 분산</li>
+<li><strong>포지션 조정</strong>: 개별 종목 비중 제한을 통한 리스크 관리</li>
+<li><strong>정기 모니터링</strong>: 시장 상황 및 기업 실적 지속 추적</li>
+<li><strong>손절 기준</strong>: 명확한 손절 수준 설정으로 손실 제한</li>
+<li><strong>실사</strong>: 투자 결정 전 충분한 조사 수행</li>
+</ol>
+<h2 id="_59">📋 법적 면책 조항</h2>
+<h3 id="_60">투자 자문 면책</h3>
+<ul>
+<li>본 보고서는 정보 제공 목적으로만 작성되었으며 투자 자문을 구성하지 않습니다</li>
+<li>과거 실적이 미래 수익을 보장하지 않습니다</li>
+<li>모든 투자 결정은 개인의 리스크 허용도와 재무 상황을 기반으로 이루어져야 합니다</li>
+<li>투자자는 투자 결정 전 전문 재무 상담사와 상담해야 합니다</li>
+</ul>
+<h3 id="_61">데이터 정확성 면책</h3>
+<ul>
+<li>정확성을 위해 노력하나 모든 정보의 완전성이나 정확성을 보장할 수 없습니다</li>
+<li>시장 상황 및 기업 정보는 빠르게 변할 수 있습니다</li>
+<li>투자자는 결정 전 독립적으로 정보를 검증해야 합니다</li>
+</ul>
+<h3 id="_62">책임의 제한</h3>
+<ul>
+<li>본 보고서 사용으로 인한 투자 손실에 대해 책임지지 않습니다</li>
+<li>투자자는 투자 결정에 대한 전적인 책임을 집니다</li>
+<li>본 보고서는 투자 결정의 유일한 근거가 되어서는 안 됩니다</li>
+</ul>
+<h2 id="_63">👤 투자자 책임사항</h2>
+<h3 id="_64">투자 전 고려사항</h3>
+<ol>
+<li><strong>리스크 평가</strong>: 리스크 허용도 및 투자 목표 평가</li>
+<li><strong>재무 상황</strong>: 재무 능력 및 투자 기간 고려</li>
+<li><strong>시장 이해</strong>: EV 시장 역학에 대한 이해 확보</li>
+<li><strong>전문가 자문</strong>: 필요시 전문 재무 조언 구하기</li>
+</ol>
+<h3 id="_65">지속적 책임사항</h3>
+<ol>
+<li><strong>포트폴리오 모니터링</strong>: 정기적으로 포트폴리오 검토 및 조정</li>
+<li><strong>시장 인식</strong>: 시장 동향 및 기업 뉴스 파악</li>
+<li><strong>리스크 관리</strong>: 적절한 리스크 관리 전략 실행</li>
+<li><strong>성과 평가</strong>: 목표 대비 투자 성과 주기적 평가</li>
+</ol>
+<hr />
+<p><em>본 면책 조항은 보고서 생성일 기준으로 유효하며 주기적으로 업데이트될 수 있습니다.</em></p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr />
+<h1 id="9">9. 참고문헌 및 부록</h1>
+<h2 id="_66">📚 데이터 출처 요약</h2>
+<h3 id="100">뉴스 기사 (100개 기사)</h3>
+<ul>
+<li>EV Magazine: Home of Electric Vehicle News</li>
+<li>EV News - The Latest Electric Car, Truck, and SUV ... - MotorTrend</li>
+<li>InsideEVs | Electric Vehicle News, Reviews, and Reports</li>
+<li>Porsche's Operating Profit Slumps as EV Challenges, China Woes ...</li>
+<li>Porsche loses almost one billion euros on shift back to petrol</li>
+<li>The Global Electric Vehicle Market In 2025 - Virta</li>
+<li>Trends in electric car markets – Global EV Outlook 2025 - IEA</li>
+<li>Electric Vehicle Outlook | BloombergNEF</li>
+<li>Global EV Outlook 2024 – Analysis - IEA</li>
+<li>Electric Vehicles - Worldwide | Statista Market Forecast</li>
+</ul>
+<h3 id="0">공시 데이터 (0건 공시)</h3>
+<p>공시 데이터 없음</p>
+<h2 id="_67">🔬 분석 방법론</h2>
+<h3 id="_68">시장 트렌드 분석</h3>
+<ul>
+<li><strong>데이터 출처</strong>: 이데일리, 한국경제, 머니투데이 등 주요 언론</li>
+<li><strong>분석 기간</strong>: 최근 7일</li>
+<li><strong>키워드</strong>: EV, electric vehicle, battery, charging</li>
+<li><strong>방법</strong>: 키워드 추출 및 카테고리화</li>
+</ul>
+<h3 id="_69">공급망 분석</h3>
+<ul>
+<li><strong>데이터 출처</strong>: 웹 검색 및 공급업체 데이터베이스</li>
+<li><strong>방법</strong>: 키워드 기반 공급업체 발견</li>
+<li><strong>관계 분류</strong>: 공급/협력/경쟁/불명확</li>
+</ul>
+<h3 id="_70">재무 분석</h3>
+<ul>
+<li><strong>정성적 (70%)</strong>: 시장 트렌드, 공급업체 관계</li>
+<li><strong>정량적 (30%)</strong>: DART 재무 데이터, 증권사 리포트</li>
+</ul>
+<h3 id="_71">리스크 분석</h3>
+<ul>
+<li><strong>정량적 (80%)</strong>: 3가지 핵심 지표</li>
+<li>기술투자 리스크 (40%): R&amp;D 비용, 무형자산</li>
+<li>운전자본 리스크 (35%): 운전자본/매출, CCC</li>
+<li>성장단계 리스크 (25%): CapEx, 감가상각비</li>
+<li><strong>정성적 (20%)</strong>: 거버넌스, 법적, 경영 리스크</li>
+</ul>
+<h2 id="_72">📊 데이터 품질 평가</h2>
+<h3 id="_73">신뢰도 수준</h3>
+<ul>
+<li><strong>높음</strong>: 공식 DART 공시, 주요 증권사 리포트</li>
+<li><strong>중간</strong>: 뉴스 기사, 산업 리포트</li>
+<li><strong>낮음</strong>: 웹 검색 결과, 미검증 출처</li>
+</ul>
+<h2 id="_74">📖 추가 자료</h2>
+<h3 id="_75">관련 용어</h3>
+<ul>
+<li><strong>EV</strong>: 전기차 (Electric Vehicle)</li>
+<li><strong>BEV</strong>: 배터리 전기차 (Battery Electric Vehicle)</li>
+<li><strong>OEM</strong>: 완성차 제조사 (Original Equipment Manufacturer)</li>
+<li><strong>Tier 1/2</strong>: 공급업체 등급 분류</li>
+</ul>
+<h3 id="_76">참고 웹사이트</h3>
+<ul>
+<li>DART (dart.fss.or.kr) - 전자공시시스템</li>
+<li>한국거래소 (krx.co.kr)</li>
+<li>주요 증권사 리서치 센터</li>
+</ul>
+<h2 id="_77">📝 상세 출처</h2>
+<p>출처 시스템을 사용할 수 없습니다</p>
+<hr />
+<p><em>본 부록은 투자 보고서에 대한 상세 정보를 제공하며 투자 결정을 위한 참고 자료로 사용되어야 합니다.</em></p>
+<hr />
+<p><em>Generated: 2025-10-25 03:44</em></p>
+<hr /></div>
+        </div>
+
+        <div class="footer">
+            <p><strong>생성 일시:</strong> 2025-10-25 03:44:59</p>
+            <p>이 보고서는 참고용으로만 사용되어야 합니다. 투자 결정은 투자자 자신의 판단과 책임 하에 이루어져야 합니다.</p>
+            <p style="margin-top: 15px; opacity: 0.7;">Generated by EVI Agent System</p>
+        </div>
+    </div>
+</body>
+</html>

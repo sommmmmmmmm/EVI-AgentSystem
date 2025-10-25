@@ -52,6 +52,7 @@ desktop.ini
 # Logs
 *.log
 logs/
+nohup.out
 
 # Temporary files
 *.tmp
@@ -78,3 +79,6 @@ htmlcov/
 .dmypy.json
 dmypy.json
 outputs/mock_test/
+
+# Deprecated files
+deprecated_old_system/

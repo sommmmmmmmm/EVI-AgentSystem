@@ -428,3 +428,4 @@ def get_financial_data(company, country):
 **작성일**: 2025-10-24
 **목표 완료일**: 2025-10-26 (3일 이내)
 
+

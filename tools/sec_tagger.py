@@ -10,34 +10,39 @@ from datetime import datetime
 class SECTagger:
     """
     SEC EDGAR 공시 데이터 태깅 및 기업 매칭 도구
+    미국 기업은 SEC, 한국 기업은 DART, 그 외는 Yahoo Finance 사용
     """
     
     # 주요 해외 전기차 관련 기업 리스트
     OVERSEAS_EV_COMPANIES = {
-        # 미국 완성차 (SEC EDGAR)
-        'Tesla': {'ticker': 'TSLA', 'cik': '1318605', 'name': 'Tesla Inc', 'source': 'SEC EDGAR'},
-        'GM': {'ticker': 'GM', 'cik': '0001467858', 'name': 'General Motors Company', 'source': 'SEC EDGAR'},
-        'Ford': {'ticker': 'F', 'cik': '0000037996', 'name': 'Ford Motor Company', 'source': 'SEC EDGAR'},
-        'Rivian': {'ticker': 'RIVN', 'cik': '0001874178', 'name': 'Rivian Automotive Inc', 'source': 'SEC EDGAR'},
-        'Lucid': {'ticker': 'LCID', 'cik': '0001811210', 'name': 'Lucid Group Inc', 'source': 'SEC EDGAR'},
+        # 미국 완성차 (SEC EDGAR) - CIK는 10자리 형식
+        'Tesla': {'ticker': 'TSLA', 'cik': '0001318605', 'name': 'Tesla Inc', 'source': 'SEC', 'country': 'US'},
+        'GM': {'ticker': 'GM', 'cik': '0001467858', 'name': 'General Motors Company', 'source': 'SEC', 'country': 'US'},
+        'Ford': {'ticker': 'F', 'cik': '0000037996', 'name': 'Ford Motor Company', 'source': 'SEC', 'country': 'US'},
+        'Rivian': {'ticker': 'RIVN', 'cik': '0001874178', 'name': 'Rivian Automotive Inc', 'source': 'SEC', 'country': 'US'},
+        'Lucid': {'ticker': 'LCID', 'cik': '0001811210', 'name': 'Lucid Group Inc', 'source': 'SEC', 'country': 'US'},
         
         # 유럽 완성차 (Yahoo Finance)
-        'BMW': {'ticker': 'BMW.DE', 'cik': None, 'name': 'BMW AG', 'source': 'Yahoo Finance'},
-        'Mercedes': {'ticker': 'MBG.DE', 'cik': None, 'name': 'Mercedes-Benz Group AG', 'source': 'Yahoo Finance'},
-        'Volkswagen': {'ticker': 'VOW3.DE', 'cik': None, 'name': 'Volkswagen AG', 'source': 'Yahoo Finance'},
+        'BMW': {'ticker': 'BMW.DE', 'cik': None, 'name': 'BMW AG', 'source': 'Yahoo', 'country': 'DE'},
+        'Mercedes': {'ticker': 'MBG.DE', 'cik': None, 'name': 'Mercedes-Benz Group AG', 'source': 'Yahoo', 'country': 'DE'},
+        'Volkswagen': {'ticker': 'VOW3.DE', 'cik': None, 'name': 'Volkswagen AG', 'source': 'Yahoo', 'country': 'DE'},
         
-        # 중국 완성차 (Yahoo Finance / SEC EDGAR)
-        'BYD': {'ticker': '1211.HK', 'cik': None, 'name': 'BYD Company Limited', 'source': 'Yahoo Finance'},
-        'Nio': {'ticker': 'NIO', 'cik': '0001736541', 'name': 'NIO Inc', 'source': 'SEC EDGAR'},
-        'Xpeng': {'ticker': 'XPEV', 'cik': '0001806059', 'name': 'XPeng Inc', 'source': 'SEC EDGAR'},
-        'Li Auto': {'ticker': 'LI', 'cik': '0001799209', 'name': 'Li Auto Inc', 'source': 'SEC EDGAR'},
+        # 중국 완성차 (Yahoo Finance / SEC EDGAR - 미국 상장)
+        'BYD': {'ticker': '1211.HK', 'cik': None, 'name': 'BYD Company Limited', 'source': 'Yahoo', 'country': 'CN'},
+        'Nio': {'ticker': 'NIO', 'cik': '0001736541', 'name': 'NIO Inc', 'source': 'SEC', 'country': 'US'},  # 미국 상장
+        'Xpeng': {'ticker': 'XPEV', 'cik': '0001806059', 'name': 'XPeng Inc', 'source': 'SEC', 'country': 'US'},  # 미국 상장
+        'Li Auto': {'ticker': 'LI', 'cik': '0001799209', 'name': 'Li Auto Inc', 'source': 'SEC', 'country': 'US'},  # 미국 상장
         
         # 일본 배터리 (Yahoo Finance)
-        'Panasonic': {'ticker': '6752.T', 'cik': None, 'name': 'Panasonic Holdings Corporation', 'source': 'Yahoo Finance'},
+        'Panasonic': {'ticker': '6752.T', 'cik': None, 'name': 'Panasonic Holdings Corporation', 'source': 'Yahoo', 'country': 'JP'},
         
         # 미국 배터리/부품 (SEC EDGAR)
-        'Albemarle': {'ticker': 'ALB', 'cik': '0000915913', 'name': 'Albemarle Corporation', 'source': 'SEC EDGAR'},
-        'QuantumScape': {'ticker': 'QS', 'cik': '0001811414', 'name': 'QuantumScape Corporation', 'source': 'SEC EDGAR'},
+        'Albemarle': {'ticker': 'ALB', 'cik': '0000915913', 'name': 'Albemarle Corporation', 'source': 'SEC', 'country': 'US'},
+        'QuantumScape': {'ticker': 'QS', 'cik': '0001811414', 'name': 'QuantumScape Corporation', 'source': 'SEC', 'country': 'US'},
+        
+        # 유럽 배터리/부품 (Yahoo Finance)
+        'Northvolt': {'ticker': None, 'cik': None, 'name': 'Northvolt AB', 'source': 'Yahoo', 'country': 'SE'},
+        'CATL': {'ticker': '300750.SZ', 'cik': None, 'name': 'Contemporary Amperex Technology', 'source': 'Yahoo', 'country': 'CN'},
     }
     
     # 공시 유형별 중요도
@@ -64,6 +69,33 @@ class SECTagger:
         """
         self.sec_tool = sec_tool
         self._company_cache: Dict[str, str] = {}  # company_name -> cik
+    
+    def classify_companies_by_source(self, company_names: List[str]) -> Dict[str, List[str]]:
+        """
+        기업들을 데이터 소스별로 분류 (SEC / DART / Yahoo)
+        
+        Args:
+            company_names: 기업명 리스트
+            
+        Returns:
+            {'SEC': [...], 'DART': [...], 'Yahoo': [...]}
+        """
+        classified = {
+            'SEC': [],
+            'DART': [],
+            'Yahoo': []
+        }
+        
+        for company_name in company_names:
+            if company_name in self.OVERSEAS_EV_COMPANIES:
+                company_info = self.OVERSEAS_EV_COMPANIES[company_name]
+                source = company_info.get('source', 'Yahoo')
+                classified[source].append(company_name)
+            else:
+                # 알 수 없는 기업은 Yahoo로 분류
+                classified['Yahoo'].append(company_name)
+        
+        return classified
     
     def extract_company_names(self, text: str) -> List[str]:
         """
@@ -120,6 +152,7 @@ class SECTagger:
             태그가 추가된 공시 데이터
         """
         form_type = filing.get('form', '') or filing.get('form_type', '')
+        company_name = filing.get('company_name', '')
         
         # 중요도 태깅
         importance = 'low'
@@ -128,17 +161,29 @@ class SECTagger:
                 importance = level
                 break
         
-        # EV 관련성 체크 (제목 및 설명)
+        # EV 관련성 체크
         is_ev_related = False
         ev_keywords_found = []
         
+        # 1. 회사가 EV 관련 기업 리스트에 있으면 자동으로 EV 관련으로 태깅
+        if company_name in self.OVERSEAS_EV_COMPANIES:
+            company_info = self.OVERSEAS_EV_COMPANIES[company_name]
+            # SEC 소스 기업이면 자동 태깅 (Yahoo는 재무 정보만이므로 제외)
+            if company_info.get('source') == 'SEC':
+                is_ev_related = True
+                ev_keywords_found.append(f'{company_name} (EV 기업)')
+                print(f"   [AUTO-TAG] {company_name}는 EV 관련 기업으로 자동 태깅")
+        
+        # 2. 제목/설명에 EV 키워드가 있는지 추가 체크
         content = f"{filing.get('title', '')} {filing.get('description', '')}"
         content_lower = content.lower()
         
         for keyword in self.EV_KEYWORDS:
             if keyword.lower() in content_lower:
-                is_ev_related = True
-                ev_keywords_found.append(keyword)
+                if not is_ev_related:
+                    is_ev_related = True
+                if keyword not in ev_keywords_found:
+                    ev_keywords_found.append(keyword)
         
         # 태그 추가
         filing['tags'] = {
@@ -176,7 +221,8 @@ class SECTagger:
     def collect_company_filings(
         self, 
         company_names: List[str], 
-        max_filings: int = 5
+        max_filings: int = 5,
+        relaxed_mode: bool = False
     ) -> List[Dict[str, Any]]:
         """
         여러 기업의 SEC 공시 데이터 수집
@@ -184,6 +230,7 @@ class SECTagger:
         Args:
             company_names: 기업명 리스트
             max_filings: 기업당 최대 수집 개수
+            relaxed_mode: True면 에러 시에도 계속 진행 (기준 완화)
             
         Returns:
             태그된 공시 데이터 리스트
@@ -194,8 +241,12 @@ class SECTagger:
             print("   [WARNING] SEC EDGAR tool이 초기화되지 않았습니다.")
             return all_filings
         
-        # 중요한 form types
-        important_forms = ['10-K', '10-Q', '8-K']
+        # 중요한 form types (relaxed_mode에서는 더 많은 타입 포함)
+        if relaxed_mode:
+            important_forms = ['10-K', '10-Q', '8-K', 'DEF 14A', '10-K/A', '10-Q/A']
+            print("   [INFO] Relaxed mode: 더 많은 공시 유형 수집")
+        else:
+            important_forms = ['10-K', '10-Q', '8-K']
         
         for company_name in company_names:
             cik = self.get_cik(company_name)
@@ -203,18 +254,24 @@ class SECTagger:
             if not cik:
                 # 미국 기업이 아니면 Yahoo Finance 사용 (공시는 없음)
                 company_info = self.OVERSEAS_EV_COMPANIES.get(company_name, {})
-                source = company_info.get('source', 'Unknown')
-                print(f"   [INFO] {company_name} - {source}에서 데이터 수집 (공시 없음)")
+                source = company_info.get('source', 'Yahoo')
+                if not relaxed_mode:
+                    print(f"   [INFO] {company_name} - {source}에서 데이터 수집 (공시 없음)")
                 continue
             
             try:
                 # 각 form type별로 공시 수집
                 company_filings = []
                 for form_type in important_forms:
-                    filings = self.sec_tool.get_recent_filings(cik, form_type=form_type)
-                    if filings:
-                        # max_filings 개수만큼만 가져오기
-                        company_filings.extend(filings[:2])  # 각 type당 2개씩
+                    try:
+                        filings = self.sec_tool.get_recent_filings(cik, form_type=form_type)
+                        if filings:
+                            # max_filings 개수만큼만 가져오기
+                            company_filings.extend(filings[:2])  # 각 type당 2개씩
+                    except Exception as e:
+                        if not relaxed_mode:
+                            print(f"   [WARNING] {company_name} {form_type} 수집 실패: {e}")
+                        continue
                 
                 if company_filings:
                     # max_filings 제한
@@ -229,10 +286,14 @@ class SECTagger:
                     
                     all_filings.extend(company_filings)
                 else:
-                    print(f"   [INFO] {company_name}: 공시 없음")
+                    if not relaxed_mode:
+                        print(f"   [INFO] {company_name}: 공시 없음")
                     
             except Exception as e:
-                print(f"   [ERROR] {company_name} 공시 수집 실패: {e}")
+                if relaxed_mode:
+                    print(f"   [WARNING] {company_name} 공시 수집 실패 (계속 진행): {e}")
+                else:
+                    print(f"   [ERROR] {company_name} 공시 수집 실패: {e}")
         
         return all_filings
     

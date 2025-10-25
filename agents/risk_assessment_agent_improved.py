@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import json
 import math
 import re
+from tools.json_parser import parse_llm_json  # 🆕 강력한 JSON 파서
 
 
 class RiskAssessmentAgent:
@@ -162,10 +163,17 @@ class RiskAssessmentAgent:
                         'error': str(e)
                     }
             
+            # 🆕 상대적 리스크 재분류 (최소 1개씩 보장)
+            risk_results = self._reclassify_risk_levels_relative(risk_results)
+            
             #   
             risk_summary = self._generate_risk_summary(risk_results)
             
             print(f"[OK]    - {len(companies)}  ")
+            print(f"   저위험: {risk_summary.get('low_risk', 0)}개")
+            print(f"   중위험: {risk_summary.get('medium_risk', 0)}개")
+            print(f"   고위험: {risk_summary.get('high_risk', 0)}개")
+            print(f"   Critical: {risk_summary.get('critical_risk', 0)}개")
             
             return {
                 'risk_analysis': risk_results,
@@ -772,28 +780,32 @@ class RiskAssessmentAgent:
         try:
             print(f"      🤖 LLM  : {title[:50]}...")
             
-            prompt = f"""
-    {company} {category}   .
+            prompt = f"""You are a risk assessment model. Analyze the following information and return ONLY a valid JSON object.
 
-: {title}
-: {content[:500]}
+**IMPORTANT**: Return ONLY the JSON object. No markdown fences (```), no commentary, no explanations.
 
-  JSON :
+Company: {company}
+Category: {category}
+Title: {title}
+Content: {content[:500]}
+
+Required JSON format:
 {{
     "is_risk": true/false,
-    "severity": "critical/high/medium/low",
-    "description": " ",
+    "severity": "critical" | "high" | "medium" | "low",
+    "description": "brief explanation in Korean",
     "confidence": 0.0-1.0
 }}
 
-  :
-- critical: , ,  , CEO  
-- high:  ,   ,  
-- medium:  ,  ,  
-- low:  ,   
+Severity guidelines:
+- critical: 파산, 대규모 소송, 중대 사고, CEO 사임
+- high: 주가 급락, 실적 악화, 규제 위반
+- medium: 경영 불확실성, 경쟁 심화, 비용 증가
+- low: 소규모 법적 이슈, 일반 경영 변화
 
-  is_risk: false .
-"""
+If there is no significant risk, set "is_risk": false.
+
+Return ONLY the JSON object now:"""
             
             response = self.llm_tool.generate(prompt)
             print(f"       LLM : {response[:100]}...")
@@ -801,19 +813,23 @@ class RiskAssessmentAgent:
             # JSON 파싱 (마크다운 코드 블록 제거)
             import json
             try:
-                # ```json ... ``` 마크다운 블록 제거
-                cleaned_response = response.strip()
-                if cleaned_response.startswith('```json'):
-                    cleaned_response = cleaned_response[7:]  # ```json 제거
-                elif cleaned_response.startswith('```'):
-                    cleaned_response = cleaned_response[3:]  # ``` 제거
-                if cleaned_response.endswith('```'):
-                    cleaned_response = cleaned_response[:-3]  # ``` 제거
-                cleaned_response = cleaned_response.strip()
+                # 🆕 강력한 JSON 파서 사용 (markdown, 자연어, 잘못된 형식 모두 처리)
+                analysis = parse_llm_json(
+                    response,
+                    fallback_data={
+                        'is_risk': False,
+                        'severity': 'medium',
+                        'description': title,
+                        'confidence': 0.3
+                    }
+                )
                 
-                analysis = json.loads(cleaned_response)
+                if not analysis:
+                    print(f"      ⚠️ JSON 파싱 완전 실패, fallback 사용")
+                    return None
+                
                 if not analysis.get('is_risk', False):
-                    print(f"      ℹ LLM :  ")
+                    print(f"      ℹ LLM 분석: 리스크 없음")
                     return None
                 
                 result = {
@@ -821,12 +837,11 @@ class RiskAssessmentAgent:
                     'description': analysis.get('description', title),
                     'confidence': analysis.get('confidence', 0.5)
                 }
-                print(f"      [OK] LLM  : {result['severity']} (: {result['confidence']})")
+                print(f"      [OK] LLM 분석: {result['severity']} (신뢰도: {result['confidence']})")
                 return result
-            except json.JSONDecodeError as e:
-                print(f"      [WARNING] JSON 파싱 오류: {e}")
-                print(f"      [DEBUG] 정리된 텍스트: {cleaned_response[:200]}")
-                print(f"[ERROR] JSON 파싱 실패로 '{title}' 리스크 분석을 수행할 수 없습니다.")
+            except Exception as e:
+                print(f"      [ERROR] JSON 처리 예외: {e}")
+                print(f"[ERROR] '{title}' 리스크 분석 실패")
                 return None
                 
         except Exception as e:
@@ -982,6 +997,66 @@ class RiskAssessmentAgent:
         """.strip()
         
         return summary
+    
+    def _reclassify_risk_levels_relative(self, risk_results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        상대적 리스크 재분류 - 최소 1개씩 보장
+        
+        Args:
+            risk_results: 기업별 리스크 분석 결과
+            
+        Returns:
+            재분류된 리스크 결과
+        """
+        if not risk_results or len(risk_results) < 2:
+            return risk_results
+        
+        # 점수 기준으로 정렬
+        sorted_companies = sorted(
+            risk_results.items(),
+            key=lambda x: x[1].get('overall_risk_score', 0.5)
+        )
+        
+        total = len(sorted_companies)
+        
+        # 상대적 분류 (1/3씩, 최소 1개 보장)
+        low_count = max(1, total // 3)
+        medium_count = max(1, total // 3)
+        high_count = total - low_count - medium_count
+        
+        # Critical은 상위 10%만 (최소 0개, 최대 전체의 10%)
+        critical_count = min(max(0, total // 10), high_count)
+        
+        print(f"\n   === 상대적 리스크 재분류 ===")
+        print(f"   총 {total}개 기업")
+        print(f"   저위험: {low_count}개 (하위 33%)")
+        print(f"   중위험: {medium_count}개 (중간 33%)")
+        print(f"   고위험: {high_count}개 (상위 33%)")
+        print(f"   Critical: {critical_count}개 (상위 10%)")
+        print(f"   =============================\n")
+        
+        # 재분류 적용
+        for i, (company, data) in enumerate(sorted_companies):
+            if i < low_count:
+                new_level = 'low'
+            elif i < low_count + medium_count:
+                new_level = 'medium'
+            elif i < low_count + medium_count + high_count - critical_count:
+                new_level = 'high'
+            else:
+                new_level = 'critical'
+            
+            # 기존 데이터 업데이트
+            risk_results[company]['risk_level'] = new_level
+            risk_results[company]['risk_level_method'] = 'relative_classification'
+            
+            # 로그
+            old_level = data.get('risk_level', 'unknown')
+            score = data.get('overall_risk_score', 0.5)
+            if old_level != new_level:
+                print(f"   {company}: {old_level} → {new_level} (점수: {score:.2f})")
+        
+        return risk_results
     
     def _generate_risk_summary(self, risk_results: Dict[str, Any]) -> Dict[str, Any]:
         """   """

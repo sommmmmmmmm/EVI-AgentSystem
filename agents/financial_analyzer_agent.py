@@ -9,6 +9,9 @@ from config.settings import config
 from datetime import datetime
 import json
 import re
+from tools.disclosure_routing_tools import DisclosureRouter  # 🆕 공시 라우팅 도구
+from tools.llm_qualitative_analysis_tools import LLMQualitativeAnalyzer  # 🆕 LLM 정성 분석 도구 (실제 뉴스+공시 기반)
+from tools.scoring_missing_data_tools import ScoringWithMissingData  # 🆕 결측값 처리 도구
 
 
 class FinancialAnalyzerAgent:
@@ -27,6 +30,11 @@ class FinancialAnalyzerAgent:
         #    
         self.qualitative_weight = config.financial_analysis_weights['qualitative']  # 0.7
         self.quantitative_weight = config.financial_analysis_weights['quantitative']  # 0.3
+        
+        # 🆕 새로운 도구들
+        self.disclosure_router = DisclosureRouter()  # 공시 데이터 라우팅
+        self.qualitative_analyzer = LLMQualitativeAnalyzer(llm_tool=llm_tool)  # 실제 데이터 기반 LLM 정성 분석
+        self.scoring_tool = ScoringWithMissingData()  # 결측값 처리
     
     def analyze_financials(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -89,43 +97,52 @@ class FinancialAnalyzerAgent:
         """
         target_companies = []
         
-        #   
+        #  1:  (  )
         suppliers = state.get('suppliers', [])
+        supplier_companies = []
         for supplier in suppliers:
             company_name = supplier.get('company', '')
-            if company_name and company_name not in target_companies:
-                target_companies.append(company_name)
+            confidence = supplier.get('overall_confidence', 0.0)
+            if company_name:
+                supplier_companies.append({
+                    'name': company_name,
+                    'confidence': confidence,
+                    'source': 'supplier'
+                })
         
-        #   
+        #  2: EV OEM  (  )
         ev_oems = config.ev_oems
         for oem in ev_oems:
-            if oem not in target_companies:
-                target_companies.append(oem)
+            target_companies.append({
+                'name': oem,
+                'confidence': 1.0,  #  OEM  
+                'source': 'oem'
+            })
         
-        #  15  
-        #    (DART  Yahoo .KS  )
-        filtered = []
-        try:
-            from tools.yahoo_finance_tools import YahooFinanceTool
-            ytool = YahooFinanceTool()
-        except Exception:
-            ytool = None
-        for name in target_companies:
-            try:
-                if hasattr(self, 'dart_tool') and self.dart_tool:
-                    info = self.dart_tool.search_company(name)
-                    if info and info.get('stock_code'):
-                        filtered.append(name)
-                        continue
-                if ytool:
-                    sym = ytool._get_company_symbol(name)
-                    if sym and sym.endswith('.KS'):
-                        filtered.append(name)
-            except Exception:
-                continue
-        #      (DART/Alpha/Yahoo   )
-        #     15 
-        return target_companies[:15]
+        #  3:    
+        all_candidates = target_companies + supplier_companies
+        
+        #  4:   ( )
+        seen = set()
+        deduplicated = []
+        for item in all_candidates:
+            name = item['name']
+            if name not in seen:
+                seen.add(name)
+                deduplicated.append(item)
+        
+        #  5:   ( )
+        deduplicated.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        #  6:   ( 30  )
+        #    /     
+        final_companies = [item['name'] for item in deduplicated[:30]]
+        
+        print(f"   :  {len(final_companies)} ")
+        print(f"   OEM: {len([c for c in deduplicated if c['source'] == 'oem'])}")
+        print(f"   : {len([c for c in deduplicated if c['source'] == 'supplier'])}")
+        
+        return final_companies
     
     def _perform_qualitative_analysis(self, companies: List[str], state: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -435,55 +452,66 @@ class FinancialAnalyzerAgent:
     
     def _analyze_analyst_sentiment(self, company: str, state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        분석가 센티먼트 분석 - 전문가 의견 도구 사용
+        정성 분석 - LLM 기반 실제 뉴스/공시 분석 (하드코딩 전문가 의견 대신)
         """
         try:
-            print(f"    {company} 전문가 의견 분석 중...")
+            print(f"    {company} LLM 정성 분석 중 (실제 뉴스+공시 기반)...")
             
-            # 전문가 의견 도구 사용
-            from tools.real_expert_analysis_tools import RealExpertAnalysisTool
-            expert_tool = RealExpertAnalysisTool()
+            # 실제 데이터 기반 LLM 정성 분석
+            news_articles = state.get('news_articles', [])
+            disclosures = state.get('disclosure_data', [])
+            market_trends = state.get('market_trends', [])
+            suppliers = state.get('suppliers', [])
             
-            # 전문가 의견 분석 실행
-            expert_analysis = expert_tool.generate_qualitative_analysis(company)
+            # LLM 정성 분석 실행
+            llm_analysis = self.qualitative_analyzer.analyze_company_qualitative(
+                company_name=company,
+                news_articles=news_articles,
+                disclosures=disclosures,
+                market_trends=market_trends,
+                supplier_relationships=suppliers
+            )
             
-            if expert_analysis and expert_analysis.get('expert_analysis'):
-                expert_data = expert_analysis['expert_analysis']
-                
-                # 전문가 의견 점수를 0-1 스케일로 변환
-                expert_score = expert_data.get('expert_consensus_score', 50.0) / 100.0
-                confidence = expert_data.get('expert_confidence', 0.0)
+            if llm_analysis:
+                # LLM 분석 점수를 0-1 스케일로 변환
+                overall_rating = llm_analysis.get('overall_rating', 5.0)  # 1-10 scale
+                sentiment_score = overall_rating / 10.0  # Convert to 0-1
+                confidence = llm_analysis.get('confidence', 50) / 100.0  # Convert to 0-1
                 
                 # 센티먼트 결정
-                if expert_score >= 0.7:
+                if sentiment_score >= 0.7:
                     sentiment = "positive"
-                elif expert_score <= 0.3:
+                elif sentiment_score <= 0.3:
                     sentiment = "negative"
                 else:
                     sentiment = "neutral"
                 
+                data_sources = llm_analysis.get('data_sources', {})
+                
                 return {
                     'analysis_result': {
                         "overall_sentiment": sentiment,
-                        "sentiment_score": expert_score,
-                        "market_outlook": f"전문가 의견 {expert_data.get('opinion_count', 0)}개 기반",
-                        "investment_psychology": f"전문가 합의도 {expert_data.get('consensus_strength', 0):.2f}",
-                        "competitive_position": f"전문가 신뢰도 {confidence:.2f}",
-                        "key_investment_points": expert_data.get('key_points', []),
-                        "risk_factors": expert_data.get('risk_factors', []),
-                        "confidence_score": confidence
+                        "sentiment_score": sentiment_score,
+                        "market_outlook": f"뉴스 {data_sources.get('news_count', 0)}건, 공시 {data_sources.get('disclosure_count', 0)}건 기반",
+                        "investment_psychology": llm_analysis.get('competitive_position', ''),
+                        "competitive_position": llm_analysis.get('competitive_position', ''),
+                        "key_investment_points": llm_analysis.get('key_strengths', []),
+                        "risk_factors": llm_analysis.get('key_risks', []),
+                        "growth_drivers": llm_analysis.get('growth_drivers', []),
+                        "confidence_score": confidence,
+                        "recommendation": llm_analysis.get('recommendation', 'Hold')
                     },
                     'confidence_score': confidence,
-                    'expert_sources': expert_data.get('sources', []),
-                    'analysis_method': 'expert_opinion_analysis'
+                    'data_sources': data_sources,
+                    'analysis_method': llm_analysis.get('method', 'LLM-based (real data)')
                 }
             else:
-                print(f"    [WARNING] {company} 전문가 의견을 찾을 수 없습니다.")
+                print(f"    [WARNING] {company} LLM 분석 실패, 기본값 사용")
                 return {
                     'analysis_result': {
                         "overall_sentiment": "neutral",
                         "sentiment_score": 0.5,
-                        "market_outlook": "전문가 의견 데이터 부족",
+                        "market_outlook": "데이터 부족",
                         "investment_psychology": "데이터 부족",
                         "competitive_position": "데이터 부족",
                         "key_investment_points": ["전문가 의견 데이터 부족"],

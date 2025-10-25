@@ -46,7 +46,12 @@ def main():
         'max_sec_filings_per_company': 8,  # SEC 기업당 최대 공시 수
         'keywords': ['EV', 'electric vehicle', 'battery', 'charging'],  # 영어 키워드로 변경
         'target_audience': 'individual investors',  # 영어로 변경
-        'language': 'en'  # 영어 보고서 생성
+        'language': 'en',  # 영어 보고서 생성
+        
+        # 데이터 수집 전략 (웹 서치 실패 대비)
+        'relaxed_mode': True,  # 에러 시에도 계속 진행 (기준 완화)
+        'fallback_enabled': True,  # 웹 서치 실패 시 fallback 전략 사용
+        'default_companies_enabled': True  # 기본 기업 리스트 사용 여부
     }
     
     print("[설정 정보]")
@@ -55,6 +60,8 @@ def main():
     print(f"   - 최대 뉴스 기사 수: {config['max_news_articles']}개")
     print(f"   - 키워드: {', '.join(config['keywords'])}")
     print(f"   - 대상 독자: {config['target_audience']}")
+    print(f"   - Relaxed Mode: {'활성화' if config.get('relaxed_mode') else '비활성화'}")
+    print(f"   - Fallback 전략: {'활성화' if config.get('fallback_enabled') else '비활성화'}")
     print()
     
     # ==========================================

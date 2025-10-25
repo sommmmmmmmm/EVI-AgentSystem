@@ -10,6 +10,7 @@ from tools.gnews_tool import GNewsTool
 from tools.dart_tagger import DARTTagger
 from tools.sec_tagger import SECTagger
 from tools.sec_edgar_tools import SECEdgarTool
+from tools.trend_analysis_tools import TrendAnalyzer  # 🆕 트렌드 분석 도구
 
 
 class MarketTrendAgent:
@@ -21,6 +22,7 @@ class MarketTrendAgent:
         self.dart_tagger = DARTTagger(dart_tool=dart_tool) if dart_tool else None  # DART Tagger 추가
         self.sec_tool = SECEdgarTool()  # SEC EDGAR 도구 추가
         self.sec_tagger = SECTagger(sec_tool=self.sec_tool)  # SEC Tagger 추가
+        self.trend_analyzer = TrendAnalyzer()  # 🆕 트렌드 분석기
 
     def analyze_market_trends(self, state: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -33,14 +35,55 @@ class MarketTrendAgent:
             # DART 공시 데이터 수집
             disclosure_data = self._collect_disclosures(news_articles, state)
 
-            categorized_keywords = self._extract_and_categorize_keywords(news_articles, disclosure_data, [])
-            market_trends: List[Dict[str, Any]] = []
+            # 🆕 트렌드 분석 (불용어 제거 + Fallback 규칙)
+            print("\n    ========================================")
+            print("    [트렌드 분석 시작]")
+            print("    ========================================")
+            
+            # 키워드 추출 (불용어 제거됨) - returns Dict[str, List[Tuple[str, int]]]
+            keywords_with_counts = self.trend_analyzer.extract_keywords(news_articles, top_n=20)
+            
+            # 튜플 리스트를 문자열 리스트로 변환 (기존 코드와 호환성 유지)
+            categorized_keywords = {}
+            for category, keyword_list in keywords_with_counts.items():
+                # Extract only keywords (ignore counts)
+                categorized_keywords[category] = [kw for kw, count in keyword_list]
+            
+            # 트렌드 분석 (최소 3개 보장)
+            market_trends = self.trend_analyzer.analyze_trends_with_fallback(
+                news_articles,
+                clustering_result=[]  # 기존 군집화 결과 없음
+            )
+            
+            print(f"    ✅ {len(market_trends)}개 트렌드 식별")
+            print(f"    ✅ 키워드 추출 완료 (companies: {len(categorized_keywords.get('companies', []))}개)")
+            print("    ========================================\n")
 
             result = self._structure_analysis_result(
                 news_articles, disclosure_data, [], categorized_keywords, market_trends, state
             )
 
-            print(f"MarketTrend: news={len(news_articles)} disclosures={len(disclosure_data)}")
+            # 최종 수집 결과 요약
+            print("\n============================")
+            print("[MarketTrendAgent] 데이터 수집 완료")
+            print("============================")
+            print(f"📰 뉴스 기사: {len(news_articles)}개")
+            print(f"📋 공시/재무 데이터: {len(disclosure_data)}개")
+            
+            if len(news_articles) == 0:
+                print("\n⚠️  경고: 뉴스 데이터가 없습니다!")
+                print("   → 웹 서치가 실패했거나 검색 결과가 없습니다.")
+            
+            if len(disclosure_data) == 0:
+                print("\n⚠️  경고: 공시/재무 데이터가 없습니다!")
+                print("   → 모든 데이터 소스에서 정보를 가져올 수 없었습니다.")
+            
+            if len(news_articles) == 0 and len(disclosure_data) == 0:
+                print("\n❌ 중요: 모든 데이터 소스에서 정보 수집 실패!")
+                print("   → 인터넷 연결, API 키, API 사용량 한도를 확인하세요.")
+            
+            print("============================\n")
+            
             return result
 
         except Exception as e:
@@ -64,11 +107,16 @@ class MarketTrendAgent:
         # config에서 최대 뉴스 개수 가져오기 (기본값: 10)
         max_articles = state.get('config', {}).get('max_news_articles', 10)
         
-        print("    Tavily를 사용한 최근 전기차 뉴스 수집 중... (GNews 건너뛰기)")
+        print("\n    ========================================")
+        print("    [웹 서치를 통한 뉴스 수집 시작]")
+        print("    ========================================")
+        print("    Tavily를 사용한 최근 전기차 뉴스 수집 중...")
+        
+        web_search_failed = False
         
         # GNews 건너뛰고 바로 Tavily 웹 검색 사용 (4000 크레딧)
         if True:  # 항상 웹 검색 사용
-            print("    Tavily 뉴스 검색 시작... (고용량 모드 - 4000 크레딧)")
+            print("    Tavily 뉴스 검색 시작...")
             # 뉴스 중심의 검색 쿼리 (최신성 강조)
             seed_queries = [
                 # 최신 트렌드
@@ -116,22 +164,28 @@ class MarketTrendAgent:
                     print(f"    [{i+1}/{len(seed_queries)}] '{q}' 웹 검색 중... (남은 자리: {remaining}개)")
                     results = self.web_search_tool.search(q, num_results=results_needed)
                     
-                    for r in results:
-                        if len(articles) >= max_articles:
-                            break
-                        articles.append({
-                            'title': r.get('title', ''),
-                            'url': r.get('url', ''),
-                            'content': r.get('content', ''),
-                            'publishedAt': r.get('date'),
-                            'source': 'web_search',
-                            'query': q
-                        })
-                    
-                    print(f"    [OK] {len(results)}개 기사 수집 (총 {len(articles)}개)")
+                    if not results:
+                        print(f"    [경고] '{q}': 검색 결과가 없습니다 (웹 서치 실패 또는 정보 없음)")
+                        web_search_failed = True
+                    else:
+                        for r in results:
+                            if len(articles) >= max_articles:
+                                break
+                            articles.append({
+                                'title': r.get('title', ''),
+                                'url': r.get('url', ''),
+                                'content': r.get('content', ''),
+                                'publishedAt': r.get('date'),
+                                'source': 'web_search',
+                                'query': q
+                            })
+                        
+                        print(f"    [OK] {len(results)}개 기사 수집 (총 {len(articles)}개)")
                     
                 except Exception as e:
-                    print(f"    [WARNING] '{q}' 웹 검색 실패: {e}")
+                    print(f"    [경고] '{q}' 웹 검색 실패: {e}")
+                    print(f"    → 해당 검색어에 대한 정보를 가져올 수 없습니다.")
+                    web_search_failed = True
                     continue
         
         # 3. 최근 N일 이내 필터링 (config에서 설정)
@@ -141,7 +195,19 @@ class MarketTrendAgent:
         # 4. 최대 개수 제한
         articles = articles[:max_articles]
         
-        print(f"    [OK] 총 {len(articles)}개 뉴스 기사 수집 완료 (최근 {days_ago}일 이내)")
+        # 5. 결과 요약
+        print("    ========================================")
+        if len(articles) == 0:
+            print("    ⚠️  [경고] 뉴스 데이터를 수집하지 못했습니다!")
+            print("    → 웹 서치가 실패했거나 검색 결과가 없습니다.")
+            print("    → 기본 기업 리스트를 사용하여 공시 데이터를 수집합니다.")
+        elif len(articles) < 10:
+            print(f"    ⚠️  [주의] 뉴스 데이터가 부족합니다: {len(articles)}개")
+            print("    → 일부 웹 서치가 실패했을 수 있습니다.")
+        else:
+            print(f"    ✅ [성공] 총 {len(articles)}개 뉴스 기사 수집 완료 (최근 {days_ago}일 이내)")
+        print("    ========================================\n")
+        
         return articles
 
     def _filter_recent_articles(self, articles: List[Dict[str, Any]], days: int = 7) -> List[Dict[str, Any]]:
@@ -215,63 +281,160 @@ class MarketTrendAgent:
         state: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """
-        뉴스 기사에서 기업명을 추출하여 DART 공시 데이터 수집
+        뉴스 기사에서 기업명을 추출하여 공시 데이터 수집
+        - 한국 기업: DART 공시
+        - 미국 기업: SEC EDGAR 공시
+        - 그 외: Yahoo Finance (재무 정보만)
         """
         disclosure_data = []
         
-        # DART가 없으면 빈 리스트 반환
-        if not self.dart_tool or not self.dart_tagger:
-            print("    [INFO] DART API가 설정되지 않았습니다. 공시 데이터를 건너뜁니다.")
-            return disclosure_data
+        # 웹 서치 실패 시 relaxed mode 활성화
+        relaxed_mode = state.get('config', {}).get('relaxed_mode', True)
+        
+        # 1. 뉴스 기사에서 텍스트 추출
+        all_text = ' '.join([
+            f"{article.get('title', '')} {article.get('content', '')}" 
+            for article in news_articles
+        ]) if news_articles else ""
+        
+        # 텍스트가 없으면 기본 기업 리스트 사용
+        using_default_list = False
+        if not all_text.strip():
+            print("    ⚠️  [경고] 뉴스 기사가 없습니다!")
+            print("    → 웹 서치 실패로 인해 뉴스에서 기업을 추출할 수 없습니다.")
+            print("    → 대신 기본 기업 리스트를 사용하여 공시를 수집합니다.")
+            korean_companies = ['LG에너지솔루션', '삼성SDI', 'SK온', '현대자동차', '기아']
+            overseas_companies = ['Tesla', 'GM', 'Ford', 'BMW', 'BYD']
+            using_default_list = True
+        else:
+            # 한국 기업 추출
+            korean_companies = self.dart_tagger.extract_company_names(all_text) if self.dart_tagger else []
+            # 해외 기업 추출
+            overseas_companies = self.sec_tagger.extract_company_names(all_text)
+        
+        # 추출된 기업이 없으면 기본 리스트 사용
+        if not using_default_list:
+            if not korean_companies and not overseas_companies:
+                print("    ⚠️  [경고] 뉴스에서 EV 관련 기업을 찾지 못했습니다!")
+                print("    → 뉴스 내용에 EV 기업명이 포함되지 않았습니다.")
+                print("    → 대신 기본 기업 리스트를 사용합니다.")
+                using_default_list = True
+            
+            if not korean_companies:
+                korean_companies = ['LG에너지솔루션', '삼성SDI', 'SK온']
+            if not overseas_companies:
+                overseas_companies = ['Tesla', 'GM', 'Ford']
+        
+        # 해외 기업을 데이터 소스별로 분류
+        classified_companies = self.sec_tagger.classify_companies_by_source(overseas_companies)
+        sec_companies = classified_companies.get('SEC', [])
+        yahoo_companies = classified_companies.get('Yahoo', [])
+        
+        print("\n    ========================================")
+        print("    [공시 데이터 수집 전략]")
+        print("    ========================================")
+        if using_default_list:
+            print("    📋 데이터 소스: 기본 기업 리스트 (뉴스 데이터 없음)")
+        else:
+            print("    📰 데이터 소스: 뉴스 기사에서 추출")
+        print(f"    - 한국 기업 (DART): {len(korean_companies)}개")
+        print(f"    - 미국 기업 (SEC): {len(sec_companies)}개")
+        print(f"    - 그 외 기업 (Yahoo Finance): {len(yahoo_companies)}개")
+        print(f"    - Relaxed Mode: {'활성화' if relaxed_mode else '비활성화'}")
+        print("    ========================================\n")
+        
+        # ==============================================
+        # 1) 한국 기업 - DART 공시
+        # ==============================================
+        if self.dart_tool and self.dart_tagger and korean_companies:
+            disclosure_data.extend(
+                self._collect_dart_disclosures(korean_companies, state, relaxed_mode)
+            )
+        
+        # ==============================================
+        # 2) 미국 기업 - SEC EDGAR 공시
+        # ==============================================
+        if sec_companies:
+            disclosure_data.extend(
+                self._collect_sec_disclosures(sec_companies, state, relaxed_mode)
+            )
+        
+        # ==============================================
+        # 3) 그 외 기업 - Yahoo Finance (재무 정보)
+        # ==============================================
+        if yahoo_companies:
+            disclosure_data.extend(
+                self._collect_yahoo_data(yahoo_companies, state, relaxed_mode)
+            )
+        
+        # 최종 요약
+        print("\n    ========================================")
+        print("    [공시/재무 데이터 수집 결과 요약]")
+        print("    ========================================")
+        if len(disclosure_data) == 0:
+            print("    ❌ [실패] 공시/재무 데이터를 수집하지 못했습니다!")
+            print("    → 모든 데이터 소스(DART/SEC/Yahoo)에서 정보를 가져올 수 없었습니다.")
+            print("    → 뉴스 데이터만으로 분석을 진행하거나, API 설정을 확인하세요.")
+        elif len(disclosure_data) < 5:
+            print(f"    ⚠️  [주의] 공시/재무 데이터가 부족합니다: {len(disclosure_data)}개")
+            print("    → 일부 데이터 소스에서만 정보를 수집했을 수 있습니다.")
+        else:
+            print(f"    ✅ [성공] 총 {len(disclosure_data)}개 공시/재무 데이터 수집 완료")
+        print("    ========================================\n")
+        
+        return disclosure_data
+    
+    def _collect_dart_disclosures(
+        self, 
+        company_names: List[str], 
+        state: Dict[str, Any],
+        relaxed_mode: bool
+    ) -> List[Dict[str, Any]]:
+        """한국 기업 DART 공시 수집"""
+        disclosure_data = []
         
         try:
             print("\n    ========================================")
-            print("    [공시 데이터 수집 시작]")
+            print("    [한국 기업 공시 수집 - DART]")
             print("    ========================================")
             
-            # 1. 뉴스 기사에서 기업명 추출
-            all_text = ' '.join([
-                f"{article.get('title', '')} {article.get('content', '')}" 
-                for article in news_articles
-            ])
-            
-            company_names = self.dart_tagger.extract_company_names(all_text)
-            
-            if not company_names:
-                print("    [INFO] 뉴스에서 한국 EV 기업을 찾지 못했습니다.")
-                print("    [INFO] 주요 한국 EV 기업의 공시를 자동으로 수집합니다...")
-                # 주요 기업 리스트 사용
-                company_names = [
-                    'LG에너지솔루션', '삼성SDI', 'SK온', 
-                    '현대자동차', '기아', '에코프로비엠'
-                ]
-            
-            print(f"    [OK] 공시 수집 대상 기업: {len(company_names)}개")
-            for company in company_names[:5]:  # 상위 5개만 출력
+            print(f"    [OK] 공시 수집 대상 한국 기업: {len(company_names)}개")
+            for company in company_names[:5]:
                 print(f"        - {company}")
             if len(company_names) > 5:
                 print(f"        ... 외 {len(company_names) - 5}개")
             
-            # 2. 각 기업의 최근 공시 수집
+            # 각 기업의 최근 공시 수집
             days_ago = state.get('config', {}).get('days_ago', 30)
             max_disclosures = state.get('config', {}).get('max_disclosures_per_company', 10)
             
-            # 기업별로 더 많은 공시 수집
             all_disclosures = []
             for company in company_names:
-                company_disclosures = self.dart_tagger.collect_company_disclosures(
-                    [company], 
-                    days=days_ago
-                )
-                # 기업당 최대 개수 제한
-                all_disclosures.extend(company_disclosures[:max_disclosures])
+                try:
+                    company_disclosures = self.dart_tagger.collect_company_disclosures(
+                        [company], 
+                        days=days_ago
+                    )
+                    all_disclosures.extend(company_disclosures[:max_disclosures])
+                except Exception as e:
+                    if relaxed_mode:
+                        print(f"    [WARNING] {company} 공시 수집 실패 (계속 진행): {e}")
+                    else:
+                        raise
             
-            # 3. EV 관련 공시만 필터링
+            # EV 관련 공시만 필터링
             if all_disclosures:
-                ev_disclosures = self.dart_tagger.filter_ev_disclosures(all_disclosures)
+                # relaxed_mode에서는 필터링 기준 완화
+                # EV 기업의 공시는 모두 EV 관련으로 간주 (strict=False)
+                if relaxed_mode:
+                    ev_disclosures = self.dart_tagger.filter_ev_disclosures(all_disclosures, strict=False)
+                    print(f"    [INFO] Relaxed mode: EV 기업의 모든 공시 포함")
+                else:
+                    ev_disclosures = self.dart_tagger.filter_ev_disclosures(all_disclosures, strict=True)
+                
                 disclosure_data = ev_disclosures
                 
-                print(f"    [OK] 총 {len(all_disclosures)}개 공시 중 {len(ev_disclosures)}개 EV 관련 공시 선별")
+                print(f"    [OK] 총 {len(all_disclosures)}개 공시 중 {len(ev_disclosures)}개 선별")
                 
                 # 요약 통계
                 summary = self.dart_tagger.get_disclosure_summary(ev_disclosures)
@@ -285,49 +448,72 @@ class MarketTrendAgent:
                     for disc in summary['recent_important'][:3]:
                         print(f"        - [{disc['company']}] {disc['title'][:50]}... ({disc['date']})")
             else:
-                print("    [WARNING] 공시 데이터를 찾지 못했습니다.")
+                print("    ⚠️  [경고] DART 공시 데이터를 찾지 못했습니다!")
+                print("    → 해당 기업의 공시가 기간 내에 없거나 API 호출이 실패했습니다.")
+                print("    → 한국 기업 공시 정보 없이 분석을 계속합니다.")
             
             print("    ========================================\n")
             
         except Exception as e:
-            print(f"    [ERROR] 한국 기업 공시 수집 실패: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"    [ERROR] DART 공시 수집 실패: {e}")
+            if not relaxed_mode:
+                import traceback
+                traceback.print_exc()
         
-        # 해외 기업 공시 수집 (SEC EDGAR)
+        return disclosure_data
+    
+    def _collect_sec_disclosures(
+        self, 
+        company_names: List[str], 
+        state: Dict[str, Any],
+        relaxed_mode: bool
+    ) -> List[Dict[str, Any]]:
+        """미국 기업 SEC EDGAR 공시 수집"""
+        disclosure_data = []
+        
         try:
             print("\n    ========================================")
-            print("    [해외 기업 공시 데이터 수집 시작 - SEC EDGAR]")
+            print("    [미국 기업 공시 수집 - SEC EDGAR]")
             print("    ========================================")
             
-            # 1. 뉴스 기사에서 해외 기업명 추출
-            overseas_companies = self.sec_tagger.extract_company_names(all_text)
-            
-            if not overseas_companies:
-                print("    [INFO] 뉴스에서 해외 EV 기업을 찾지 못했습니다.")
-                print("    [INFO] 주요 해외 EV 기업의 공시를 자동으로 수집합니다...")
-                # 주요 미국 기업 리스트 사용
-                overseas_companies = ['Tesla', 'GM', 'Ford']
-            
-            print(f"    [OK] 공시 수집 대상 해외 기업: {len(overseas_companies)}개")
-            for company in overseas_companies[:5]:
+            print(f"    [OK] 공시 수집 대상 미국 기업: {len(company_names)}개")
+            for company in company_names[:5]:
                 print(f"        - {company}")
-            if len(overseas_companies) > 5:
-                print(f"        ... 외 {len(overseas_companies) - 5}개")
+            if len(company_names) > 5:
+                print(f"        ... 외 {len(company_names) - 5}개")
             
-            # 2. 각 기업의 최근 공시 수집
+            # 각 기업의 최근 공시 수집
             max_sec_filings = state.get('config', {}).get('max_sec_filings_per_company', 8)
             overseas_filings = self.sec_tagger.collect_company_filings(
-                overseas_companies,
-                max_filings=max_sec_filings
+                company_names,
+                max_filings=max_sec_filings,
+                relaxed_mode=relaxed_mode
             )
             
-            # 3. EV 관련 공시만 필터링
+            # EV 관련 공시만 필터링
             if overseas_filings:
-                ev_filings = self.sec_tagger.filter_ev_filings(overseas_filings)
-                disclosure_data.extend(ev_filings)  # 한국 공시와 합치기
+                # relaxed_mode에서는 모든 공시 포함 (EV 기업의 공시는 모두 관련성 있음)
+                if relaxed_mode:
+                    # 각 공시에 EV 관련 태그 자동 추가
+                    for filing in overseas_filings:
+                        company_name = filing.get('company_name', '')
+                        if 'tags' not in filing:
+                            filing['tags'] = {
+                                'importance': 'high',
+                                'is_ev_related': True,
+                                'ev_keywords': [f'{company_name} (EV 기업)'],
+                                'tagged_at': datetime.now().isoformat()
+                            }
+                        else:
+                            filing['tags']['is_ev_related'] = True
+                    ev_filings = overseas_filings
+                    print(f"    [INFO] Relaxed mode: EV 기업의 모든 공시 포함")
+                else:
+                    ev_filings = self.sec_tagger.filter_ev_filings(overseas_filings)
                 
-                print(f"    [OK] 총 {len(overseas_filings)}개 공시 중 {len(ev_filings)}개 EV 관련 공시 선별")
+                disclosure_data = ev_filings
+                
+                print(f"    [OK] 총 {len(overseas_filings)}개 공시 중 {len(ev_filings)}개 선별")
                 
                 # 요약 통계
                 summary = self.sec_tagger.get_filing_summary(ev_filings)
@@ -340,19 +526,91 @@ class MarketTrendAgent:
                     print(f"    [IMPORTANT] 주요 공시 (최대 3개):")
                     for disc in summary['recent_important'][:3]:
                         print(f"        - [{disc['company']}] {disc['title']} ({disc['date']})")
-                        if disc.get('description'):
-                            print(f"          {disc['description']}")
             else:
-                print("    [WARNING] 해외 기업 공시 데이터를 찾지 못했습니다.")
+                print("    ⚠️  [경고] SEC 공시 데이터를 찾지 못했습니다!")
+                print("    → 해당 기업의 SEC 공시가 없거나 API 호출이 실패했습니다.")
+                print("    → 미국 기업 공시 정보 없이 분석을 계속합니다.")
             
             print("    ========================================\n")
             
         except Exception as e:
-            print(f"    [ERROR] 해외 기업 공시 수집 실패: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"    [ERROR] SEC 공시 수집 실패: {e}")
+            if not relaxed_mode:
+                import traceback
+                traceback.print_exc()
         
         return disclosure_data
+    
+    def _collect_yahoo_data(
+        self, 
+        company_names: List[str], 
+        state: Dict[str, Any],
+        relaxed_mode: bool
+    ) -> List[Dict[str, Any]]:
+        """그 외 기업 Yahoo Finance 재무 정보 수집"""
+        yahoo_data = []
+        
+        try:
+            print("\n    ========================================")
+            print("    [그 외 기업 재무 정보 수집 - Yahoo Finance]")
+            print("    ========================================")
+            
+            print(f"    [OK] 재무 정보 수집 대상 기업: {len(company_names)}개")
+            for company in company_names[:5]:
+                print(f"        - {company}")
+            if len(company_names) > 5:
+                print(f"        ... 외 {len(company_names) - 5}개")
+            
+            # Yahoo Finance 도구 import
+            from tools.yahoo_finance_tools import YahooFinanceTool
+            yahoo_tool = YahooFinanceTool()
+            
+            for company_name in company_names:
+                try:
+                    # 티커 심볼 가져오기
+                    company_info = self.sec_tagger.OVERSEAS_EV_COMPANIES.get(company_name, {})
+                    ticker = company_info.get('ticker')
+                    
+                    if not ticker:
+                        if not relaxed_mode:
+                            print(f"    [WARNING] {company_name}: 티커 심볼을 찾을 수 없습니다.")
+                        continue
+                    
+                    # 재무 데이터 생성 (공시 형식으로 변환)
+                    financial_info = {
+                        'company_name': company_name,
+                        'title': f'{company_name} - Yahoo Finance 재무 정보',
+                        'ticker': ticker,
+                        'date': datetime.now().strftime('%Y%m%d'),
+                        'source': 'Yahoo Finance',
+                        'country': company_info.get('country', 'Unknown'),
+                        'tags': {
+                            'importance': 'medium',
+                            'is_ev_related': True,
+                            'ev_keywords': ['EV', 'electric vehicle'],
+                            'tagged_at': datetime.now().isoformat()
+                        }
+                    }
+                    
+                    yahoo_data.append(financial_info)
+                    print(f"    [OK] {company_name} ({ticker}): 재무 정보 수집")
+                    
+                except Exception as e:
+                    if relaxed_mode:
+                        print(f"    [WARNING] {company_name} 재무 정보 수집 실패 (계속 진행): {e}")
+                    else:
+                        print(f"    [ERROR] {company_name} 재무 정보 수집 실패: {e}")
+            
+            print(f"    [OK] 총 {len(yahoo_data)}개 기업의 재무 정보 수집")
+            print("    ========================================\n")
+            
+        except Exception as e:
+            print(f"    [ERROR] Yahoo Finance 데이터 수집 실패: {e}")
+            if not relaxed_mode:
+                import traceback
+                traceback.print_exc()
+        
+        return yahoo_data
 
     def _extract_and_categorize_keywords(
         self,

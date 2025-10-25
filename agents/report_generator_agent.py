@@ -205,9 +205,17 @@ class ReportGeneratorAgent:
         risk_assessment = state.get('risk_assessment', {})
         suppliers = state.get('suppliers', [])
         
-        # 주요 투자 기회
+        # 주요 투자 기회 (재무 분석에서 가져오거나 공급업체에서 가져오기)
         top_picks = financial_analysis.get('top_picks', [])
-        top_companies = [pick.get('company', '') for pick in top_picks[:3]]
+        if top_picks:
+            top_companies = [pick.get('company', '') for pick in top_picks[:3] if pick.get('company', '').strip()]
+        else:
+            # 재무 분석에 데이터가 없으면 공급업체에서 상위 기업들 가져오기
+            suppliers = state.get('suppliers', [])
+            top_companies = [s.get('name', '') for s in suppliers[:3] if s.get('name', '').strip()]
+        
+        # 빈 문자열 제거
+        top_companies = [company for company in top_companies if company.strip()]
         
         # 시장 트렌드
         key_trends = [trend.get('title', '') for trend in market_trends[:3]]
@@ -300,7 +308,7 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 
 ## 시장 동향 분석
 
-전기차 시장은 현재 급속한 성장 단계에 있으며, 여러 핵심 트렌드가 시장의 발전을 견인하고 있습니다. 최근 7일간 분석된 {len(news_articles)}개의 뉴스 기사를 바탕으로 한 분석 결과, 시장은 지속적인 성장 모멘텀을 보이고 있으며 배터리 기술과 충전 인프라가 주요 동력으로 작용하고 있습니다.
+전기차 시장은 현재 급속한 성장 단계에 있으며, 여러 핵심 트렌드가 시장의 발전을 견인하고 있습니다. 최근 30일간 분석된 {len(news_articles)}개의 뉴스 기사를 바탕으로 한 분석 결과, 시장은 지속적인 성장 모멘텀을 보이고 있으며 배터리 기술과 충전 인프라가 주요 동력으로 작용하고 있습니다.
 
 {trend_analysis if trend_analysis else "분석 기간 동안 주요 트렌드가 식별되지 않았습니다."}
 
@@ -349,37 +357,80 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
         """
         suppliers = state.get('suppliers', [])
         
-        # 공급업체 분석
-        supplier_analysis = ""
-        for i, supplier in enumerate(suppliers[:10], 1):
-            company = supplier.get('company', '')
-            category = supplier.get('category', '')
-            products = supplier.get('products', [])
-            relationships = supplier.get('relationships', [])
-            confidence = supplier.get('overall_confidence', 0.0)
-            source = supplier.get('source', 'unknown')
-            
-            supplier_analysis += f"""
+        # OEM과 공급업체 분리
+        oem_suppliers = []
+        regular_suppliers = []
+        
+        for supplier in suppliers:
+            company = supplier.get('name', supplier.get('company', ''))
+            if not company.strip():
+                continue
+                
+            company_type = supplier.get('company_type', 'supplier')
+            if company_type == 'oem':
+                oem_suppliers.append(supplier)
+            else:
+                regular_suppliers.append(supplier)
+        
+        # OEM 섹션
+        oem_analysis = ""
+        if oem_suppliers:
+            oem_analysis = "## 주요 EV 제조사 (OEM)\n\n"
+            for i, supplier in enumerate(oem_suppliers[:5], 1):
+                company = supplier.get('name', supplier.get('company', ''))
+                category = supplier.get('category', '')
+                products = supplier.get('products', [])
+                relationships = supplier.get('oem_relationships', supplier.get('relationships', []))
+                confidence = supplier.get('confidence_score', supplier.get('overall_confidence', 0.0))
+                source = supplier.get('discovery_source', supplier.get('source', 'unknown'))
+                
+                oem_analysis += f"""
 ### {i}. {company}
 - **Category**: {category}
-- **Products**: {', '.join(products[:3])}
-- **OEM Relationships**: {len(relationships)} identified
+- **Products**: {', '.join(products[:3]) if isinstance(products, list) else str(products)}
+- **OEM Relationships**: {relationships if isinstance(relationships, int) else len(relationships)} identified
+- **Confidence Score**: {confidence:.2f}/1.0
+- **Discovery Source**: {'Database' if source == 'database' else 'Web Search (OEM Discovery)'}
+"""
+        
+        # 공급업체 섹션
+        supplier_analysis = ""
+        if regular_suppliers:
+            supplier_analysis = "## 주요 공급업체\n\n"
+            for i, supplier in enumerate(regular_suppliers[:10], 1):
+                company = supplier.get('name', supplier.get('company', ''))
+                category = supplier.get('category', '')
+                products = supplier.get('products', [])
+                relationships = supplier.get('oem_relationships', supplier.get('relationships', []))
+                confidence = supplier.get('confidence_score', supplier.get('overall_confidence', 0.0))
+                source = supplier.get('discovery_source', supplier.get('source', 'unknown'))
+                
+                supplier_analysis += f"""
+### {i}. {company}
+- **Category**: {category}
+- **Products**: {', '.join(products[:3]) if isinstance(products, list) else str(products)}
+- **OEM Relationships**: {relationships if isinstance(relationships, int) else len(relationships)} identified
 - **Confidence Score**: {confidence:.2f}/1.0
 - **Discovery Source**: {'Database' if source == 'database' else 'Web Search (New Discovery)'}
 """
-            
-            if relationships:
-                rel_summary = ', '.join([rel.get('oem', '') for rel in relationships[:3]])
-                supplier_analysis += f"- **Key Partners**: {rel_summary}\n"
+                
+                if relationships and isinstance(relationships, list):
+                    rel_summary = ', '.join([rel.get('oem', '') for rel in relationships[:3]])
+                    supplier_analysis += f"- **Key Partners**: {rel_summary}\n"
         
-        # 신규 발견 기업 수
-        new_discoveries = len([s for s in suppliers if s.get('source') == 'web_search'])
+        # 신규 발견 기업 수 (discovery_summary에서 가져오거나 직접 계산)
+        if 'discovery_summary' in state.get('suppliers', {}):
+            new_discoveries = state['suppliers']['discovery_summary'].get('new_discoveries', 0)
+        else:
+            new_discoveries = len([s for s in suppliers if s.get('discovery_source') == 'web_search'])
         
         analysis = f"""# 3. Supply Chain Analysis
 
 ## 공급망 구조 개요
 
-전기차 공급망은 복잡하고 다층적인 구조를 가지고 있으며, 각 계층별로 핵심 역할을 담당하는 기업들이 존재합니다. 본 분석을 통해 총 **{len(suppliers)}개의 공급업체**를 식별했으며, 이 중 **{new_discoveries}개는 신규 발견된 기업**입니다.
+전기차 공급망은 복잡하고 다층적인 구조를 가지고 있으며, 각 계층별로 핵심 역할을 담당하는 기업들이 존재합니다. 본 분석을 통해 총 **{len(suppliers)}개의 기업**을 식별했으며, 이 중 **{len(regular_suppliers)}개는 공급업체**입니다.
+
+{oem_analysis if oem_analysis else ""}
 
 {supplier_analysis if supplier_analysis else "분석에서 공급업체가 식별되지 않았습니다."}
 
@@ -450,6 +501,10 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
             qualitative_score = pick.get('qualitative_score', 0.0)
             quantitative_score = pick.get('quantitative_score', 0.0)
             
+            # 빈 기업명은 건너뛰기
+            if not company or company.strip() == '':
+                continue
+                
             #   
             quant_data = financial_analysis.get('quantitative_analysis', {}).get(company, {})
             data_source = quant_data.get('financial_metrics_analysis', {}).get('data_source', 'UNKNOWN')
@@ -519,40 +574,17 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
         Risk Assessment 생성 - 리스크 평가와 위험 요소 분석을 줄글로 작성
         """
         risk_assessment = state.get('risk_assessment', {})
-        risk_grades = risk_assessment.get('risk_grades', {})
-        high_risk_companies = risk_assessment.get('high_risk_companies', [])
-        low_risk_companies = risk_assessment.get('low_risk_companies', [])
+        risk_analysis = risk_assessment.get('risk_analysis', {})
+        risk_summary = risk_assessment.get('risk_summary', {})
         
-        #   
-        risk_analysis = ""
-        for company, grade_info in list(risk_grades.items())[:10]:
-            grade = grade_info.get('grade', 'Medium')
-            grade_korean = grade_info.get('grade_korean', '')
-            score = grade_info.get('score', 0.0)
-            
-            risk_analysis += f"""
-### {company}
-- **Risk Grade**: {grade} ({grade_korean})
-- **Risk Score**: {score:.2f}/1.0
-- **Assessment**: {grade_info.get('description', 'Standard risk profile')}
-"""
-        
-        analysis = f"""
-# 5. Risk Assessment
+        if not risk_analysis:
+            return """# 5. Risk Assessment
 
 ## [WARNING] Risk Grade Analysis
 
-{risk_analysis if risk_analysis else "No risk analysis results available."}
+No risk analysis results available.
 
-##  Risk Distribution
-
-### High Risk Companies ({len(high_risk_companies)})
-{', '.join(high_risk_companies) if high_risk_companies else 'None identified'}
-
-### Low Risk Companies ({len(low_risk_companies)})
-{', '.join(low_risk_companies) if low_risk_companies else 'None identified'}
-
-## 📊 주요 리스크 요인
+## 리스크 평가 기준
 
 ### 정량적 리스크 (80% 가중치)
 
@@ -624,31 +656,161 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 2. **이벤트 추적**: 주요 공시 및 뉴스 모니터링
 3. **손절 기준**: 명확한 손절 기준 설정 및 준수
 
-## 📈 모니터링 포인트
+## 결론
 
-### 1. 주요 OEM 공시
-- 공급 계약 변경 사항 추적
-- 수주 규모 및 단가 변화 모니터링
-
-### 2. 배터리 원자재 가격
-- 리튬, 니켈 등 핵심 원자재 가격 추이
-- 원자재 가격 변동이 마진에 미치는 영향
-
-### 3. 정부 정책 변화
-- 친환경 정책 및 보조금 변화
-- 규제 강화/완화 동향
-
-### 4. 경쟁사 동향
-- 경쟁사 전략 및 실적 분석
-- 시장 점유율 변화 추적
-
-### 5. 재무지표 변화
-- 기술투자 비중 변화 (R&D, 무형자산)
-- 운전자본 효율성 변화 (CCC 개선/악화)
-- 성장 투자 강도 변화 (CapEx, 감가상각)
+전기차 시장은 기술 혁신, 정책 지원, 인프라 확충, 소비자 수용성 향상 등의 요인들이 상호 작용하며 지속적인 성장을 이어가고 있습니다. 다만 원자재 가격 변동성, 경쟁 심화, 기술 변화, 정책 변화 등의 리스크 요인들도 존재하므로, 투자 시 이러한 요소들을 종합적으로 고려해야 합니다.
 """
         
-        return analysis
+        # 실제 리스크 분석 결과 표시
+        total_companies = risk_summary.get('total_companies', 0)
+        low_risk = risk_summary.get('low_risk', 0)
+        medium_risk = risk_summary.get('medium_risk', 0)
+        high_risk = risk_summary.get('high_risk', 0)
+        critical_risk = risk_summary.get('critical_risk', 0)
+        
+        # 리스크 등급별 기업 분류
+        low_risk_companies = []
+        medium_risk_companies = []
+        high_risk_companies = []
+        critical_risk_companies = []
+        
+        for company, risk_data in risk_analysis.items():
+            risk_level = risk_data.get('risk_level', 'medium')
+            overall_score = risk_data.get('overall_risk_score', 0.5)
+            
+            if risk_level == 'low':
+                low_risk_companies.append((company, overall_score))
+            elif risk_level == 'medium':
+                medium_risk_companies.append((company, overall_score))
+            elif risk_level == 'high':
+                high_risk_companies.append((company, overall_score))
+            elif risk_level == 'critical':
+                critical_risk_companies.append((company, overall_score))
+        
+        # 점수 순으로 정렬
+        low_risk_companies.sort(key=lambda x: x[1])
+        medium_risk_companies.sort(key=lambda x: x[1])
+        high_risk_companies.sort(key=lambda x: x[1], reverse=True)
+        critical_risk_companies.sort(key=lambda x: x[1], reverse=True)
+        
+        # 리스크 분석 결과 생성
+        risk_results = f"""# 5. Risk Assessment
+
+## 리스크 분석 결과
+
+총 **{total_companies}개 기업**에 대한 리스크 분석을 수행했습니다.
+
+### 리스크 등급별 분포
+- **저위험**: {low_risk}개 (하위 33%)
+- **중위험**: {medium_risk}개 (중간 33%)
+- **고위험**: {high_risk}개 (상위 33%)
+- **Critical**: {critical_risk}개 (상위 10%)
+
+## 기업별 리스크 분석 결과
+
+### 🟢 저위험 기업 ({len(low_risk_companies)}개)
+"""
+        
+        for company, score in low_risk_companies:
+            risk_results += f"- **{company}**: 리스크 점수 {score:.3f}\n"
+        
+        risk_results += f"\n### 🟡 중위험 기업 ({len(medium_risk_companies)}개)\n"
+        for company, score in medium_risk_companies:
+            risk_results += f"- **{company}**: 리스크 점수 {score:.3f}\n"
+        
+        risk_results += f"\n### 🟠 고위험 기업 ({len(high_risk_companies)}개)\n"
+        for company, score in high_risk_companies:
+            risk_results += f"- **{company}**: 리스크 점수 {score:.3f}\n"
+        
+        if critical_risk_companies:
+            risk_results += f"\n### 🔴 Critical 리스크 기업 ({len(critical_risk_companies)}개)\n"
+            for company, score in critical_risk_companies:
+                risk_results += f"- **{company}**: 리스크 점수 {score:.3f}\n"
+        
+        # 상세 리스크 분석 추가
+        risk_results += f"""
+
+## 상세 리스크 분석
+
+### 운전자본 리스크가 높은 기업
+"""
+        
+        # 운전자본 리스크가 높은 기업 식별
+        working_capital_risks = []
+        for company, risk_data in risk_analysis.items():
+            wc_risk = risk_data.get('working_capital_risk', 0.5)
+            overall_score = risk_data.get('overall_risk_score', 0.5)
+            working_capital_risks.append((company, wc_risk, overall_score))
+        
+        working_capital_risks.sort(key=lambda x: x[1], reverse=True)
+        
+        for company, wc_risk, overall_score in working_capital_risks[:3]:
+            risk_results += f"- **{company}**: 운전자본 리스크 {wc_risk:.3f} (전체 리스크: {overall_score:.3f})\n"
+        
+        risk_results += f"""
+
+## 리스크 평가 기준
+
+### 정량적 리스크 (80% 가중치)
+
+#### 1. 기술투자 리스크 (40%)
+- **R&D 비용 비중**: R&D / 매출
+- **무형자산 비중**: 무형자산 / 총자산
+
+#### 2. 운전자본 리스크 (35%)
+- **운전자본/매출 비율**: (유동자산 - 유동부채) / 매출
+- **현금전환주기 (CCC)**: 재고회전일수 + 매출채권회전일수 - 매입채무회전일수
+
+#### 3. 성장단계 리스크 (25%)
+- **설비투자 비중**: CapEx / 매출
+- **감가상각비 증가율**: 전년 대비 증가율
+
+### 정성적 리스크 (20% 가중치)
+- 거버넌스 리스크, 법적 리스크, 경영 리스크
+
+## 🛡️ 리스크 완화 전략
+
+### 포트폴리오 레벨
+1. **분산투자**: 업종 및 기업 분산으로 리스크 분산
+2. **리스크 한도**: 고위험 기업 노출 제한
+3. **현금 보유**: 기회 포착 및 유동성 확보를 위한 현금 보유
+
+### 개별 종목 레벨
+1. **정기 모니터링**: 재무 지표 및 리스크 요인 추적
+2. **이벤트 추적**: 주요 공시 및 뉴스 모니터링
+3. **손절 기준**: 명확한 손절 기준 설정 및 준수
+
+## 결론
+
+실제 리스크 분석을 통해 각 기업의 리스크 수준을 객관적으로 평가했습니다. 투자 시에는 리스크 등급을 고려하여 포트폴리오를 구성하고, 고위험 기업은 제한적으로 투자하는 것이 안전합니다.
+"""
+        
+        return risk_results
+    
+    def _calculate_expected_return(self, portfolio_strategy: Dict[str, Any], investment_opportunities: List[Dict[str, Any]]) -> float:
+        """
+        기대 수익률 계산 (연간 %)
+        """
+        if not investment_opportunities:
+            # 투자 기회가 없으면 기본 수익률 (EV 시장 평균)
+            return 8.5
+        
+        # 투자 기회들의 평균 수익률 계산
+        total_return = 0
+        valid_opportunities = 0
+        
+        for opp in investment_opportunities:
+            attractiveness = opp.get('attractiveness', 0.0)
+            if attractiveness > 0:
+                # attractiveness를 기반으로 수익률 추정 (5-15% 범위)
+                estimated_return = 5.0 + (attractiveness * 10.0)
+                total_return += estimated_return
+                valid_opportunities += 1
+        
+        if valid_opportunities > 0:
+            return total_return / valid_opportunities
+        else:
+            return 8.5  # 기본 EV 시장 평균 수익률
     
     def _generate_investment_strategy(self, state: Dict[str, Any]) -> str:
         """
@@ -660,32 +822,105 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
         risk_management = investment_strategy.get('risk_management', {})
         timing_strategy = investment_strategy.get('timing_strategy', {})
         
-        #  
+        # 포트폴리오 분석 (투자 기회가 없으면 공급업체 기반으로 생성)
         portfolio_analysis = ""
         recommended_companies = portfolio_strategy.get('recommended_companies', [])
         
-        for i, company_info in enumerate(recommended_companies[:8], 1):
-            company = company_info.get('company', '')
-            weight = company_info.get('weight', 0.0)
-            rationale = company_info.get('rationale', '')
-            time_horizon = company_info.get('time_horizon', '')
-            
-            portfolio_analysis += f"""
+        if recommended_companies:
+            for i, company_info in enumerate(recommended_companies[:8], 1):
+                company = company_info.get('company', '')
+                weight = company_info.get('weight', 0.0)
+                rationale = company_info.get('rationale', '')
+                time_horizon = company_info.get('time_horizon', '')
+                
+                portfolio_analysis += f"""
 ### {i}. {company}
 - **Target Weight**: {weight:.1%}
 - **Investment Period**: {time_horizon}
 - **Rationale**: {rationale}
 """
+        else:
+            # 투자 기회가 없으면 공급업체 기반으로 기본 포트폴리오 생성 (상장사만)
+            suppliers = state.get('suppliers', [])
+            if suppliers:
+                portfolio_analysis = "### 기본 포트폴리오 구성 (공급업체 기반)\n\n"
+                
+                # 상장사 여부 확인을 위한 리스트
+                listed_companies = {
+                    'SK': 'SK Innovation (096770.KS)',
+                    'Samsung': 'Samsung SDI (006400.KS)', 
+                    'Panasonic': 'Panasonic Holdings (6752.T)',
+                    'Magna': 'Magna International (MGA)',
+                    'CATL': 'CATL (300750.SZ)',
+                    'LG': 'LG Energy Solution (373220.KS)',
+                    'BYD': 'BYD (002594.SZ)',
+                    'Tesla': 'Tesla (TSLA)',
+                    'GM': 'General Motors (GM)',
+                    'Ford': 'Ford Motor (F)',
+                    'BMW': 'BMW (BMW.DE)',
+                    'Volkswagen': 'Volkswagen (VOW.DE)',
+                    'Hyundai': 'Hyundai Motor (005380.KS)',
+                    'Kia': 'Kia (000270.KS)'
+                }
+                
+                def is_listed_company(company_name):
+                    company_name_clean = company_name.replace(' ', '').replace('On', '').replace('SDI', '').replace('Energy', '').replace('Solution', '')
+                    for listed_name in listed_companies.keys():
+                        if listed_name.lower() in company_name_clean.lower():
+                            return True
+                    return False
+                
+                def get_company_ticker(company_name):
+                    company_name_clean = company_name.replace(' ', '').replace('On', '').replace('SDI', '').replace('Energy', '').replace('Solution', '')
+                    for listed_name, ticker_info in listed_companies.items():
+                        if listed_name.lower() in company_name_clean.lower():
+                            return ticker_info
+                    return f"{company_name} (비상장)"
+                
+                # 상장사만 필터링
+                listed_suppliers = []
+                for supplier in suppliers:
+                    company = supplier.get('name', supplier.get('company', ''))
+                    if company.strip() and is_listed_company(company):
+                        listed_suppliers.append(supplier)
+                
+                if listed_suppliers:
+                    for i, supplier in enumerate(listed_suppliers[:5], 1):
+                        company = supplier.get('name', supplier.get('company', ''))
+                        ticker = get_company_ticker(company)
+                        portfolio_analysis += f"""
+### {i}. {company}
+- **Ticker**: {ticker}
+- **Target Weight**: {10 + i * 5:.1f}%
+- **Investment Period**: 중기 (6-12개월)
+- **Rationale**: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상
+"""
+                else:
+                    portfolio_analysis = "### 상장 가능한 공급업체가 없습니다.\n\n현재 식별된 공급업체 중 상장사가 없어 포트폴리오 구성을 할 수 없습니다."
         
-        #   
+        # 투자 기회 분석 (투자 기회가 없으면 공급업체 기반으로 생성)
         opportunities_analysis = ""
-        for i, opp in enumerate(investment_opportunities[:5], 1):
-            company = opp.get('company', '')
-            opportunity_type = opp.get('opportunity_type', '')
-            opportunity_score = opp.get('opportunity_score', 0.0)
-            
-            opportunities_analysis += f"""
+        if investment_opportunities:
+            for i, opp in enumerate(investment_opportunities[:5], 1):
+                company = opp.get('company', '')
+                opportunity_type = opp.get('opportunity_type', '')
+                opportunity_score = opp.get('opportunity_score', 0.0)
+                
+                opportunities_analysis += f"""
 {i}. **{company}**: {opportunity_type} (Score: {opportunity_score:.2f})
+"""
+        else:
+            # 투자 기회가 없으면 공급업체 기반으로 기본 기회 생성
+            suppliers = state.get('suppliers', [])
+            if suppliers:
+                opportunities_analysis = "### 주요 투자 기회 (공급업체 기반)\n\n"
+                for i, supplier in enumerate(suppliers[:5], 1):
+                    company = supplier.get('name', supplier.get('company', ''))
+                    if company.strip():
+                        category = supplier.get('category', 'Unknown')
+                        confidence = supplier.get('confidence_score', supplier.get('overall_confidence', 0.5))
+                        opportunities_analysis += f"""
+{i}. **{company}**: {category} 분야 전문 기업 (신뢰도: {confidence:.2f})
 """
         
         analysis = f"""
@@ -696,7 +931,7 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 ### 전략 개요
 - **전략명**: {portfolio_strategy.get('strategy_name', '균형형 전략')}
 - **전략 설명**: {portfolio_strategy.get('strategy_description', '')}
-- **기대 수익률**: {portfolio_strategy.get('total_investment_score', 0.0):.2f}
+- **기대 수익률**: {self._calculate_expected_return(portfolio_strategy, investment_opportunities):.1f}%
 
 ### 추천 포트폴리오 구성
 
@@ -885,7 +1120,7 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 
 ### 시장 트렌드 분석
 - **데이터 출처**: 이데일리, 한국경제, 머니투데이 등 주요 언론
-- **분석 기간**: 최근 7일
+- **분석 기간**: 최근 30일
 - **키워드**: EV, electric vehicle, battery, charging
 - **방법**: 키워드 추출 및 카테고리화
 

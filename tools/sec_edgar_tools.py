@@ -21,16 +21,16 @@ class SECEdgarTool:
     
     def __init__(self, user_agent: str = None):
         # SEC는 User-Agent 필수 (이메일 포함 권장)
-        self.user_agent = user_agent or f"EVI-Agent/1.0 (contact@example.com)"
+        self.user_agent = user_agent or "EVI-Agent/1.0 (evi-agent@example.com)"
         self.base_url = "https://data.sec.gov"
         self.session = requests.Session()
+        # Host 헤더는 자동으로 설정되도록 제거 (수동 설정 시 404 발생 가능)
         self.session.headers.update({
             'User-Agent': self.user_agent,
-            'Accept-Encoding': 'gzip, deflate',
-            'Host': 'data.sec.gov'
+            'Accept-Encoding': 'gzip, deflate'
         })
         
-        print(f"[OK] SEC EDGAR API 초기화 완료")
+        print(f"[OK] SEC EDGAR API 초기화 완료 (User-Agent: {self.user_agent})")
     
     def get_company_financial_data(self, company_name: str) -> Dict[str, Any]:
         """
@@ -83,13 +83,28 @@ class SECEdgarTool:
                 'error': str(e)
             }
     
+    def _normalize_cik(self, cik: str) -> str:
+        """
+        CIK를 10자리 형식으로 정규화 (앞에 0 패딩)
+        
+        Args:
+            cik: CIK 코드 (숫자 문자열)
+            
+        Returns:
+            10자리로 패딩된 CIK (예: '0001318605')
+        """
+        # 숫자만 추출
+        cik_digits = ''.join(filter(str.isdigit, cik))
+        # 10자리로 패딩
+        return cik_digits.zfill(10)
+    
     def _get_cik(self, company_name: str) -> Optional[str]:
         """
-        회사명으로 CIK 코드 조회
+        회사명으로 CIK 코드 조회 (10자리 형식)
         """
         # 주요 기업 CIK 매핑 (10자리 숫자로 패딩)
         cik_mapping = {
-            # 자동차
+            # 미국 자동차
             'Tesla': '0001318605',
             '테슬라': '0001318605',
             'GM': '0001467858',
@@ -100,7 +115,19 @@ class SECEdgarTool:
             '리비안': '0001874178',
             'Lucid': '0001811210',
             
-            # 기타
+            # 중국 자동차 (미국 상장)
+            'Nio': '0001736541',
+            'NIO': '0001736541',
+            'Xpeng': '0001806059',
+            'XPEV': '0001806059',
+            'Li Auto': '0001799209',
+            'LI': '0001799209',
+            
+            # 미국 배터리/부품
+            'Albemarle': '0000915913',
+            'QuantumScape': '0001811414',
+            
+            # 빅테크
             'Apple': '0000320193',
             'Microsoft': '0000789019',
             'Amazon': '0001018724',
@@ -119,7 +146,8 @@ class SECEdgarTool:
         
         cik = cik_mapping.get(company_name)
         if cik:
-            return cik
+            # 이미 10자리로 패딩되어 있는지 확인
+            return self._normalize_cik(cik)
         
         # 매핑에 없으면 검색 API 사용 (간단한 구현)
         print(f"   [WARNING] '{company_name}'의 CIK 매핑 없음")
@@ -128,12 +156,18 @@ class SECEdgarTool:
     def _get_company_facts(self, cik: str) -> Optional[Dict[str, Any]]:
         """
         회사의 모든 재무 팩트 데이터 조회
+        
+        Args:
+            cik: 10자리 CIK 코드 (예: '0001318605')
         """
         try:
-            # CIK는 10자리로 패딩 (앞에 0 제거)
-            cik_clean = cik.lstrip('0')
+            # CIK를 10자리로 정규화 (혹시 모를 경우를 대비)
+            cik_padded = self._normalize_cik(cik)
             
-            url = f"{self.base_url}/api/xbrl/companyfacts/CIK{cik}.json"
+            # SEC API 형식: https://data.sec.gov/api/xbrl/companyfacts/CIK0001318605.json
+            url = f"{self.base_url}/api/xbrl/companyfacts/CIK{cik_padded}.json"
+            
+            print(f"   [DEBUG] SEC API 호출: {url}")
             
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
@@ -147,13 +181,21 @@ class SECEdgarTool:
             
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                print(f"   [WARNING] CIK {cik}의 데이터를 찾을 수 없습니다")
+                print(f"   ❌ [에러] CIK {cik_padded}의 데이터를 찾을 수 없습니다 (404)")
+                print(f"   → URL: {url}")
+                print(f"   → CIK 형식을 확인하세요. 10자리여야 합니다 (예: CIK0001318605.json)")
+            elif e.response.status_code == 403:
+                print(f"   ❌ [에러] SEC API 접근 거부 (403)")
+                print(f"   → User-Agent 헤더를 확인하세요: {self.user_agent}")
+            elif e.response.status_code == 429:
+                print(f"   ❌ [에러] SEC API 요청 한도 초과 (429)")
+                print(f"   → Rate limit: 10 requests/second을 초과했습니다")
             else:
-                print(f"   [WARNING] SEC API 오류: {e}")
+                print(f"   ❌ [에러] SEC API HTTP 오류: {e.response.status_code}")
             return None
             
         except Exception as e:
-            print(f"   [WARNING] 회사 팩트 조회 실패: {e}")
+            print(f"   ❌ [에러] 회사 팩트 조회 실패: {e}")
             return None
     
     def _extract_financial_data(self, company_facts: Dict[str, Any]) -> Dict[str, Any]:
@@ -303,11 +345,17 @@ class SECEdgarTool:
         최근 SEC 제출 서류 조회
         
         Args:
-            cik: CIK 코드
+            cik: 10자리 CIK 코드 (예: '0001318605')
             form_type: 서류 유형 (10-K, 10-Q, 8-K 등)
         """
         try:
-            url = f"{self.base_url}/submissions/CIK{cik}.json"
+            # CIK를 10자리로 정규화
+            cik_padded = self._normalize_cik(cik)
+            
+            # SEC API 형식: https://data.sec.gov/submissions/CIK0001318605.json
+            url = f"{self.base_url}/submissions/CIK{cik_padded}.json"
+            
+            print(f"   [DEBUG] SEC Submissions API 호출: {url}")
             
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
@@ -321,19 +369,36 @@ class SECEdgarTool:
             forms = filings.get('form', [])
             filing_dates = filings.get('filingDate', [])
             accession_numbers = filings.get('accessionNumber', [])
+            primary_documents = filings.get('primaryDocument', [])
             
             for i, form in enumerate(forms):
                 if form == form_type:
                     results.append({
                         'form': form,
+                        'form_type': form,
                         'filing_date': filing_dates[i] if i < len(filing_dates) else '',
-                        'accession_number': accession_numbers[i] if i < len(accession_numbers) else ''
+                        'date': filing_dates[i] if i < len(filing_dates) else '',
+                        'accession_number': accession_numbers[i] if i < len(accession_numbers) else '',
+                        'primary_document': primary_documents[i] if i < len(primary_documents) else '',
+                        'description': f'{form} filing'
                     })
             
             time.sleep(1)
             return results[:10]  # 최근 10개만
             
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                print(f"   ❌ [에러] CIK {cik_padded}의 Submissions를 찾을 수 없습니다 (404)")
+                print(f"   → URL: {url}")
+            elif e.response.status_code == 403:
+                print(f"   ❌ [에러] SEC API 접근 거부 (403)")
+            elif e.response.status_code == 429:
+                print(f"   ❌ [에러] SEC API 요청 한도 초과 (429)")
+            else:
+                print(f"   ❌ [에러] SEC API HTTP 오류: {e.response.status_code}")
+            return []
+            
         except Exception as e:
-            print(f"   [WARNING] SEC 제출 서류 조회 실패: {e}")
+            print(f"   ❌ [에러] SEC 제출 서류 조회 실패: {e}")
             return []
 

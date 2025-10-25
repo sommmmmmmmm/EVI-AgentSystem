@@ -208,6 +208,7 @@ class DARTTagger:
             태그가 추가된 공시 데이터
         """
         title = disclosure.get('title', '') or disclosure.get('report_nm', '')
+        company_name = disclosure.get('company_name', '')
         
         # 중요도 태깅
         importance = 'low'
@@ -223,13 +224,22 @@ class DARTTagger:
         is_ev_related = False
         ev_keywords_found = []
         
+        # 1. 회사가 EV 관련 기업 리스트에 있으면 자동으로 EV 관련으로 태깅
+        if company_name in self.KOREAN_EV_COMPANIES:
+            is_ev_related = True
+            ev_keywords_found.append(f'{company_name} (EV 기업)')
+            print(f"   [AUTO-TAG] {company_name}는 EV 관련 기업으로 자동 태깅")
+        
+        # 2. 제목/내용에 EV 키워드가 있는지 추가 체크
         content = f"{title} {disclosure.get('content', '')}"
         content_lower = content.lower()
         
         for keyword in self.EV_KEYWORDS:
             if keyword.lower() in content_lower:
-                is_ev_related = True
-                ev_keywords_found.append(keyword)
+                if not is_ev_related:
+                    is_ev_related = True
+                if keyword not in ev_keywords_found:
+                    ev_keywords_found.append(keyword)
         
         # 태그 추가
         disclosure['tags'] = {
@@ -241,12 +251,13 @@ class DARTTagger:
         
         return disclosure
     
-    def filter_ev_disclosures(self, disclosures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def filter_ev_disclosures(self, disclosures: List[Dict[str, Any]], strict: bool = True) -> List[Dict[str, Any]]:
         """
         EV 관련 공시만 필터링
         
         Args:
             disclosures: 공시 리스트
+            strict: True면 엄격한 필터링, False면 모든 공시 포함
             
         Returns:
             EV 관련 공시만 포함된 리스트
@@ -258,9 +269,22 @@ class DARTTagger:
             if 'tags' not in disclosure:
                 disclosure = self.tag_disclosure(disclosure)
             
-            # EV 관련이거나 중요도가 high인 경우 포함
-            if disclosure['tags']['is_ev_related'] or disclosure['tags']['importance'] == 'high':
-                ev_disclosures.append(disclosure)
+            # strict mode가 아니면 모든 공시 포함 (EV 기업의 공시는 모두 관련성 있음)
+            if not strict:
+                # 회사가 EV 관련 기업이면 모든 공시 포함
+                company_name = disclosure.get('company_name', '')
+                if company_name in self.KOREAN_EV_COMPANIES:
+                    disclosure['tags']['is_ev_related'] = True
+                    if not disclosure['tags']['ev_keywords']:
+                        disclosure['tags']['ev_keywords'] = [f'{company_name} (EV 기업의 모든 공시)']
+                    ev_disclosures.append(disclosure)
+                # 또는 EV 관련이거나 중요도가 high인 경우
+                elif disclosure['tags']['is_ev_related'] or disclosure['tags']['importance'] == 'high':
+                    ev_disclosures.append(disclosure)
+            else:
+                # strict mode: EV 관련이거나 중요도가 high인 경우만
+                if disclosure['tags']['is_ev_related'] or disclosure['tags']['importance'] == 'high':
+                    ev_disclosures.append(disclosure)
         
         return ev_disclosures
     
