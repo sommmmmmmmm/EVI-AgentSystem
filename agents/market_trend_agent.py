@@ -34,6 +34,9 @@ class MarketTrendAgent:
 
             # DART 공시 데이터 수집
             disclosure_data = self._collect_disclosures(news_articles, state)
+            
+            # 공시 데이터를 state에 저장
+            state['disclosure_data'] = disclosure_data
 
             # 🆕 트렌드 분석 (불용어 제거 + Fallback 규칙)
             print("\n    ========================================")

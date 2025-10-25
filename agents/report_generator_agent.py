@@ -1096,7 +1096,20 @@ No risk analysis results available.
         References & Appendix 생성 - 참고문헌과 부록을 줄글로 작성
         """
         news_articles = state.get('news_articles', [])
+        
+        # 공시 데이터 수집 (여러 소스에서)
         disclosure_data = state.get('disclosure_data', [])
+        
+        # 추가 공시 데이터 소스 확인
+        market_trends = state.get('market_trends', {})
+        if 'disclosures' in market_trends:
+            disclosure_data.extend(market_trends['disclosures'])
+        if 'dart_disclosures' in state:
+            disclosure_data.extend(state['dart_disclosures'])
+        if 'sec_disclosures' in state:
+            disclosure_data.extend(state['sec_disclosures'])
+        if 'yahoo_data' in state:
+            disclosure_data.extend(state['yahoo_data'])
         
         #   
         source_manager = state.get('source_manager')
