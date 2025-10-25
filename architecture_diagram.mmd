@@ -1,0 +1,91 @@
+graph TB
+    %% External Data Sources
+    subgraph "External Data Sources"
+        GNews[GNews API<br/>뉴스 수집]
+        DART[DART API<br/>한국 기업 공시]
+        SEC[SEC EDGAR API<br/>미국 기업 공시]
+        Yahoo[Yahoo Finance API<br/>재무 데이터]
+        Tavily[Tavily Search<br/>웹 검색]
+    end
+
+    %% Core Tools Layer
+    subgraph "Core Tools Layer"
+        TrendAnalyzer[TrendAnalyzer<br/>트렌드 분석]
+        SupplierScorer[SupplierScorer<br/>공급업체 점수화]
+        DisclosureRouter[DisclosureRouter<br/>공시 라우팅]
+        ScoringTool[ScoringWithMissingData<br/>결측 데이터 처리]
+        LLMQualitative[LLMQualitativeAnalyzer<br/>정성 분석]
+        JSONParser[JSONParser<br/>JSON 파싱]
+        RealExpert[RealExpertAnalysisTool<br/>전문가 의견]
+    end
+
+    %% Agent Layer
+    subgraph "Agent Layer"
+        MarketAgent[MarketTrendAgent<br/>시장 트렌드 분석]
+        SupplierAgent[SupplierMatchingAgent<br/>공급업체 매칭]
+        FinancialAgent[FinancialAnalyzerAgent<br/>재무 분석]
+        RiskAgent[RiskAssessmentAgent<br/>리스크 평가]
+        StrategyAgent[InvestmentStrategyAgent<br/>투자 전략]
+        ReportAgent[ReportGeneratorAgent<br/>보고서 생성]
+    end
+
+    %% Workflow Layer
+    subgraph "Workflow Layer"
+        StateGraph[LangGraph StateGraph<br/>워크플로우 관리]
+        ReportState[ReportState<br/>상태 관리]
+    end
+
+    %% Output Layer
+    subgraph "Output Layer"
+        JSONReport[JSON Report<br/>구조화된 데이터]
+        MarkdownReport[Markdown Report<br/>마크다운 보고서]
+        HTMLReport[HTML Report<br/>웹 보고서]
+        PDFReport[PDF Report<br/>PDF 보고서]
+    end
+
+    %% Data Flow
+    GNews --> MarketAgent
+    DART --> MarketAgent
+    SEC --> MarketAgent
+    Yahoo --> MarketAgent
+    Tavily --> MarketAgent
+
+    MarketAgent --> TrendAnalyzer
+    MarketAgent --> DisclosureRouter
+    MarketAgent --> SupplierAgent
+
+    SupplierAgent --> SupplierScorer
+    SupplierAgent --> FinancialAgent
+
+    FinancialAgent --> DisclosureRouter
+    FinancialAgent --> ScoringTool
+    FinancialAgent --> LLMQualitative
+    FinancialAgent --> RealExpert
+
+    RiskAgent --> JSONParser
+    RiskAgent --> Tavily
+
+    StrategyAgent --> ScoringTool
+
+    ReportAgent --> MarketAgent
+    ReportAgent --> SupplierAgent
+    ReportAgent --> FinancialAgent
+    ReportAgent --> RiskAgent
+    ReportAgent --> StrategyAgent
+
+    %% Workflow connections
+    StateGraph --> MarketAgent
+    MarketAgent --> SupplierAgent
+    SupplierAgent --> FinancialAgent
+    FinancialAgent --> RiskAgent
+    RiskAgent --> StrategyAgent
+    StrategyAgent --> ReportAgent
+
+    ReportAgent --> JSONReport
+    ReportAgent --> MarkdownReport
+    ReportAgent --> HTMLReport
+    ReportAgent --> PDFReport
+
+    %% State management
+    ReportState --> StateGraph
+    StateGraph --> ReportState
