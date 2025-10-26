@@ -5,229 +5,334 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EV 투자 분석 보고서 - 2025.10.26</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-black: #1a1a1a;
+            --secondary-gray: #4a4a4a;
+            --light-gray: #8a8a8a;
+            --border-gray: #e0e0e0;
+            --bg-light: #f8f9fa;
+            --accent: #2c3e50;
+        }
+
         body {
-            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             line-height: 1.8;
-            color: #1a1a1a;
+            color: var(--primary-black);
             background: #ffffff;
             padding: 0;
             margin: 0;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 960px;
             margin: 0 auto;
-            padding: 60px 40px;
+            padding: 0;
+            background: white;
+            box-shadow: 0 0 60px rgba(0,0,0,0.08);
         }
 
-        /* Cover page style */
+        /* Cover Page */
         .cover {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 100px 0;
-            border-bottom: 3px solid #000;
-            margin-bottom: 60px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-bottom: 4px solid var(--primary-black);
+            padding: 60px;
         }
 
         .cover h1 {
-            font-size: 2.8em;
+            font-family: 'Noto Serif KR', serif;
+            font-size: 3.5em;
             font-weight: 700;
-            color: #000000;
-            margin-bottom: 20px;
+            color: var(--primary-black);
+            margin-bottom: 30px;
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+
+        .cover .subtitle {
+            font-size: 1.4em;
+            color: var(--secondary-gray);
+            margin-bottom: 50px;
+            font-weight: 300;
         }
 
         .cover .date {
-            font-size: 1.2em;
-            color: #666;
-            margin-top: 30px;
+            font-size: 1.1em;
+            color: var(--light-gray);
+            font-weight: 400;
+            letter-spacing: 1px;
         }
 
-        /* Headers */
+        /* Content Area */
+        .content {
+            padding: 80px 80px 100px;
+        }
+
+        /* Section Headers */
+        .section-header {
+            margin-top: 100px;
+            margin-bottom: 50px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--primary-black);
+        }
+
+        .section-number {
+            font-size: 0.9em;
+            color: var(--light-gray);
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
         h1 {
-            font-size: 2.2em;
+            font-family: 'Noto Serif KR', serif;
+            font-size: 2.8em;
             font-weight: 700;
-            color: #000000;
-            margin-top: 60px;
-            margin-bottom: 25px;
-            padding-top: 20px;
-            border-top: 3px solid #000;
+            color: var(--primary-black);
+            margin-top: 100px;
+            margin-bottom: 40px;
+            letter-spacing: -0.5px;
+            line-height: 1.3;
         }
 
         h2 {
-            font-size: 1.8em;
+            font-family: 'Noto Serif KR', serif;
+            font-size: 2em;
             font-weight: 600;
-            color: #000000;
-            margin-top: 50px;
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            color: var(--primary-black);
+            margin-top: 60px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-gray);
+            letter-spacing: -0.3px;
         }
 
         h3 {
-            font-size: 1.3em;
+            font-size: 1.4em;
             font-weight: 600;
-            color: #2a2a2a;
-            margin-top: 35px;
-            margin-bottom: 18px;
+            color: var(--accent);
+            margin-top: 45px;
+            margin-bottom: 20px;
+            letter-spacing: -0.2px;
         }
 
         h4 {
             font-size: 1.1em;
             font-weight: 600;
-            color: #3a3a3a;
-            margin-top: 25px;
+            color: var(--secondary-gray);
+            margin-top: 30px;
             margin-bottom: 15px;
         }
 
         /* Paragraphs */
         p {
-            margin-bottom: 16px;
-            color: #2a2a2a;
+            margin-bottom: 18px;
+            color: var(--secondary-gray);
+            font-size: 1.05em;
+            text-align: justify;
         }
 
         /* Lists */
         ul, ol {
             margin-left: 30px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         li {
-            margin-bottom: 10px;
-            color: #2a2a2a;
+            margin-bottom: 12px;
+            color: var(--secondary-gray);
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        li strong {
+            color: var(--primary-black);
         }
 
         /* Tables */
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin: 25px 0;
-            background: #fafafa;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 35px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         }
 
         thead {
-            background: #e8e8e8;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
         }
 
         th {
             font-weight: 600;
             text-align: left;
-            padding: 14px 16px;
-            border: 1px solid #d0d0d0;
-            color: #000000;
+            padding: 18px 20px;
+            border: none;
+            color: white;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
         }
 
         td {
-            padding: 12px 16px;
-            border: 1px solid #d0d0d0;
-            color: #2a2a2a;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-gray);
+            color: var(--secondary-gray);
+            font-size: 1em;
         }
 
-        tr:nth-child(even) {
-            background: #ffffff;
+        tr:last-child td {
+            border-bottom: none;
         }
 
-        tr:nth-child(odd) {
-            background: #f8f8f8;
+        tbody tr:hover {
+            background: var(--bg-light);
+            transition: background 0.3s ease;
         }
 
         /* Code blocks */
         code {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
+            background: var(--bg-light);
+            padding: 3px 8px;
+            border-radius: 4px;
             font-family: 'Monaco', 'Courier New', monospace;
             font-size: 0.9em;
-            color: #1a1a1a;
+            color: var(--accent);
+            border: 1px solid var(--border-gray);
         }
 
         pre {
-            background: #f5f5f5;
-            padding: 20px;
-            border-left: 4px solid #c0c0c0;
+            background: var(--bg-light);
+            padding: 25px;
+            border-left: 4px solid var(--accent);
             overflow-x: auto;
-            margin: 20px 0;
-            border-radius: 4px;
+            margin: 30px 0;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         pre code {
             background: none;
             padding: 0;
+            border: none;
         }
 
         /* Horizontal rule */
         hr {
             border: none;
-            border-top: 1px solid #d0d0d0;
-            margin: 40px 0;
+            border-top: 1px solid var(--border-gray);
+            margin: 60px 0;
         }
 
         /* Strong emphasis */
         strong {
             font-weight: 600;
-            color: #000000;
+            color: var(--primary-black);
         }
 
         /* Blockquotes */
         blockquote {
-            border-left: 4px solid #c0c0c0;
-            padding-left: 20px;
-            margin: 25px 0;
-            color: #4a4a4a;
+            border-left: 4px solid var(--accent);
+            padding: 20px 30px;
+            margin: 30px 0;
+            background: var(--bg-light);
+            color: var(--secondary-gray);
             font-style: italic;
+            border-radius: 0 6px 6px 0;
         }
 
-        /* Footer disclaimer */
+        /* Info boxes */
+        .info-box {
+            background: var(--bg-light);
+            padding: 25px 30px;
+            margin: 30px 0;
+            border-left: 4px solid var(--accent);
+            border-radius: 0 6px 6px 0;
+        }
+
+        /* Disclaimer footer */
         .disclaimer {
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 2px solid #000;
-            font-size: 0.9em;
-            color: #666;
-            font-style: italic;
+            margin-top: 100px;
+            padding: 40px 80px;
+            background: var(--bg-light);
+            border-top: 3px solid var(--primary-black);
         }
 
-        /* Print styles */
+        .disclaimer h3 {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: var(--primary-black);
+        }
+
+        .disclaimer p {
+            font-size: 0.95em;
+            color: var(--secondary-gray);
+            line-height: 1.8;
+        }
+
+        /* Page breaks for print */
         @media print {
             body {
                 background: white;
-                padding: 0;
             }
             
             .container {
                 max-width: 100%;
-                padding: 20px;
+                box-shadow: none;
+            }
+
+            .content {
+                padding: 40px;
+            }
+            
+            .cover {
+                page-break-after: always;
             }
             
             h1, h2, h3 {
                 page-break-after: avoid;
             }
             
-            table {
+            table, figure, img {
                 page-break-inside: avoid;
             }
-            
-            .cover {
-                page-break-after: always;
+
+            .disclaimer {
+                page-break-before: always;
             }
         }
 
         @page {
-            margin: 2cm;
+            margin: 2.5cm;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Cover Page -->
         <div class="cover">
             <h1>EV 투자 분석 보고서</h1>
-            <p class="date">2025년 10월 26일</p>
+            <div class="subtitle">전기차 산업 투자 전망 및 전략 분석</div>
+            <div class="date">2025년 10월 26일</div>
         </div>
-        <h1>1. Executive Summary</h1>
+
+        <!-- Main Content -->
+        <div class="content">
+            <h1>1. Executive Summary</h1>
 <h1>Executive Summary: 전기차(EV) 산업 분석</h1>
 <h2>1. 핵심 투자 하이라이트</h2>
 <p>전기차(EV) 시장은 현재 빠르게 성장하고 있으며, 시장 확대의 영향도가 0.70으로 나타나고 있습니다. 주요 기업인 Tesla, Ford, GM, BYD, BMW가 시장에서 두각을 나타내고 있으며, 이들 기업의 평균 신뢰도는 0.80로 높습니다. 특히 Tesla는 투자 점수 0.45로 가장 높은 평가를 받고 있어, 투자자에게 유망한 기회를 제공합니다.</p>
@@ -891,8 +996,22 @@
 <hr />
 <p><em>Generated: 2025-10-26 17:18</em></p>
 <hr />
+        </div>
+
+        <!-- Disclaimer -->
         <div class="disclaimer">
-            <p><strong>면책사항:</strong> 본 보고서는 정보 제공 목적으로만 작성되었으며, 투자 권유를 구성하지 않습니다. 모든 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 합니다.</p>
+            <h3>면책사항</h3>
+            <p>
+                본 보고서는 정보 제공 목적으로만 작성되었으며, 특정 종목의 매수 또는 매도를 권유하는 것이 아닙니다. 
+                본 시스템은 금융투자업 인가를 보유하고 있지 않으며, 법적으로 투자자문업을 영위할 수 없습니다.
+            </p>
+            <p>
+                모든 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 하며, 본 보고서의 내용에 의존하여 
+                발생한 손실에 대해 작성자는 어떠한 책임도 지지 않습니다.
+            </p>
+            <p>
+                과거의 실적이 미래의 수익을 보장하지 않으며, 모든 투자에는 원금 손실의 위험이 있습니다.
+            </p>
         </div>
     </div>
 </body>
