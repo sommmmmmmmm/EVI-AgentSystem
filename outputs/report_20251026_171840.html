@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EV 투자 분석 보고서 - 2025.10.26</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 
         * {
             margin: 0;
@@ -19,11 +19,16 @@
             --light-gray: #8a8a8a;
             --border-gray: #e0e0e0;
             --bg-light: #f8f9fa;
-            --accent: #2c3e50;
+            --accent: #0077b6;
+            --accent-light: #48cae4;
+            --accent-lighter: #90e0ef;
+            --success: #06d6a0;
+            --gradient-start: #0096c7;
+            --gradient-end: #00b4d8;
         }
 
         body {
-            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
             line-height: 1.8;
             color: var(--primary-black);
             background: #ffffff;
@@ -47,16 +52,19 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-bottom: 4px solid var(--primary-black);
+            background: linear-gradient(135deg, #e0f7ff 0%, #ffffff 50%, #f8f9fa 100%);
+            border-bottom: 4px solid var(--accent);
             padding: 60px;
         }
 
         .cover h1 {
-            font-family: 'Noto Serif KR', serif;
+            font-family: 'Pretendard', sans-serif;
             font-size: 3.5em;
-            font-weight: 700;
-            color: var(--primary-black);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 30px;
             letter-spacing: -1px;
             line-height: 1.2;
@@ -86,22 +94,22 @@
             margin-top: 100px;
             margin-bottom: 50px;
             padding-bottom: 20px;
-            border-bottom: 3px solid var(--primary-black);
+            border-bottom: 3px solid var(--accent);
         }
 
         .section-number {
             font-size: 0.9em;
-            color: var(--light-gray);
+            color: var(--accent-light);
             font-weight: 600;
             letter-spacing: 2px;
             margin-bottom: 10px;
         }
 
         h1 {
-            font-family: 'Noto Serif KR', serif;
+            font-family: 'Pretendard', sans-serif;
             font-size: 2.8em;
-            font-weight: 700;
-            color: var(--primary-black);
+            font-weight: 800;
+            color: var(--accent);
             margin-top: 100px;
             margin-bottom: 40px;
             letter-spacing: -0.5px;
@@ -109,21 +117,21 @@
         }
 
         h2 {
-            font-family: 'Noto Serif KR', serif;
+            font-family: 'Pretendard', sans-serif;
             font-size: 2em;
-            font-weight: 600;
-            color: var(--primary-black);
+            font-weight: 700;
+            color: var(--accent);
             margin-top: 60px;
             margin-bottom: 30px;
             padding-bottom: 15px;
-            border-bottom: 2px solid var(--border-gray);
+            border-bottom: 2px solid var(--accent-lighter);
             letter-spacing: -0.3px;
         }
 
         h3 {
             font-size: 1.4em;
             font-weight: 600;
-            color: var(--accent);
+            color: var(--accent-light);
             margin-top: 45px;
             margin-bottom: 20px;
             letter-spacing: -0.2px;
@@ -175,7 +183,7 @@
         }
 
         thead {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
         }
 
         th {
@@ -421,73 +429,48 @@
 <h3>주요 공급업체 재무 성과</h3>
 <h3>1. Tesla</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 전기차 제조 및 배터리 기술 선도기업</li>
+<li><strong>Core Strength</strong>: 수직계열화, 자율주행 기술, 슈퍼차저 네트워크</li>
 </ul>
 <h3>2. Ford</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 전통 자동차 제조사의 전기차 전환 선도</li>
+<li><strong>Core Strength</strong>: F-150 Lightning, Mustang Mach-E, 강력한 브랜드</li>
 </ul>
 <h3>3. Rivian</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 전기 트럭/SUV 전문 스타트업</li>
+<li><strong>Core Strength</strong>: 혁신적 디자인, 오프로드 성능, 아마존 파트너십</li>
 </ul>
 <h3>4. Lucid</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 프리미엄 전기 세단 제조사</li>
+<li><strong>Core Strength</strong>: 최장 주행거리, 럭셔리 포지셔닝, 배터리 효율성</li>
 </ul>
-<h3>5. Byd</h3>
+<h3>5. BYD</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 중국 전기차 시장 1위, 글로벌 확장</li>
+<li><strong>Core Strength</strong>: 배터리 자체 생산, 수직계열화, 가격 경쟁력</li>
 </ul>
-<h3>6. Catl</h3>
+<h3>6. CATL (Contemporary Amperex Technology)</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: Lithium-ion Batteries, Battery Packs, Energy Storage</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 세계 최대 전기차 배터리 제조사</li>
+<li><strong>Core Strength</strong>: LFP/NCM 배터리 기술, 대규모 생산능력, 주요 OEM 파트너십</li>
 </ul>
 <h3>7. Panasonic</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: Lithium-ion Batteries, Battery Packs, Energy Storage</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: Tesla 주요 배터리 공급 파트너</li>
+<li><strong>Core Strength</strong>: 높은 에너지밀도, 안정성, 일본 제조 품질</li>
 </ul>
-<h3>8. Bmw</h3>
+<h3>8. BMW</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 프리미엄 전기차 시장 강자</li>
+<li><strong>Core Strength</strong>: iX/i4 라인업, 주행 성능, 브랜드 가치</li>
 </ul>
-<h3>9. Mercedes</h3>
+<h3>9. Mercedes-Benz</h3>
 <ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
-</ul>
-<h3>10. Mercedes-benz</h3>
-<ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Confidence Score</strong>: 0.80/1.0</li>
-<li><strong>Products</strong>: companies Components, companies Systems</li>
-<li><strong>Market Position</strong>: 전기차 부품 공급업체</li>
+<li><strong>Market Position</strong>: 럭셔리 전기차 EQ 브랜드</li>
+<li><strong>Core Strength</strong>: EQS/EQE 라인업, 프리미엄 포지셔닝, 혁신 기술</li>
 </ul>
 <h2>재무 지표 분석</h2>
 <h3>핵심 평가 기준</h3>
@@ -638,46 +621,44 @@
 <h2>🔧 공급업체 (Suppliers) 투자 전략</h2>
 <h3>공급업체 포트폴리오 구성</h3>
 <p>공급업체는 전기차 부품의 핵심 기술력을 보유하고 있어 기술 혁신의 혜택을 받습니다.</p>
-<h3>1. Tesla</h3>
-<ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Target Weight</strong>: 10.0%</li>
-<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
-<li><strong>Rationale</strong>: 기술 경쟁력과 공급망 지위에 중점을 둔 투자</li>
-<li><strong>Key Factors</strong>: 기술 혁신, OEM 관계, 원자재 가격</li>
-</ul>
-<h3>2. Ford</h3>
-<ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Target Weight</strong>: 12.0%</li>
-<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
-<li><strong>Rationale</strong>: 기술 경쟁력과 공급망 지위에 중점을 둔 투자</li>
-<li><strong>Key Factors</strong>: 기술 혁신, OEM 관계, 원자재 가격</li>
-</ul>
-<h3>3. Rivian</h3>
-<ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Target Weight</strong>: 14.0%</li>
-<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
-<li><strong>Rationale</strong>: 기술 경쟁력과 공급망 지위에 중점을 둔 투자</li>
-<li><strong>Key Factors</strong>: 기술 혁신, OEM 관계, 원자재 가격</li>
-</ul>
-<h3>4. Lucid</h3>
-<ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Target Weight</strong>: 16.0%</li>
-<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
-<li><strong>Rationale</strong>: 기술 경쟁력과 공급망 지위에 중점을 둔 투자</li>
-<li><strong>Key Factors</strong>: 기술 혁신, OEM 관계, 원자재 가격</li>
-</ul>
-<h3>5. Byd</h3>
-<ul>
-<li><strong>Category</strong>: companies</li>
-<li><strong>Target Weight</strong>: 18.0%</li>
-<li><strong>Investment Period</strong>: 중기 (6-12개월)</li>
-<li><strong>Rationale</strong>: 기술 경쟁력과 공급망 지위에 중점을 둔 투자</li>
-<li><strong>Key Factors</strong>: 기술 혁신, OEM 관계, 원자재 가격</li>
-</ul>
+<h3>공급업체 중심 포트폴리오 (상위 5개 종목)</h3>
+<table>
+<thead>
+<tr>
+<th>기업명</th>
+<th>목표 비중</th>
+<th>투자 포인트</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tesla</strong></td>
+<td>10.0%</td>
+<td>시장 선도, 기술 혁신</td>
+</tr>
+<tr>
+<td><strong>Ford</strong></td>
+<td>12.0%</td>
+<td>전통 강자의 전환</td>
+</tr>
+<tr>
+<td><strong>Rivian</strong></td>
+<td>14.0%</td>
+<td>신규 시장 개척</td>
+</tr>
+<tr>
+<td><strong>Lucid</strong></td>
+<td>16.0%</td>
+<td>프리미엄 포지셔닝</td>
+</tr>
+<tr>
+<td><strong>BYD</strong></td>
+<td>18.0%</td>
+<td>글로벌 확장성</td>
+</tr>
+</tbody>
+</table>
+<p><em>투자 기간: 중기 (6-12개월) | 리스크: 중간 | 전략: 기술 혁신 중심</em></p>
 <h2>📊 통합 포트폴리오 전략</h2>
 <h3>추천 포트폴리오 구성</h3>
 <h3>기본 포트폴리오 구성 (공급업체 기반)</h3>
@@ -723,23 +704,13 @@
 <li><strong>현금</strong>: 10.0%</li>
 </ul>
 <h2>🎯 투자 기회</h2>
-<h3>주요 투자 기회 (공급업체 기반)</h3>
+<h3>주요 투자 기회</h3>
 <ol>
-<li>
-<p><strong>Tesla</strong>: companies 분야 전문 기업 (신뢰도: 0.80)</p>
-</li>
-<li>
-<p><strong>Ford</strong>: companies 분야 전문 기업 (신뢰도: 0.80)</p>
-</li>
-<li>
-<p><strong>Rivian</strong>: companies 분야 전문 기업 (신뢰도: 0.80)</p>
-</li>
-<li>
-<p><strong>Lucid</strong>: companies 분야 전문 기업 (신뢰도: 0.80)</p>
-</li>
-<li>
-<p><strong>Byd</strong>: companies 분야 전문 기업 (신뢰도: 0.80)</p>
-</li>
+<li><strong>Tesla</strong>: 전기차 시장 선도기업, 기술혁신 리더</li>
+<li><strong>Ford</strong>: 전통 제조사의 성공적 전환 사례</li>
+<li><strong>Rivian</strong>: 전기 트럭/SUV 시장 개척자</li>
+<li><strong>Lucid</strong>: 프리미엄 세그먼트 혁신기업</li>
+<li><strong>BYD</strong>: 중국 시장 지배력과 글로벌 확장</li>
 </ol>
 <h2>⏰ 투자 타이밍</h2>
 <h3>진입 전략</h3>
@@ -928,19 +899,8 @@
 <li>EV Industry Trends In 2025 - GreenLancer</li>
 <li>Global EV Outlook 2024 – Analysis - IEA</li>
 </ul>
-<h3>공시 데이터 (91건 공시)</h3>
-<ul>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-<li>제목 없음</li>
-</ul>
+<h3>공시 데이터 (91건)</h3>
+<p>한국 DART 및 미국 SEC 공식 전자공시 데이터를 기반으로 분석하였습니다.</p>
 <h2>🔬 분석 방법론</h2>
 <h3>시장 트렌드 분석</h3>
 <ul>
