@@ -1,0 +1,345 @@
+"""
+SEC EDGAR Tagger Tool
+Purpose: Extract overseas company names and collect SEC filings.
+"""
+
+from typing import List, Dict, Any
+from datetime import datetime
+
+
+class SECTagger:
+    """
+    SEC EDGAR 공시 데이터 태깅 및 기업 매칭 도구
+    미국 기업은 SEC, 한국 기업은 DART, 그 외는 Yahoo Finance 사용
+    """
+    
+    # 주요 해외 전기차 관련 기업 리스트
+    OVERSEAS_EV_COMPANIES = {
+        # 미국 완성차 (SEC EDGAR) - CIK는 10자리 형식
+        'Tesla': {'ticker': 'TSLA', 'cik': '0001318605', 'name': 'Tesla Inc', 'source': 'SEC', 'country': 'US'},
+        'GM': {'ticker': 'GM', 'cik': '0001467858', 'name': 'General Motors Company', 'source': 'SEC', 'country': 'US'},
+        'Ford': {'ticker': 'F', 'cik': '0000037996', 'name': 'Ford Motor Company', 'source': 'SEC', 'country': 'US'},
+        'Rivian': {'ticker': 'RIVN', 'cik': '0001874178', 'name': 'Rivian Automotive Inc', 'source': 'SEC', 'country': 'US'},
+        'Lucid': {'ticker': 'LCID', 'cik': '0001811210', 'name': 'Lucid Group Inc', 'source': 'SEC', 'country': 'US'},
+        
+        # 유럽 완성차 (Yahoo Finance)
+        'BMW': {'ticker': 'BMW.DE', 'cik': None, 'name': 'BMW AG', 'source': 'Yahoo', 'country': 'DE'},
+        'Mercedes': {'ticker': 'MBG.DE', 'cik': None, 'name': 'Mercedes-Benz Group AG', 'source': 'Yahoo', 'country': 'DE'},
+        'Volkswagen': {'ticker': 'VOW3.DE', 'cik': None, 'name': 'Volkswagen AG', 'source': 'Yahoo', 'country': 'DE'},
+        
+        # 중국 완성차 (Yahoo Finance / SEC EDGAR - 미국 상장)
+        'BYD': {'ticker': '1211.HK', 'cik': None, 'name': 'BYD Company Limited', 'source': 'Yahoo', 'country': 'CN'},
+        'Nio': {'ticker': 'NIO', 'cik': '0001736541', 'name': 'NIO Inc', 'source': 'SEC', 'country': 'US'},  # 미국 상장
+        'Xpeng': {'ticker': 'XPEV', 'cik': '0001806059', 'name': 'XPeng Inc', 'source': 'SEC', 'country': 'US'},  # 미국 상장
+        'Li Auto': {'ticker': 'LI', 'cik': '0001799209', 'name': 'Li Auto Inc', 'source': 'SEC', 'country': 'US'},  # 미국 상장
+        
+        # 일본 배터리 (Yahoo Finance)
+        'Panasonic': {'ticker': '6752.T', 'cik': None, 'name': 'Panasonic Holdings Corporation', 'source': 'Yahoo', 'country': 'JP'},
+        
+        # 미국 배터리/부품 (SEC EDGAR)
+        'Albemarle': {'ticker': 'ALB', 'cik': '0000915913', 'name': 'Albemarle Corporation', 'source': 'SEC', 'country': 'US'},
+        'QuantumScape': {'ticker': 'QS', 'cik': '0001811414', 'name': 'QuantumScape Corporation', 'source': 'SEC', 'country': 'US'},
+        
+        # 유럽 배터리/부품 (Yahoo Finance)
+        'Northvolt': {'ticker': None, 'cik': None, 'name': 'Northvolt AB', 'source': 'Yahoo', 'country': 'SE'},
+        'CATL': {'ticker': '300750.SZ', 'cik': None, 'name': 'Contemporary Amperex Technology', 'source': 'Yahoo', 'country': 'CN'},
+    }
+    
+    # 공시 유형별 중요도
+    FILING_IMPORTANCE = {
+        'high': ['10-K', '10-Q', '8-K', 'DEF 14A', 'S-1'],
+        'medium': ['10-K/A', '10-Q/A', '8-K/A'],
+        'low': ['4', '3', '5', 'SC 13G', 'SC 13D']
+    }
+    
+    # EV 관련 키워드
+    EV_KEYWORDS = [
+        'electric vehicle', 'EV', 'battery', 'lithium',
+        'charging', 'autonomous', 'self-driving',
+        'energy storage', 'powertrain', 'electrification',
+        'zero emission', 'clean energy', 'sustainability'
+    ]
+    
+    def __init__(self, sec_tool=None):
+        """
+        Initialize SEC Tagger
+        
+        Args:
+            sec_tool: SECEdgarTool instance
+        """
+        self.sec_tool = sec_tool
+        self._company_cache: Dict[str, str] = {}  # company_name -> cik
+    
+    def classify_companies_by_source(self, company_names: List[str]) -> Dict[str, List[str]]:
+        """
+        기업들을 데이터 소스별로 분류 (SEC / DART / Yahoo)
+        
+        Args:
+            company_names: 기업명 리스트
+            
+        Returns:
+            {'SEC': [...], 'DART': [...], 'Yahoo': [...]}
+        """
+        classified = {
+            'SEC': [],
+            'DART': [],
+            'Yahoo': []
+        }
+        
+        for company_name in company_names:
+            if company_name in self.OVERSEAS_EV_COMPANIES:
+                company_info = self.OVERSEAS_EV_COMPANIES[company_name]
+                source = company_info.get('source', 'Yahoo')
+                classified[source].append(company_name)
+            else:
+                # 알 수 없는 기업은 Yahoo로 분류
+                classified['Yahoo'].append(company_name)
+        
+        return classified
+    
+    def extract_company_names(self, text: str) -> List[str]:
+        """
+        텍스트에서 해외 기업명 추출
+        
+        Args:
+            text: 분석할 텍스트
+            
+        Returns:
+            추출된 기업명 리스트
+        """
+        found_companies = []
+        
+        text_lower = text.lower()
+        
+        for company_name in self.OVERSEAS_EV_COMPANIES.keys():
+            if company_name.lower() in text_lower:
+                if company_name not in found_companies:
+                    found_companies.append(company_name)
+        
+        return found_companies
+    
+    def get_cik(self, company_name: str) -> str:
+        """
+        기업명으로 SEC CIK 조회
+        
+        Args:
+            company_name: 기업명
+            
+        Returns:
+            CIK 또는 빈 문자열
+        """
+        # 캐시 확인
+        if company_name in self._company_cache:
+            return self._company_cache[company_name]
+        
+        # 딕셔너리에서 조회
+        if company_name in self.OVERSEAS_EV_COMPANIES:
+            cik = self.OVERSEAS_EV_COMPANIES[company_name].get('cik')
+            if cik:
+                self._company_cache[company_name] = cik
+                return cik
+        
+        return ""
+    
+    def tag_filing(self, filing: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        공시 데이터에 태그 추가
+        
+        Args:
+            filing: SEC 공시 데이터
+            
+        Returns:
+            태그가 추가된 공시 데이터
+        """
+        form_type = filing.get('form', '') or filing.get('form_type', '')
+        company_name = filing.get('company_name', '')
+        
+        # 중요도 태깅
+        importance = 'low'
+        for level, form_types in self.FILING_IMPORTANCE.items():
+            if form_type in form_types:
+                importance = level
+                break
+        
+        # EV 관련성 체크
+        is_ev_related = False
+        ev_keywords_found = []
+        
+        # 1. 회사가 EV 관련 기업 리스트에 있으면 자동으로 EV 관련으로 태깅
+        if company_name in self.OVERSEAS_EV_COMPANIES:
+            company_info = self.OVERSEAS_EV_COMPANIES[company_name]
+            # SEC 소스 기업이면 자동 태깅 (Yahoo는 재무 정보만이므로 제외)
+            if company_info.get('source') == 'SEC':
+                is_ev_related = True
+                ev_keywords_found.append(f'{company_name} (EV 기업)')
+                print(f"   [AUTO-TAG] {company_name}는 EV 관련 기업으로 자동 태깅")
+        
+        # 2. 제목/설명에 EV 키워드가 있는지 추가 체크
+        content = f"{filing.get('title', '')} {filing.get('description', '')}"
+        content_lower = content.lower()
+        
+        for keyword in self.EV_KEYWORDS:
+            if keyword.lower() in content_lower:
+                if not is_ev_related:
+                    is_ev_related = True
+                if keyword not in ev_keywords_found:
+                    ev_keywords_found.append(keyword)
+        
+        # 태그 추가
+        filing['tags'] = {
+            'importance': importance,
+            'is_ev_related': is_ev_related,
+            'ev_keywords': ev_keywords_found,
+            'tagged_at': datetime.now().isoformat()
+        }
+        
+        return filing
+    
+    def filter_ev_filings(self, filings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        EV 관련 공시만 필터링
+        
+        Args:
+            filings: 공시 리스트
+            
+        Returns:
+            EV 관련 공시만 포함된 리스트
+        """
+        ev_filings = []
+        
+        for filing in filings:
+            # 태그가 없으면 추가
+            if 'tags' not in filing:
+                filing = self.tag_filing(filing)
+            
+            # 중요도가 high이면 무조건 포함, 아니면 EV 관련만
+            if filing['tags']['importance'] == 'high' or filing['tags']['is_ev_related']:
+                ev_filings.append(filing)
+        
+        return ev_filings
+    
+    def collect_company_filings(
+        self, 
+        company_names: List[str], 
+        max_filings: int = 5,
+        relaxed_mode: bool = False
+    ) -> List[Dict[str, Any]]:
+        """
+        여러 기업의 SEC 공시 데이터 수집
+        
+        Args:
+            company_names: 기업명 리스트
+            max_filings: 기업당 최대 수집 개수
+            relaxed_mode: True면 에러 시에도 계속 진행 (기준 완화)
+            
+        Returns:
+            태그된 공시 데이터 리스트
+        """
+        all_filings = []
+        
+        if not self.sec_tool:
+            print("   [WARNING] SEC EDGAR tool이 초기화되지 않았습니다.")
+            return all_filings
+        
+        # 중요한 form types (relaxed_mode에서는 더 많은 타입 포함)
+        if relaxed_mode:
+            important_forms = ['10-K', '10-Q', '8-K', 'DEF 14A', '10-K/A', '10-Q/A']
+            print("   [INFO] Relaxed mode: 더 많은 공시 유형 수집")
+        else:
+            important_forms = ['10-K', '10-Q', '8-K']
+        
+        for company_name in company_names:
+            cik = self.get_cik(company_name)
+            
+            if not cik:
+                # 미국 기업이 아니면 Yahoo Finance 사용 (공시는 없음)
+                company_info = self.OVERSEAS_EV_COMPANIES.get(company_name, {})
+                source = company_info.get('source', 'Yahoo')
+                if not relaxed_mode:
+                    print(f"   [INFO] {company_name} - {source}에서 데이터 수집 (공시 없음)")
+                continue
+            
+            try:
+                # 각 form type별로 공시 수집
+                company_filings = []
+                for form_type in important_forms:
+                    try:
+                        filings = self.sec_tool.get_recent_filings(cik, form_type=form_type)
+                        if filings:
+                            # max_filings 개수만큼만 가져오기
+                            company_filings.extend(filings[:2])  # 각 type당 2개씩
+                    except Exception as e:
+                        if not relaxed_mode:
+                            print(f"   [WARNING] {company_name} {form_type} 수집 실패: {e}")
+                        continue
+                
+                if company_filings:
+                    # max_filings 제한
+                    company_filings = company_filings[:max_filings]
+                    print(f"   [OK] {company_name}: {len(company_filings)}개 공시 수집")
+                    
+                    # 각 공시에 기업명 추가 및 태깅
+                    for filing in company_filings:
+                        filing['company_name'] = company_name
+                        filing['cik'] = cik
+                        filing = self.tag_filing(filing)
+                    
+                    all_filings.extend(company_filings)
+                else:
+                    if not relaxed_mode:
+                        print(f"   [INFO] {company_name}: 공시 없음")
+                    
+            except Exception as e:
+                if relaxed_mode:
+                    print(f"   [WARNING] {company_name} 공시 수집 실패 (계속 진행): {e}")
+                else:
+                    print(f"   [ERROR] {company_name} 공시 수집 실패: {e}")
+        
+        return all_filings
+    
+    def get_filing_summary(self, filings: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        공시 데이터 요약 통계
+        
+        Args:
+            filings: 공시 리스트
+            
+        Returns:
+            요약 정보
+        """
+        summary = {
+            'total': len(filings),
+            'by_importance': {'high': 0, 'medium': 0, 'low': 0},
+            'ev_related': 0,
+            'by_company': {},
+            'recent_important': []
+        }
+        
+        for filing in filings:
+            # 태그 확인
+            tags = filing.get('tags', {})
+            importance = tags.get('importance', 'low')
+            is_ev_related = tags.get('is_ev_related', False)
+            company_name = filing.get('company_name', 'Unknown')
+            
+            # 통계 업데이트
+            summary['by_importance'][importance] += 1
+            
+            if is_ev_related:
+                summary['ev_related'] += 1
+            
+            if company_name not in summary['by_company']:
+                summary['by_company'][company_name] = 0
+            summary['by_company'][company_name] += 1
+            
+            # 중요한 공시 수집 (최대 10개)
+            if importance == 'high' and len(summary['recent_important']) < 10:
+                summary['recent_important'].append({
+                    'company': company_name,
+                    'title': filing.get('form', '') or filing.get('form_type', ''),
+                    'description': filing.get('description', '')[:100],
+                    'date': filing.get('filing_date', '') or filing.get('date', ''),
+                })
+        
+        return summary
+
