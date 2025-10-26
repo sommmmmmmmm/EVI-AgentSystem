@@ -16,16 +16,16 @@ from agents.investment_strategy_agent import InvestmentStrategyAgent
 from agents.report_generator_agent import ReportGeneratorAgent
 
 
-def create_workflow(web_search_tool, llm_tool, dart_tool):
+def create_workflow(web_search_tool, llm_tool, dart_tool, sec_tool=None):
     """
-       
-    CoT      
+    워크플로우 생성
+    CoT 체인으로 연결된 에이전트 파이프라인
     """
     
-    # Agent  ( )
+    # Agent 초기화 (순서 중요)
     market_agent = MarketTrendAgent(web_search_tool, llm_tool, dart_tool)
     supplier_agent = SupplierMatchingAgent(web_search_tool, llm_tool)
-    financial_agent = FinancialAnalyzerAgent(web_search_tool, llm_tool, dart_tool)
+    financial_agent = FinancialAnalyzerAgent(web_search_tool, llm_tool, dart_tool, sec_tool=sec_tool)  # 🆕 SEC tool 추가
     risk_agent = RiskAssessmentAgent(web_search_tool, llm_tool)
     strategy_agent = InvestmentStrategyAgent(web_search_tool, llm_tool)
     report_agent = ReportGeneratorAgent(llm_tool)
@@ -327,8 +327,8 @@ def create_workflow(web_search_tool, llm_tool, dart_tool):
     workflow.add_edge("investment_strategy_node", "report_generation_node")
     workflow.add_edge("report_generation_node", END)
     
-    #
-    # checkpointer=None  checkpointing
-    app = workflow.compile(checkpointer=None)
+    # 그래프 컴파일 (체크포인팅 없이)
+    # checkpointer를 명시적으로 제거
+    app = workflow.compile()
 
     return app

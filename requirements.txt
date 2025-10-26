@@ -19,13 +19,15 @@ python-dotenv==1.0.1
 # Data Processing
 pandas>=2.0.0
 numpy>=1.24.0
+yfinance>=0.2.38  # Yahoo Finance API for global stock data
 
 # Date/Time
 python-dateutil>=2.8.0
 
 # Report Generation
 markdown>=3.4.0
-pdfkit>=1.0.0  # Optional: For PDF generation (requires wkhtmltopdf)
+# Note: For PDF generation, open the HTML file in browser and use "Print > Save as PDF"
+# Or install WeasyPrint with system dependencies: brew install cairo pango gdk-pixbuf && pip install weasyprint
 
 # Optional: If using these tools
 # tavily-python>=0.3.0  # For Tavily search

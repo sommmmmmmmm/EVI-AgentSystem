@@ -22,10 +22,11 @@ class FinancialAnalyzerAgent:
     -     
     """
     
-    def __init__(self, web_search_tool, llm_tool, dart_tool):
+    def __init__(self, web_search_tool, llm_tool, dart_tool, sec_tool=None):
         self.web_search_tool = web_search_tool
         self.llm_tool = llm_tool
         self.dart_tool = dart_tool
+        self.sec_tool = sec_tool  # 🆕 SEC EDGAR tool 추가
         
         #    
         self.qualitative_weight = config.financial_analysis_weights['qualitative']  # 0.7
@@ -452,22 +453,24 @@ class FinancialAnalyzerAgent:
     
     def _analyze_analyst_sentiment(self, company: str, state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        정성 분석 - LLM 기반 실제 뉴스/공시 분석 (하드코딩 전문가 의견 대신)
+        정성 분석 - 전문가 의견(증권사 리포트, 애널리스트 분석) 웹 수집 + LLM 분석
         """
         try:
-            print(f"    {company} LLM 정성 분석 중 (실제 뉴스+공시 기반)...")
+            print(f"    {company} 전문가 의견 수집 중 (증권사 리포트, 애널리스트 분석)...")
             
-            # 실제 데이터 기반 LLM 정성 분석
+            # 1. 웹에서 전문가 의견 수집
+            expert_opinions = self._collect_expert_opinions_from_web(company)
+            
+            # 2. 실제 데이터 기반 LLM 정성 분석 (뉴스 + 전문가 의견)
             news_articles = state.get('news_articles', [])
-            disclosures = state.get('disclosure_data', [])
             market_trends = state.get('market_trends', [])
             suppliers = state.get('suppliers', [])
             
-            # LLM 정성 분석 실행
+            # LLM 정성 분석 실행 (공시 데이터 제외, 전문가 의견 추가)
             llm_analysis = self.qualitative_analyzer.analyze_company_qualitative(
                 company_name=company,
                 news_articles=news_articles,
-                disclosures=disclosures,
+                expert_opinions=expert_opinions,  # 전문가 의견 추가
                 market_trends=market_trends,
                 supplier_relationships=suppliers
             )
@@ -492,7 +495,7 @@ class FinancialAnalyzerAgent:
                     'analysis_result': {
                         "overall_sentiment": sentiment,
                         "sentiment_score": sentiment_score,
-                        "market_outlook": f"뉴스 {data_sources.get('news_count', 0)}건, 공시 {data_sources.get('disclosure_count', 0)}건 기반",
+                        "market_outlook": f"뉴스 {data_sources.get('news_count', 0)}건, 전문가 의견 {data_sources.get('expert_opinion_count', 0)}건 기반",
                         "investment_psychology": llm_analysis.get('competitive_position', ''),
                         "competitive_position": llm_analysis.get('competitive_position', ''),
                         "key_investment_points": llm_analysis.get('key_strengths', []),
@@ -538,26 +541,114 @@ class FinancialAnalyzerAgent:
                 'confidence_score': 0.0
             }
     
+    def _collect_expert_opinions_from_web(self, company: str) -> List[Dict[str, Any]]:
+        """
+        웹에서 전문가 의견(증권사 리포트, 애널리스트 분석) 수집
+        """
+        expert_opinions = []
+        
+        try:
+            # 검색 쿼리: 증권사 리포트, 애널리스트 분석
+            search_queries = [
+                f"{company} 증권사 리포트 투자의견",
+                f"{company} analyst report investment rating",
+                f"{company} stock analysis recommendation"
+            ]
+            
+            for query in search_queries:
+                try:
+                    results = self.web_search_tool.search(query, num_results=3)
+                    
+                    for result in results:
+                        title = result.get('title', '')
+                        content = result.get('content', '')
+                        url = result.get('url', '')
+                        
+                        # 증권사/애널리스트 키워드 확인
+                        is_expert_opinion = any(keyword in title.lower() or keyword in content.lower() 
+                                               for keyword in ['analyst', 'rating', 'recommendation', 
+                                                              '증권', '리포트', '투자의견', '목표주가'])
+                        
+                        if is_expert_opinion:
+                            expert_opinions.append({
+                                'title': title,
+                                'content': content[:500],  # 처음 500자만
+                                'url': url,
+                                'source': 'web_search',
+                                'type': 'expert_opinion'
+                            })
+                    
+                    print(f"      [OK] '{query}': {len(results)}개 전문가 의견 수집")
+                    
+                except Exception as e:
+                    print(f"      [WARNING] '{query}' 검색 실패: {e}")
+                    continue
+            
+            print(f"    [OK] 총 {len(expert_opinions)}개 전문가 의견 수집 완료")
+            
+        except Exception as e:
+            print(f"    [ERROR] 전문가 의견 수집 실패: {e}")
+        
+        return expert_opinions[:10]  # 최대 10개
+    
     def _analyze_financial_metrics(self, company: str, state: Dict[str, Any]) -> Dict[str, Any]:
         """
-        DART API      (, , ROE, PER )
+        재무 데이터 수집 (폴백 전략: DART → SEC → Yahoo Finance)
         """
         try:
-            # DART API    
+            financial_analysis = None
+            data_source = 'NONE'
+            
+            # 1차 시도: DART API (한국 기업)
+            print(f"   [1/3] DART API 시도: {company}")
             financial_analysis = self.dart_tool.get_company_financial_analysis(company)
-
-            #    
-            if not financial_analysis.get('data_available', False):
-                print(f"   [WARNING] {company}:    -  ")
+            
+            if financial_analysis.get('data_available', False):
+                data_source = 'DART'
+                print(f"   [OK] DART에서 {company} 데이터 수집 성공")
+            else:
+                # 2차 시도: SEC EDGAR (미국 기업)
+                if self.sec_tool:
+                    print(f"   [2/3] SEC EDGAR 시도: {company}")
+                    try:
+                        sec_result = self.sec_tool.get_company_financial_data(company)
+                        if sec_result.get('data_available', False):
+                            financial_analysis = sec_result
+                            data_source = 'SEC'
+                            print(f"   [OK] SEC에서 {company} 데이터 수집 성공")
+                        else:
+                            print(f"   [FAIL] SEC에서 {company} 데이터 없음")
+                    except Exception as e:
+                        print(f"   [ERROR] SEC 조회 실패: {e}")
+                else:
+                    print(f"   [SKIP] SEC tool이 없습니다")
+                
+                # 3차 시도: Yahoo Finance (글로벌 기업)
+                if not financial_analysis or not financial_analysis.get('data_available', False):
+                    print(f"   [3/3] Yahoo Finance 시도: {company}")
+                    try:
+                        yahoo_result = self._get_yahoo_finance_data(company)
+                        if yahoo_result.get('data_available', False):
+                            financial_analysis = yahoo_result
+                            data_source = 'Yahoo Finance'
+                            print(f"   [OK] Yahoo Finance에서 {company} 데이터 수집 성공")
+                        else:
+                            print(f"   [FAIL] Yahoo Finance에서 {company} 데이터 없음")
+                    except Exception as e:
+                        print(f"   [ERROR] Yahoo Finance 조회 실패: {e}")
+            
+            # 모든 소스에서 실패
+            if not financial_analysis or not financial_analysis.get('data_available', False):
+                print(f"   [FINAL] {company}: 모든 소스에서 재무 데이터 없음 - 제외")
                 return {
                     'financial_data': {},
                     'financial_ratios': {},
                     'financial_score': 0.0,
-                    'analysis_summary': "  ",
+                    'analysis_summary': "재무 데이터 없음",
                     'confidence_score': 0.0,
                     'data_source': 'NONE',
                     'excluded_from_analysis': True,
-                    'error': financial_analysis.get('error', ' ')
+                    'error': '모든 데이터 소스에서 수집 실패'
                 }
 
             financial_data = financial_analysis.get('financial_data', {})
@@ -611,13 +702,22 @@ class FinancialAnalyzerAgent:
             elif current_ratio > 1.0:
                 score += 0.05
 
+            # 데이터 소스별 신뢰도
+            confidence_by_source = {
+                'DART': 0.95,
+                'SEC': 0.90,
+                'Yahoo Finance': 0.75,
+                'NONE': 0.0
+            }
+            
             return {
                 'financial_data': financial_data,
                 'financial_ratios': financial_ratios,
                 'financial_score': min(score, 1.0),
-                'analysis_summary': f"ROE {roe*100:.1f}%,  {operating_margin*100:.1f}%, ROA {roa*100:.1f}%",
-                'confidence_score': 0.9,  # DART API   
-                'data_source': 'DART_API'
+                'analysis_summary': f"ROE {roe*100:.1f}%, 영업이익률 {operating_margin*100:.1f}%, ROA {roa*100:.1f}%",
+                'confidence_score': confidence_by_source.get(data_source, 0.7),
+                'data_source': data_source,
+                'data_available': True
             }
             
         except Exception as e:
@@ -690,6 +790,94 @@ class FinancialAnalyzerAgent:
             'relevant_disclosures': relevant_disclosures,
             'analysis_method': 'disclosure_analysis'
         }
+    
+    def _get_yahoo_finance_data(self, company: str) -> Dict[str, Any]:
+        """
+        Yahoo Finance에서 재무 데이터 수집
+        """
+        try:
+            import yfinance as yf
+            
+            # 티커 심볼 매핑 (일반적인 경우)
+            ticker_mapping = {
+                'Tesla': 'TSLA',
+                'Ford': 'F',
+                'GM': 'GM',
+                'BMW': 'BMW.DE',
+                'Mercedes': 'MBG.DE',
+                'Volkswagen': 'VOW.DE',
+                'BYD': '1211.HK',
+                'Toyota': '7203.T',
+                'Hyundai': '005380.KS',
+                '현대자동차': '005380.KS',
+                'Rivian': 'RIVN',
+                'Lucid': 'LCID',
+                'Nio': 'NIO',
+                'Xpeng': 'XPEV',
+                'Panasonic': '6752.T',
+                'CATL': '300750.SZ',
+                'LG에너지솔루션': '373220.KS',
+                '삼성SDI': '006400.KS'
+            }
+            
+            # 티커 찾기
+            ticker_symbol = ticker_mapping.get(company, company)
+            print(f"      Yahoo Finance 티커: {ticker_symbol}")
+            
+            stock = yf.Ticker(ticker_symbol)
+            info = stock.info
+            
+            # 재무 데이터 추출
+            if not info or 'marketCap' not in info:
+                return {'data_available': False}
+            
+            # 기본 재무 지표
+            revenue = info.get('totalRevenue', 0)
+            net_income = info.get('netIncomeToCommon', 0)
+            total_assets = info.get('totalAssets', 0)
+            total_equity = info.get('totalStockholderEquity', 0)
+            total_debt = info.get('totalDebt', 0)
+            current_assets = info.get('totalCurrentAssets', 0)
+            current_liabilities = info.get('totalCurrentLiabilities', 0)
+            
+            # 재무 비율 계산
+            roe = (net_income / total_equity * 100) if total_equity > 0 else 0
+            roa = (net_income / total_assets * 100) if total_assets > 0 else 0
+            operating_margin = info.get('operatingMargins', 0) * 100
+            debt_ratio = (total_debt / total_assets) if total_assets > 0 else 0
+            current_ratio = (current_assets / current_liabilities) if current_liabilities > 0 else 0
+            
+            return {
+                'company_info': {
+                    'name': company,
+                    'ticker': ticker_symbol,
+                    'market_cap': info.get('marketCap', 0)
+                },
+                'financial_data': {
+                    'revenue': revenue,
+                    'net_income': net_income,
+                    'total_assets': total_assets,
+                    'total_equity': total_equity
+                },
+                'financial_ratios': {
+                    'roe': roe / 100,  # 비율로 변환
+                    'roa': roa / 100,
+                    'operating_margin': operating_margin / 100,
+                    'debt_ratio': debt_ratio,
+                    'current_ratio': current_ratio
+                },
+                'stock_price': info.get('currentPrice', 0),
+                'data_source': 'Yahoo Finance',
+                'data_available': True
+            }
+            
+        except ImportError:
+            print(f"      [ERROR] yfinance 라이브러리가 설치되지 않았습니다")
+            print(f"      설치 방법: pip install yfinance")
+            return {'data_available': False}
+        except Exception as e:
+            print(f"      [ERROR] Yahoo Finance 데이터 수집 실패: {e}")
+            return {'data_available': False}
     
     def _calculate_quantitative_score(self, financial_metrics: Dict[str, Any]) -> float:
         """

@@ -11,6 +11,7 @@ from workflow.state import create_initial_state
 from tools.web_tools import WebSearchTool
 from tools.llm_tools import OpenAILLM
 from tools.dart_tools import DARTTool
+from tools.sec_edgar_tools import SECEdgarTool  # 🆕 SEC EDGAR tool 추가
 from tools.report_converter import ReportConverter
 import json
 
@@ -75,16 +76,20 @@ def main():
     
     # OpenAI API
     openai_api_key = os.getenv('OPENAI_API_KEY', 'sk-proj-your-key-here')
-    llm = OpenAILLM(openai_api_key)
+    llm = OpenAILLM(openai_api_key, model='gpt-4o-mini')  # 비용 절감: GPT-4o-mini 사용
     
-    # DART API
+    # DART API (한국 기업)
     dart_api_key = os.getenv('DART_API_KEY', 'f9cc57c302b3717900443947647ca55800eb6e8a')
     dart = DARTTool(dart_api_key)
     
-    print("   [OK] Web Search  ")
-    print("   [OK] OpenAI API  ")
+    # SEC EDGAR API (미국 기업) - 🆕 추가
+    sec = SECEdgarTool()
+    
+    print("   [OK] Web Search 도구 초기화")
+    print("   [OK] OpenAI API 초기화")
     if dart_api_key:
-        print("   [OK] DART API  ")
+        print("   [OK] DART API 초기화 (한국 기업)")
+    print("   [OK] SEC EDGAR 초기화 (미국 기업)")
     print()
     
     # ==========================================
@@ -97,15 +102,16 @@ def main():
     # 4.  
     # ==========================================
     
-    print("[  ...]")
+    print("[워크플로우 생성 중...]")
     
     workflow = create_workflow(
         web_search_tool=web_search,
         llm_tool=llm,
-        dart_tool=dart
+        dart_tool=dart,
+        sec_tool=sec  # 🆕 SEC tool 전달
     )
     
-    print("   [OK] LangGraph   ")
+    print("   [OK] LangGraph 워크플로우 생성 완료")
     print()
     
     # ==========================================
@@ -116,8 +122,71 @@ def main():
     print("="*70)
     
     try:
-        #  
-        final_state = workflow.invoke(initial_state)
+        # 워크플로우 실행 (LangGraph 버전 호환성 문제로 수동 실행)
+        # LangGraph의 checkpoint 버그를 회피하기 위해 각 에이전트를 직접 호출
+        from agents.market_trend_agent import MarketTrendAgent
+        from agents.supplier_matching_agent import SupplierMatchingAgent
+        from agents.financial_analyzer_agent import FinancialAnalyzerAgent
+        from agents.risk_assessment_agent_improved import RiskAssessmentAgent
+        from agents.investment_strategy_agent import InvestmentStrategyAgent
+        from agents.report_generator_agent import ReportGeneratorAgent
+        
+        # 에이전트 초기화
+        market_agent = MarketTrendAgent(web_search, llm, dart)
+        supplier_agent = SupplierMatchingAgent(web_search, llm)
+        financial_agent = FinancialAnalyzerAgent(web_search, llm, dart, sec_tool=sec)
+        risk_agent = RiskAssessmentAgent(web_search, llm)
+        strategy_agent = InvestmentStrategyAgent(web_search, llm)
+        report_agent = ReportGeneratorAgent(llm)
+        
+        final_state = initial_state
+        
+        # 1. MarketTrendAgent
+        print("[현재 노드: market_trend_node]")
+        print("="*60)
+        result = market_agent.analyze_market_trends(final_state)
+        final_state['news_articles'] = result.get('news_articles', [])
+        final_state['disclosure_data'] = result.get('disclosure_data', [])
+        final_state['keywords'] = result.get('keywords', [])
+        final_state['categorized_keywords'] = result.get('categorized_keywords', {})
+        final_state['market_trends'] = result.get('market_trends', [])
+        discovered = result.get('discovered_companies', [])
+        if discovered:
+            final_state['suppliers'].extend(discovered)
+        
+        # 2. SupplierMatchingAgent
+        print("\n[현재 노드: supplier_matching_node]")
+        print("="*60)
+        result = supplier_agent.match_suppliers(final_state)
+        final_state['suppliers'] = result.get('suppliers', [])
+        
+        # 3. FinancialAnalyzerAgent
+        print("\n[현재 노드: financial_analysis_node]")
+        print("="*60)
+        result = financial_agent.analyze_financials(final_state)
+        final_state['financial_analysis'] = result.get('financial_analysis', {})
+        
+        # 4. RiskAssessmentAgent
+        print("\n[현재 노드: risk_assessment_node]")
+        print("="*60)
+        result = risk_agent.analyze_risks(final_state)
+        final_state['risk_assessment'] = result.get('risk_assessment', {})
+        
+        # 5. InvestmentStrategyAgent
+        print("\n[현재 노드: investment_strategy_node]")
+        print("="*60)
+        result = strategy_agent.develop_investment_strategy(final_state)
+        final_state['investment_strategy'] = result.get('investment_strategy', {})
+        final_state['investment_opportunities'] = result.get('investment_opportunities', [])
+        final_state['portfolio_recommendation'] = result.get('portfolio_recommendation', {})
+        
+        # 6. ReportGeneratorAgent
+        print("\n[현재 노드: report_generation_node]")
+        print("="*60)
+        result = report_agent.generate_report(final_state)
+        final_state['final_report'] = result.get('final_report', {})
+        final_state['glossary'] = result.get('glossary', {})
+        final_state['investor_guide'] = result.get('investor_guide', {})
         
         # ==========================================
         # 6.  

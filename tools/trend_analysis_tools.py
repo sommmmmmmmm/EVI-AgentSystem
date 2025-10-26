@@ -289,16 +289,24 @@ class TrendAnalyzer:
                         except:
                             pass
         
-        if total_articles == 0:
-            return 0.0
+        if total_articles == 0 or mention_count == 0:
+            return 0.5  # Default score when no mentions
         
-        # Frequency score (0-0.7): How often mentioned
-        frequency_score = min(0.7, (mention_count / total_articles) * 2.0)
+        # 1. Frequency score (0.0-0.5): How often mentioned relative to total articles
+        frequency_ratio = mention_count / total_articles
+        frequency_score = min(frequency_ratio * 1.5, 0.5)  # Scale up to 0.5 max
         
-        # Recency score (0-0.3): How recent
-        recency_score = min(0.3, (recent_mentions / total_articles) * 3.0)
+        # 2. Recency score (0.0-0.3): How many recent mentions
+        recency_ratio = recent_mentions / mention_count if mention_count > 0 else 0
+        recency_score = recency_ratio * 0.3
         
-        return round(frequency_score + recency_score, 2)
+        # 3. Mention intensity (0.0-0.2): More mentions = higher impact
+        intensity_score = min(mention_count / 10.0, 1.0) * 0.2  # Normalize to 10 mentions
+        
+        # Total impact score (0.0-1.0)
+        impact_score = frequency_score + recency_score + intensity_score
+        
+        return round(min(impact_score, 1.0), 2)
     
     def extract_n_grams(
         self,

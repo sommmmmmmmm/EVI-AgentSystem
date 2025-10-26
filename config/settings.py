@@ -63,15 +63,13 @@ class EVMarketConfig:
 
         if self.ev_oems is None:
             self.ev_oems = [
-                '',
-                '',
-                '',
-                'BYD',
-                'BMW',
-                '',
-                '',
-                'GM',
-                ''
+                'Tesla', 'Ford', 'GM', 'Rivian', 'Lucid',  # 미국
+                'BYD', 'Nio', 'Xpeng', 'Li Auto',  # 중국
+                'BMW', 'Mercedes', 'Volkswagen', 'Audi', 'Porsche',  # 독일
+                'Hyundai', 'Kia', 'Genesis',  # 한국
+                '현대자동차', '기아', '제네시스',  # 한국 (한글)
+                'Toyota', 'Nissan', 'Honda',  # 일본
+                'Volvo', 'Polestar'  # 스웨덴
             ]
 
         if self.keyword_categories is None:
@@ -124,6 +122,62 @@ class EVMarketConfig:
 
 #   
 config = EVMarketConfig()
+
+# OEM 기업 리스트 (영문, 대소문자 구분 없이 매칭하기 위한 소문자 버전)
+OEM_COMPANIES_LOWER = [oem.lower() for oem in config.ev_oems]
+
+def is_oem_company(company_name: str) -> bool:
+    """기업명이 OEM인지 확인"""
+    return company_name.lower() in OEM_COMPANIES_LOWER
+
+def calculate_company_confidence(
+    company_name: str,
+    is_listed: bool = False,
+    has_financial_data: bool = False,
+    data_source: str = 'unknown',
+    is_discovered_from_news: bool = False
+) -> float:
+    """
+    기업 신뢰도 계산
+    
+    Args:
+        company_name: 기업명
+        is_listed: 상장 여부
+        has_financial_data: 재무 데이터 존재 여부
+        data_source: 데이터 출처 (DART, SEC, Yahoo Finance)
+        is_discovered_from_news: 뉴스에서 발견된 기업인지
+    
+    Returns:
+        신뢰도 점수 (0.0 ~ 1.0)
+    """
+    base_confidence = 0.4  # 기본 신뢰도
+    
+    # OEM 여부 (+0.1)
+    if is_oem_company(company_name):
+        base_confidence += 0.1
+    
+    # 상장 여부 (+0.2)
+    if is_listed:
+        base_confidence += 0.2
+    
+    # 재무 데이터 존재 여부 (+0.3)
+    if has_financial_data:
+        base_confidence += 0.3
+        
+        # 데이터 소스별 추가 보너스
+        if data_source == 'DART':
+            base_confidence += 0.05  # 공식 공시
+        elif data_source == 'SEC':
+            base_confidence += 0.05  # 공식 공시
+        elif data_source == 'Yahoo Finance':
+            base_confidence += 0.02  # 시장 데이터
+    
+    # 뉴스에서 발견 (+0.1)
+    if is_discovered_from_news:
+        base_confidence += 0.1
+    
+    # 최대 1.0으로 제한
+    return min(base_confidence, 1.0)
 
 # Ensure sodium-related materials are included in the materials keyword category
 try:

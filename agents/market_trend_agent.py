@@ -745,17 +745,47 @@ class MarketTrendAgent:
         all_keywords = list(dict.fromkeys(all_keywords))
 
         #   suppliers  
+        from config.settings import is_oem_company, calculate_company_confidence
+        
         companies = categorized_keywords.get('companies', [])
         suppliers = []
+        oem_count = 0
+        supplier_count = 0
+        
         for company in companies:
+            # OEM 여부 판단
+            is_oem = is_oem_company(company)
+            company_type = 'oem' if is_oem else 'supplier'
+            
+            if is_oem:
+                category = 'OEM'
+                products = ['Electric Vehicles', 'EV Systems']
+                oem_count += 1
+            else:
+                category = 'Supplier'
+                products = []
+                supplier_count += 1
+            
+            # 신뢰도 계산 (뉴스에서 발견, OEM 여부 고려)
+            confidence = calculate_company_confidence(
+                company_name=company,
+                is_listed=False,  # 일단 모름
+                has_financial_data=False,  # 아직 수집 전
+                data_source='unknown',
+                is_discovered_from_news=True
+            )
+            
             suppliers.append({
                 'company': company,
-                'category': ' ',
-                'products': [],
+                'type': company_type,  # 명확한 타입 지정
+                'category': category,
+                'products': products,
                 'oem_relationships': [],
-                'confidence': 0.8,
+                'confidence': confidence,
                 'source': 'news_extraction'
             })
+        
+        print(f"   [OK] MarketTrend 기업 분류: OEM {oem_count}개, 공급업체 {supplier_count}개")
 
         print(f"   [OK] MarketTrend  : {len(suppliers)}")
 

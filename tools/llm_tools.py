@@ -12,18 +12,18 @@ class OpenAILLM:
     OpenAI API 
     """
     
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, model: str = "gpt-4o"):
         try:
             self.client = openai.OpenAI(
                 api_key=api_key,
                 timeout=30.0,  # 30초 타임아웃
                 max_retries=2   # 최대 2번 재시도
             )
-            self.model = "gpt-4o"
+            self.model = model
         except Exception as e:
             print(f"[경고] OpenAI 클라이언트 초기화 실패: {e}")
             self.client = None
-            self.model = "gpt-4o"
+            self.model = model
     
     def call(self, prompt: str,
              system: str = None,
@@ -104,11 +104,19 @@ class OpenAILLM:
         """API 실패 시 에러 메시지 반환"""
         return f"[ERROR] OpenAI API 키가 설정되지 않았습니다. '{prompt[:50]}...' 요청을 처리할 수 없습니다."
     
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, max_tokens: int = 4000, temperature: float = 0.7) -> str:
         """
-        generate   (Risk Assessment Agent )
+        generate 메서드 (모든 Agent에서 사용)
+        
+        Args:
+            prompt: 프롬프트
+            max_tokens: 최대 토큰 수
+            temperature: 온도
+        
+        Returns:
+            LLM 응답
         """
-        return self.call(prompt)
+        return self.call(prompt, max_tokens=max_tokens, temperature=temperature)
     
     def generate_analysis(self, data: str, analysis_type: str = "general") -> str:
         """

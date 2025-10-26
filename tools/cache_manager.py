@@ -13,7 +13,7 @@ class CacheManager:
     
     def __init__(self, cache_dir: str = "cache"):
         self.cache_dir = cache_dir
-        self.cache_duration = 3600  # 1시간 캐시 유지
+        self.cache_duration = 86400  # 24시간 캐시 (86400초)
         
         # 캐시 디렉토리 생성
         if not os.path.exists(cache_dir):

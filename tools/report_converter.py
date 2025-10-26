@@ -18,7 +18,7 @@ class ReportConverter:
 
     def _create_html_template(self) -> str:
         """
-        보고서용 HTML 템플릿 생성
+        보고서용 HTML 템플릿 생성 - 현대적이고 세련된 디자인
         """
         return """<!DOCTYPE html>
 <html lang="ko">
@@ -27,7 +27,7 @@ class ReportConverter:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
         * {{
             margin: 0;
@@ -35,55 +35,122 @@ class ReportConverter:
             box-sizing: border-box;
         }}
 
+        :root {{
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #f1f5f9;
+            --border: #e2e8f0;
+        }}
+
         body {{
-            font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
-            line-height: 1.8;
-            color: #333;
-            background: #f5f7fa;
-            padding: 20px;
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: var(--dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 15px;
+            min-height: 100vh;
         }}
 
         .container {{
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            border-radius: 10px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 20px;
             overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }}
+
+        @keyframes fadeInUp {{
+            from {{
+                opacity: 0;
+                transform: translateY(30px);
+            }}
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
         }}
 
         .header {{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 60px 40px;
+            padding: 80px 50px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .header::before {{
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }}
+
+        @keyframes pulse {{
+            0%, 100% {{ transform: scale(1); }}
+            50% {{ transform: scale(1.1); }}
+        }}
+
+        .header-content {{
+            position: relative;
+            z-index: 1;
         }}
 
         .header h1 {{
-            font-size: 2.5em;
-            font-weight: 700;
-            margin-bottom: 15px;
+            font-size: 3em;
+            font-weight: 900;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }}
 
         .header .subtitle {{
-            font-size: 1.2em;
-            opacity: 0.9;
-            font-weight: 300;
+            font-size: 1.3em;
+            opacity: 0.95;
+            font-weight: 400;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
         }}
 
         .header .date {{
-            margin-top: 20px;
-            font-size: 0.9em;
-            opacity: 0.8;
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 0.95em;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }}
 
         .content {{
-            padding: 40px;
+            padding: 60px 50px;
+            background: white;
         }}
 
         .section {{
             margin-bottom: 50px;
             page-break-inside: avoid;
+            animation: fadeIn 0.5s ease-out;
+        }}
+
+        @keyframes fadeIn {{
+            from {{ opacity: 0; }}
+            to {{ opacity: 1; }}
         }}
 
         .section:last-child {{
@@ -91,12 +158,24 @@ class ReportConverter:
         }}
 
         h1 {{
-            color: #667eea;
-            font-size: 2em;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-            margin-top: 40px;
+            color: var(--primary);
+            font-size: 2.2em;
+            font-weight: 800;
+            margin-bottom: 30px;
+            margin-top: 50px;
+            padding-bottom: 20px;
+            border-bottom: 4px solid var(--primary);
+            position: relative;
+        }}
+
+        h1::after {{
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
         }}
 
         h1:first-child {{
@@ -104,141 +183,304 @@ class ReportConverter:
         }}
 
         h2 {{
-            color: #764ba2;
-            font-size: 1.6em;
-            margin-top: 30px;
-            margin-bottom: 20px;
-            padding-left: 15px;
-            border-left: 4px solid #764ba2;
+            color: var(--secondary);
+            font-size: 1.7em;
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 25px;
+            padding-left: 20px;
+            border-left: 5px solid var(--secondary);
+            position: relative;
+            transition: all 0.3s ease;
+        }}
+
+        h2:hover {{
+            padding-left: 25px;
+            border-left-color: var(--accent);
         }}
 
         h3 {{
-            color: #555;
-            font-size: 1.3em;
-            margin-top: 25px;
-            margin-bottom: 15px;
+            color: var(--dark);
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }}
+
+        h3::before {{
+            content: '▸';
+            color: var(--primary);
+            margin-right: 10px;
+            font-size: 0.9em;
         }}
 
         h4 {{
-            color: #666;
-            font-size: 1.1em;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-weight: 500;
+            color: var(--gray);
+            font-size: 1.15em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }}
 
         p {{
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             text-align: justify;
+            line-height: 1.8;
+            color: #334155;
         }}
 
         ul, ol {{
-            margin-left: 30px;
-            margin-bottom: 15px;
+            margin-left: 35px;
+            margin-bottom: 20px;
         }}
 
         li {{
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            padding-left: 8px;
+            line-height: 1.7;
+        }}
+
+        ul li {{
+            list-style: none;
+            position: relative;
+        }}
+
+        ul li::before {{
+            content: '●';
+            color: var(--primary);
+            font-size: 0.8em;
+            position: absolute;
+            left: -20px;
+            top: 2px;
         }}
 
         .highlight {{
-            background: #fff3cd;
-            padding: 20px;
-            border-left: 5px solid #ffc107;
-            margin: 20px 0;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 25px;
+            border-left: 5px solid var(--warning);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .highlight::before {{
+            content: '⚡';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            opacity: 0.2;
         }}
 
         .warning {{
-            background: #f8d7da;
-            padding: 20px;
-            border-left: 5px solid #dc3545;
-            margin: 20px 0;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            padding: 25px;
+            border-left: 5px solid var(--danger);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .warning::before {{
+            content: '⚠️';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            opacity: 0.2;
         }}
 
         .success {{
-            background: #d4edda;
-            padding: 20px;
-            border-left: 5px solid #28a745;
-            margin: 20px 0;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            padding: 25px;
+            border-left: 5px solid var(--success);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .success::before {{
+            content: '✓';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.5em;
+            opacity: 0.2;
         }}
 
         .info {{
-            background: #d1ecf1;
-            padding: 20px;
-            border-left: 5px solid #17a2b8;
-            margin: 20px 0;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 25px;
+            border-left: 5px solid var(--info);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .info::before {{
+            content: 'ℹ';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            opacity: 0.2;
         }}
 
         table {{
             width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 30px 0;
             background: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }}
+
+        thead {{
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         }}
 
         th {{
-            background: #667eea;
             color: white;
-            padding: 15px;
+            padding: 18px 20px;
             text-align: left;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9em;
         }}
 
         td {{
-            padding: 12px 15px;
-            border-bottom: 1px solid #ddd;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s ease;
         }}
 
-        tr:hover {{
-            background: #f8f9fa;
+        tr:last-child td {{
+            border-bottom: none;
+        }}
+
+        tbody tr {{
+            transition: all 0.2s ease;
+        }}
+
+        tbody tr:hover {{
+            background: var(--light-gray);
+            transform: scale(1.01);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }}
 
         code {{
-            background: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            color: #e83e8c;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #e11d48;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
         }}
 
         pre {{
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 20px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            padding: 25px;
+            border-radius: 12px;
             overflow-x: auto;
-            margin: 20px 0;
+            margin: 25px 0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
         }}
 
         pre code {{
             background: none;
             color: inherit;
             padding: 0;
+            border: none;
         }}
 
         .divider {{
-            height: 2px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            margin: 50px 0;
-            opacity: 0.3;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            margin: 60px 0;
+            border-radius: 10px;
+            opacity: 0.4;
         }}
 
         .footer {{
-            background: #f8f9fa;
-            padding: 30px 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 40px 50px;
             text-align: center;
-            color: #666;
-            font-size: 0.9em;
-            border-top: 1px solid #ddd;
+            color: var(--gray);
+            font-size: 0.95em;
+            border-top: 3px solid var(--primary);
+            position: relative;
         }}
 
         .footer p {{
-            margin: 5px 0;
+            margin: 8px 0;
+            line-height: 1.6;
+        }}
+
+        .footer strong {{
+            color: var(--dark);
+            font-weight: 600;
+        }}
+
+        .footer::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+        }}
+
+        .badge {{
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 5px;
+        }}
+
+        .badge-primary {{
+            background: var(--primary);
+            color: white;
+        }}
+
+        .badge-success {{
+            background: var(--success);
+            color: white;
+        }}
+
+        .badge-warning {{
+            background: var(--warning);
+            color: white;
+        }}
+
+        blockquote {{
+            margin: 25px 0;
+            padding: 20px 30px;
+            background: var(--light-gray);
+            border-left: 5px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--gray);
         }}
 
         @media print {{
@@ -249,6 +491,7 @@ class ReportConverter:
 
             .container {{
                 box-shadow: none;
+                border-radius: 0;
             }}
 
             .header {{
@@ -258,37 +501,86 @@ class ReportConverter:
             .section {{
                 page-break-inside: avoid;
             }}
+
+            .header::before {{
+                display: none;
+            }}
+
+            tr {{
+                page-break-inside: avoid;
+            }}
         }}
 
         @media (max-width: 768px) {{
+            body {{
+                padding: 15px;
+            }}
+
             .header {{
-                padding: 40px 20px;
+                padding: 50px 30px;
             }}
 
             .header h1 {{
-                font-size: 1.8em;
+                font-size: 2em;
+            }}
+
+            .header .subtitle {{
+                font-size: 1.1em;
             }}
 
             .content {{
-                padding: 20px;
+                padding: 30px 25px;
             }}
 
             h1 {{
-                font-size: 1.5em;
+                font-size: 1.8em;
             }}
 
             h2 {{
-                font-size: 1.3em;
+                font-size: 1.4em;
             }}
+
+            h3 {{
+                font-size: 1.2em;
+            }}
+
+            table {{
+                font-size: 0.9em;
+            }}
+
+            th, td {{
+                padding: 12px 10px;
+            }}
+        }}
+
+        /* 스크롤바 스타일링 */
+        ::-webkit-scrollbar {{
+            width: 10px;
+            height: 10px;
+        }}
+
+        ::-webkit-scrollbar-track {{
+            background: var(--light-gray);
+        }}
+
+        ::-webkit-scrollbar-thumb {{
+            background: var(--primary);
+            border-radius: 5px;
+        }}
+
+        ::-webkit-scrollbar-thumb:hover {{
+            background: var(--primary-dark);
         }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>EV Investment Analysis Report</h1>
-            <div class="subtitle">전기차 산업 투자 분석 보고서</div>
-            <div class="date">{date}</div>
+            <div class="header-content">
+                <h1>⚡ EV Investment Analysis Report</h1>
+                <div class="subtitle">전기차 산업 투자 분석 보고서</div>
+                <div class="date">📅 {date}</div>
+            </div>
         </div>
 
         <div class="content">
@@ -297,8 +589,8 @@ class ReportConverter:
 
         <div class="footer">
             <p><strong>생성 일시:</strong> {generated_time}</p>
-            <p>이 보고서는 참고용으로만 사용되어야 합니다. 투자 결정은 투자자 자신의 판단과 책임 하에 이루어져야 합니다.</p>
-            <p style="margin-top: 15px; opacity: 0.7;">Generated by EVI Agent System</p>
+            <p style="margin-top: 10px;">이 보고서는 참고용으로만 사용되어야 합니다. 투자 결정은 투자자 자신의 판단과 책임 하에 이루어져야 합니다.</p>
+            <p style="margin-top: 20px; opacity: 0.6; font-size: 0.9em;">✨ Generated by EVI Agent System</p>
         </div>
     </div>
 </body>
@@ -374,34 +666,39 @@ class ReportConverter:
     def html_to_pdf(self, html_path: str, pdf_path: str):
         """
         HTML을 PDF로 변환
+        
+        브라우저 기반 변환 방법을 사용합니다 (가장 안정적)
 
         Args:
             html_path: HTML 파일 경로
             pdf_path: PDF 출력 경로
         """
+        import subprocess
+        import os
+        
+        print(f"\n   📄 HTML 파일이 생성되었습니다: {html_path}")
+        print(f"   💡 PDF로 변환하려면 다음 방법 중 하나를 사용하세요:")
+        print(f"\n   방법 1) 브라우저 사용 (권장):")
+        print(f"      1. 아래 명령어로 HTML 파일을 브라우저에서 열기:")
+        print(f"         open '{html_path}'")
+        print(f"      2. 브라우저에서 Cmd+P (인쇄)")
+        print(f"      3. 'PDF로 저장' 선택")
+        
+        # 자동으로 브라우저에서 열기
         try:
-            import pdfkit
-
-            options = {
-                'page-size': 'A4',
-                'margin-top': '20mm',
-                'margin-right': '20mm',
-                'margin-bottom': '20mm',
-                'margin-left': '20mm',
-                'encoding': 'UTF-8',
-                'no-outline': None,
-                'enable-local-file-access': None
-            }
-
-            pdfkit.from_file(html_path, pdf_path, options=options)
-            print(f"   [OK] PDF 변환 완료: {pdf_path}")
-
-        except ImportError:
-            print("   [WARNING] pdfkit이 설치되지 않았습니다. PDF 변환을 건너뜁니다.")
-            print("   설치 방법: pip install pdfkit")
-            print("   wkhtmltopdf도 설치 필요: https://wkhtmltopdf.org/downloads.html")
+            if os.path.exists(html_path):
+                subprocess.run(['open', html_path], check=False)
+                print(f"\n   ✅ 브라우저에서 HTML 파일을 열었습니다!")
+                print(f"   📌 Cmd+P를 누르고 'PDF로 저장'을 선택하세요.")
         except Exception as e:
-            print(f"   [WARNING] PDF 변환 실패: {e}")
+            print(f"   [INFO] 자동 열기 실패: {e}")
+        
+        print(f"\n   방법 2) 명령줄 도구 사용:")
+        print(f"      # Playwright 설치 (한 번만)")
+        print(f"      pip install playwright && playwright install chromium")
+        print(f"      # PDF 생성")
+        print(f"      python3 -c \"from playwright.sync_api import sync_playwright; p = sync_playwright().start(); browser = p.chromium.launch(); page = browser.new_page(); page.goto('file://{os.path.abspath(html_path)}'); page.pdf(path='{pdf_path}'); browser.close()\"")
+        print()
 
     def convert_markdown_file(self, md_path: str, generate_pdf: bool = True):
         """

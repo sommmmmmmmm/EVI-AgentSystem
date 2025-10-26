@@ -1,10 +1,10 @@
 """
 LLM-Based Qualitative Analysis Tool
-실제 뉴스 + 공시 데이터 기반 정성적 분석
+실제 뉴스 + 전문가 의견 기반 정성적 분석
 
 This tool generates qualitative analysis based on:
 - Real news articles (100+ articles)
-- DART/SEC disclosure data
+- Expert opinions (analyst reports, securities firm recommendations)
 - Market trends
 - Supply chain relationships
 """
@@ -101,7 +101,7 @@ class LLMQualitativeAnalyzer:
         self,
         company_name: str,
         news_articles: List[Dict[str, Any]],
-        disclosures: List[Dict[str, Any]],
+        expert_opinions: List[Dict[str, Any]],
         market_trends: List[Dict[str, Any]],
         supplier_relationships: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
@@ -111,7 +111,7 @@ class LLMQualitativeAnalyzer:
         Args:
             company_name: Company name to analyze
             news_articles: Recent news articles about the company
-            disclosures: Recent disclosure data (DART/SEC)
+            expert_opinions: Expert opinions (analyst reports, securities firm recommendations)
             market_trends: Market trends analysis
             supplier_relationships: Supply chain relationships
         
@@ -130,11 +130,11 @@ class LLMQualitativeAnalyzer:
         
         # Filter company-specific data
         company_news = self._filter_company_news(normalized_name, news_articles)
-        company_disclosures = self._filter_company_disclosures(normalized_name, disclosures)
+        company_expert_opinions = self._filter_company_expert_opinions(normalized_name, expert_opinions)
         company_suppliers = self._filter_company_suppliers(normalized_name, supplier_relationships)
         
         # If no data available, return low confidence analysis
-        if not company_news and not company_disclosures:
+        if not company_news and not company_expert_opinions:
             return self._generate_low_confidence_analysis(company_name)
         
         # Generate qualitative analysis using LLM
@@ -142,7 +142,7 @@ class LLMQualitativeAnalyzer:
             analysis = self._llm_based_analysis(
                 normalized_name,
                 company_news,
-                company_disclosures,
+                company_expert_opinions,
                 market_trends,
                 company_suppliers
             )
@@ -150,7 +150,7 @@ class LLMQualitativeAnalyzer:
             analysis = self._rule_based_analysis(
                 normalized_name,
                 company_news,
-                company_disclosures,
+                company_expert_opinions,
                 market_trends,
                 company_suppliers
             )
@@ -179,21 +179,27 @@ class LLMQualitativeAnalyzer:
         
         return filtered[:10]  # Top 10 most relevant
     
-    def _filter_company_disclosures(self, company_name: str, disclosures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _filter_company_expert_opinions(self, company_name: str, expert_opinions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Filter disclosure data related to the company
-        회사 관련 공시 필터링
+        Filter expert opinions related to the company
+        회사 관련 전문가 의견 필터링
         """
         filtered = []
+        keywords = [company_name.lower()]
         
-        for disclosure in disclosures:
-            disc_company = disclosure.get('company_name', '')
-            normalized_disc = self._normalize_company_name(disc_company)
+        # Add alias keywords
+        for alias, canonical in self.company_aliases.items():
+            if canonical == company_name:
+                keywords.append(alias.lower())
+        
+        for opinion in expert_opinions:
+            title = opinion.get('title', '').lower()
+            content = opinion.get('content', '').lower()
             
-            if normalized_disc == company_name:
-                filtered.append(disclosure)
+            if any(keyword in title or keyword in content for keyword in keywords):
+                filtered.append(opinion)
         
-        return filtered[:5]  # Top 5 most recent
+        return filtered[:10]  # Top 10 most relevant
     
     def _filter_company_suppliers(self, company_name: str, supplier_relationships: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -218,7 +224,7 @@ class LLMQualitativeAnalyzer:
         self,
         company_name: str,
         news: List[Dict[str, Any]],
-        disclosures: List[Dict[str, Any]],
+        expert_opinions: List[Dict[str, Any]],
         trends: List[Dict[str, Any]],
         suppliers: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
@@ -227,20 +233,20 @@ class LLMQualitativeAnalyzer:
         LLM 기반 정성 분석 생성
         """
         # Prepare context for LLM
-        context = self._prepare_llm_context(company_name, news, disclosures, trends, suppliers)
+        context = self._prepare_llm_context(company_name, news, expert_opinions, trends, suppliers)
         
         # Generate analysis using LLM
         prompt = f"""
 You are a professional financial analyst specializing in the EV industry. 
-Analyze the following company based on real news, disclosure data, and market trends.
+Analyze the following company based on real news, expert opinions (analyst reports), and market trends.
 
 Company: {company_name}
 
 === RECENT NEWS ({len(news)} articles) ===
 {self._format_news_for_prompt(news)}
 
-=== DISCLOSURE DATA ({len(disclosures)} filings) ===
-{self._format_disclosures_for_prompt(disclosures)}
+=== EXPERT OPINIONS ({len(expert_opinions)} analyst reports) ===
+{self._format_expert_opinions_for_prompt(expert_opinions)}
 
 === MARKET TRENDS ===
 {self._format_trends_for_prompt(trends)}
@@ -270,7 +276,7 @@ Output ONLY valid JSON. No markdown, no explanations.
             analysis['analysis_date'] = datetime.now().isoformat()
             analysis['data_sources'] = {
                 'news_count': len(news),
-                'disclosure_count': len(disclosures),
+                'expert_opinion_count': len(expert_opinions),
                 'supplier_count': len(suppliers)
             }
             analysis['method'] = 'LLM-based (real data)'
@@ -280,13 +286,13 @@ Output ONLY valid JSON. No markdown, no explanations.
         except Exception as e:
             print(f"   ⚠️ LLM analysis failed: {e}")
             # Fallback to rule-based
-            return self._rule_based_analysis(company_name, news, disclosures, trends, suppliers)
+            return self._rule_based_analysis(company_name, news, expert_opinions, trends, suppliers)
     
     def _rule_based_analysis(
         self,
         company_name: str,
         news: List[Dict[str, Any]],
-        disclosures: List[Dict[str, Any]],
+        expert_opinions: List[Dict[str, Any]],
         trends: List[Dict[str, Any]],
         suppliers: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
@@ -298,14 +304,14 @@ Output ONLY valid JSON. No markdown, no explanations.
         sentiment_score = self._calculate_news_sentiment(news)
         
         # Calculate data confidence
-        confidence = min(100, (len(news) * 5) + (len(disclosures) * 10) + (len(suppliers) * 5))
+        confidence = min(100, (len(news) * 5) + (len(expert_opinions) * 15) + (len(suppliers) * 5))
         
         # Determine rating based on sentiment and data
         overall_rating = self._calculate_overall_rating(sentiment_score, confidence, len(suppliers))
         
         # Extract key information
-        key_strengths = self._extract_strengths(news, disclosures, suppliers)
-        key_risks = self._extract_risks(news, disclosures)
+        key_strengths = self._extract_strengths(news, expert_opinions, suppliers)
+        key_risks = self._extract_risks(news, expert_opinions)
         growth_drivers = self._extract_growth_drivers(news, trends)
         
         # Determine recommendation
@@ -325,11 +331,11 @@ Output ONLY valid JSON. No markdown, no explanations.
             'competitive_position': f"{company_name} shows {'strong' if overall_rating >= 7 else 'moderate' if overall_rating >= 5 else 'weak'} market position based on available data.",
             'sentiment_score': round(sentiment_score, 2),
             'recommendation': recommendation,
-            'reasoning': f"Rating based on {len(news)} news articles, {len(disclosures)} disclosures, and {len(suppliers)} supply chain relationships. Sentiment score: {sentiment_score:.2f}.",
+            'reasoning': f"Rating based on {len(news)} news articles, {len(expert_opinions)} expert opinions, and {len(suppliers)} supply chain relationships. Sentiment score: {sentiment_score:.2f}.",
             'analysis_date': datetime.now().isoformat(),
             'data_sources': {
                 'news_count': len(news),
-                'disclosure_count': len(disclosures),
+                'expert_opinion_count': len(expert_opinions),
                 'supplier_count': len(suppliers)
             },
             'method': 'Rule-based (fallback)'
@@ -380,7 +386,7 @@ Output ONLY valid JSON. No markdown, no explanations.
         
         return max(1.0, min(10.0, overall))  # Clamp between 1-10
     
-    def _extract_strengths(self, news: List[Dict[str, Any]], disclosures: List[Dict[str, Any]], suppliers: List[Dict[str, Any]]) -> List[str]:
+    def _extract_strengths(self, news: List[Dict[str, Any]], expert_opinions: List[Dict[str, Any]], suppliers: List[Dict[str, Any]]) -> List[str]:
         """
         Extract key strengths from data
         핵심 강점 추출
@@ -390,8 +396,8 @@ Output ONLY valid JSON. No markdown, no explanations.
         if len(news) >= 5:
             strengths.append("High media visibility and market attention")
         
-        if len(disclosures) >= 3:
-            strengths.append("Active in regulatory filings and transparency")
+        if len(expert_opinions) >= 3:
+            strengths.append("Positive analyst coverage and expert recommendations")
         
         if len(suppliers) >= 3:
             strengths.append("Strong supply chain network")
@@ -405,7 +411,7 @@ Output ONLY valid JSON. No markdown, no explanations.
         
         return strengths[:5]
     
-    def _extract_risks(self, news: List[Dict[str, Any]], disclosures: List[Dict[str, Any]]) -> List[str]:
+    def _extract_risks(self, news: List[Dict[str, Any]], expert_opinions: List[Dict[str, Any]]) -> List[str]:
         """
         Extract key risks from data
         주요 리스크 추출
@@ -415,8 +421,8 @@ Output ONLY valid JSON. No markdown, no explanations.
         if len(news) < 3:
             risks.append("Limited market visibility and news coverage")
         
-        if len(disclosures) < 2:
-            risks.append("Limited disclosure transparency")
+        if len(expert_opinions) < 2:
+            risks.append("Limited analyst coverage and expert opinions")
         
         # Add generic risks
         risks.extend([
@@ -473,15 +479,15 @@ Output ONLY valid JSON. No markdown, no explanations.
             'analysis_date': datetime.now().isoformat(),
             'data_sources': {
                 'news_count': 0,
-                'disclosure_count': 0,
+                'expert_opinion_count': 0,
                 'supplier_count': 0
             },
             'method': 'Low-confidence placeholder'
         }
     
-    def _prepare_llm_context(self, company_name: str, news: List, disclosures: List, trends: List, suppliers: List) -> str:
+    def _prepare_llm_context(self, company_name: str, news: List, expert_opinions: List, trends: List, suppliers: List) -> str:
         """Prepare formatted context for LLM"""
-        return f"Company: {company_name}, News: {len(news)}, Disclosures: {len(disclosures)}"
+        return f"Company: {company_name}, News: {len(news)}, Expert Opinions: {len(expert_opinions)}"
     
     def _format_news_for_prompt(self, news: List[Dict[str, Any]]) -> str:
         """Format news for LLM prompt"""
@@ -494,14 +500,14 @@ Output ONLY valid JSON. No markdown, no explanations.
         
         return "\n".join(formatted)
     
-    def _format_disclosures_for_prompt(self, disclosures: List[Dict[str, Any]]) -> str:
-        """Format disclosures for LLM prompt"""
-        if not disclosures:
-            return "No recent disclosures available."
+    def _format_expert_opinions_for_prompt(self, expert_opinions: List[Dict[str, Any]]) -> str:
+        """Format expert opinions for LLM prompt"""
+        if not expert_opinions:
+            return "No expert opinions available."
         
         formatted = []
-        for i, disc in enumerate(disclosures[:3], 1):
-            formatted.append(f"{i}. {disc.get('title', 'N/A')} - {disc.get('filing_date', 'N/A')}")
+        for i, opinion in enumerate(expert_opinions[:5], 1):
+            formatted.append(f"{i}. {opinion.get('title', 'N/A')}\n   {opinion.get('content', 'N/A')[:200]}...")
         
         return "\n".join(formatted)
     
@@ -531,7 +537,7 @@ Output ONLY valid JSON. No markdown, no explanations.
         self,
         companies: List[str],
         news_articles: List[Dict[str, Any]],
-        disclosures: List[Dict[str, Any]],
+        expert_opinions: List[Dict[str, Any]],
         market_trends: List[Dict[str, Any]],
         supplier_relationships: List[Dict[str, Any]]
     ) -> Dict[str, Dict[str, Any]]:
@@ -541,7 +547,7 @@ Output ONLY valid JSON. No markdown, no explanations.
         Args:
             companies: List of company names
             news_articles: All news articles
-            disclosures: All disclosure data
+            expert_opinions: All expert opinions (analyst reports)
             market_trends: Market trends
             supplier_relationships: All supplier relationships
         
@@ -558,7 +564,7 @@ Output ONLY valid JSON. No markdown, no explanations.
             analysis = self.analyze_company_qualitative(
                 company,
                 news_articles,
-                disclosures,
+                expert_opinions,
                 market_trends,
                 supplier_relationships
             )

@@ -196,165 +196,363 @@ class ReportGeneratorAgent:
     
     def _generate_executive_summary(self, state: Dict[str, Any]) -> str:
         """
-        Executive Summary 생성 - 핵심 투자 하이라이트와 주요 추천사항을 줄글로 작성
+        Executive Summary 생성 - 실제 수집된 데이터를 기반으로 LLM이 요약
         """
-        # 데이터 추출
+        # 실제 수집된 데이터 추출
         market_trends = state.get('market_trends', [])
         financial_analysis = state.get('financial_analysis', {})
         investment_strategy = state.get('investment_strategy', {})
         risk_assessment = state.get('risk_assessment', {})
         suppliers = state.get('suppliers', [])
+        news_articles = state.get('news_articles', [])
+        disclosure_data = state.get('disclosure_data', [])
         
-        # 주요 투자 기회 (재무 분석에서 가져오거나 공급업체에서 가져오기)
+        # LLM을 사용하여 실제 데이터 기반 요약 생성
+        summary_prompt = f"""
+다음은 전기차(EV) 산업 분석을 위해 수집된 실제 데이터입니다. 이 데이터를 바탕으로 투자자를 위한 Executive Summary를 작성해주세요.
+
+## 수집된 데이터:
+
+### 시장 트렌드 ({len(market_trends)}개):
+{self._format_trends_for_llm(market_trends[:5])}
+
+### 뉴스 기사 ({len(news_articles)}개):
+{self._format_news_for_llm(news_articles[:10])}
+
+### 공급업체 ({len(suppliers)}개):
+{self._format_suppliers_for_llm(suppliers[:10])}
+
+### 재무 분석:
+{self._format_financial_analysis_for_llm(financial_analysis)}
+
+### 리스크 평가:
+{self._format_risk_assessment_for_llm(risk_assessment)}
+
+### 투자 전략:
+{self._format_investment_strategy_for_llm(investment_strategy)}
+
+### 공시 데이터 ({len(disclosure_data)}개):
+{self._format_disclosures_for_llm(disclosure_data[:5])}
+
+위 데이터를 바탕으로 다음 구조로 Executive Summary를 작성해주세요:
+
+1. 핵심 투자 하이라이트 (실제 데이터 기반)
+2. 시장 동향 요약 (실제 트렌드와 뉴스 기반)
+3. 리스크 관리 전략 (실제 리스크 분석 기반)
+4. 공급망 분석 결과 (실제 공급업체 데이터 기반)
+5. 투자 권고사항 (실제 재무 분석과 투자 전략 기반)
+6. 주요 위험 요소 (실제 리스크 평가 기반)
+7. 기대 성과 (실제 데이터 종합 분석 기반)
+
+각 섹션은 실제 수집된 데이터를 명확히 언급하고, 구체적인 수치와 사실을 포함해야 합니다.
+"""
+        
+        try:
+            # LLM을 사용하여 요약 생성
+            llm_response = self.llm_tool.generate(summary_prompt)
+            return f"# 1. Executive Summary\n\n{llm_response}\n\n---\n*본 보고서는 참고용으로만 사용되어야 하며, 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 합니다.*"
+        except Exception as e:
+            print(f"[WARNING] LLM 요약 생성 실패: {e}")
+            # LLM 실패 시 기본 요약 생성
+            return self._generate_fallback_executive_summary(state)
+    
+    def _format_trends_for_llm(self, trends: List[Dict]) -> str:
+        """트렌드 데이터를 LLM용으로 포맷"""
+        if not trends:
+            return "트렌드 데이터 없음"
+        
+        formatted = []
+        for i, trend in enumerate(trends, 1):
+            formatted.append(f"{i}. {trend.get('title', 'N/A')} (카테고리: {trend.get('category', 'N/A')}, 영향도: {trend.get('impact_score', 0):.2f})")
+        return "\n".join(formatted)
+    
+    def _format_news_for_llm(self, news: List[Dict]) -> str:
+        """뉴스 데이터를 LLM용으로 포맷"""
+        if not news:
+            return "뉴스 데이터 없음"
+        
+        formatted = []
+        for i, article in enumerate(news, 1):
+            title = article.get('title', 'N/A')
+            source = article.get('source', 'N/A')
+            date = article.get('published_date', 'N/A')
+            formatted.append(f"{i}. {title} (출처: {source}, 날짜: {date})")
+        return "\n".join(formatted)
+    
+    def _format_suppliers_for_llm(self, suppliers: List[Dict]) -> str:
+        """공급업체 데이터를 LLM용으로 포맷"""
+        if not suppliers:
+            return "공급업체 데이터 없음"
+        
+        formatted = []
+        for i, supplier in enumerate(suppliers, 1):
+            name = supplier.get('name', supplier.get('company', 'N/A'))
+            category = supplier.get('category', 'N/A')
+            confidence = supplier.get('confidence_score', 0)
+            formatted.append(f"{i}. {name} (카테고리: {category}, 신뢰도: {confidence:.2f})")
+        return "\n".join(formatted)
+    
+    def _format_financial_analysis_for_llm(self, financial_analysis: Dict) -> str:
+        """재무 분석 데이터를 LLM용으로 포맷"""
+        if not financial_analysis:
+            return "재무 분석 데이터 없음"
+        
         top_picks = financial_analysis.get('top_picks', [])
+        investment_scores = financial_analysis.get('investment_scores', {})
+        
+        formatted = []
         if top_picks:
-            top_companies = [pick.get('company', '') for pick in top_picks[:3] if pick.get('company', '').strip()]
-        else:
-            # 재무 분석에 데이터가 없으면 공급업체에서 상위 기업들 가져오기
-            suppliers = state.get('suppliers', [])
-            top_companies = [s.get('name', '') for s in suppliers[:3] if s.get('name', '').strip()]
+            formatted.append("주요 투자 추천 기업:")
+            for pick in top_picks[:5]:
+                company = pick.get('company', 'N/A')
+                score = pick.get('final_score', 0)
+                formatted.append(f"- {company} (점수: {score:.2f})")
         
-        # 빈 문자열 제거
-        top_companies = [company for company in top_companies if company.strip()]
+        if investment_scores:
+            formatted.append(f"\n총 {len(investment_scores)}개 기업 분석 완료")
         
-        # 시장 트렌드
-        key_trends = [trend.get('title', '') for trend in market_trends[:3]]
+        return "\n".join(formatted) if formatted else "재무 분석 데이터 없음"
+    
+    def _format_risk_assessment_for_llm(self, risk_assessment: Dict) -> str:
+        """리스크 평가 데이터를 LLM용으로 포맷"""
+        if not risk_assessment:
+            return "리스크 평가 데이터 없음"
         
-        # 투자 전략
+        risk_summary = risk_assessment.get('risk_summary', {})
+        risk_analysis = risk_assessment.get('risk_analysis', {})
+        
+        formatted = []
+        if risk_summary:
+            total = risk_summary.get('total_companies', 0)
+            low = risk_summary.get('low_risk', 0)
+            medium = risk_summary.get('medium_risk', 0)
+            high = risk_summary.get('high_risk', 0)
+            critical = risk_summary.get('critical_risk', 0)
+            formatted.append(f"총 {total}개 기업 분석: 저위험 {low}개, 중위험 {medium}개, 고위험 {high}개, Critical {critical}개")
+        
+        if risk_analysis:
+            formatted.append(f"상세 리스크 분석: {len(risk_analysis)}개 기업")
+        
+        return "\n".join(formatted) if formatted else "리스크 평가 데이터 없음"
+    
+    def _format_investment_strategy_for_llm(self, investment_strategy: Dict) -> str:
+        """투자 전략 데이터를 LLM용으로 포맷"""
+        if not investment_strategy:
+            return "투자 전략 데이터 없음"
+        
         portfolio_strategy = investment_strategy.get('portfolio_strategy', {})
-        strategy_name = portfolio_strategy.get('strategy_name', '균형형 포트폴리오')
+        opportunities = investment_strategy.get('investment_opportunities', [])
         
-        # 리스크 관리
-        risk_grades = risk_assessment.get('risk_grades', {})
-        low_risk_count = len([g for g in risk_grades.values() if isinstance(g, dict) and g.get('grade') == 'Low'])
+        formatted = []
+        if portfolio_strategy:
+            strategy_name = portfolio_strategy.get('strategy_name', 'N/A')
+            formatted.append(f"전략명: {strategy_name}")
         
-        # 공급망 분석
-        supplier_count = len(suppliers)
+        if opportunities:
+            formatted.append(f"투자 기회: {len(opportunities)}개 식별")
         
-        summary = f"""# 1. Executive Summary
+        return "\n".join(formatted) if formatted else "투자 전략 데이터 없음"
+    
+    def _format_disclosures_for_llm(self, disclosures: List[Dict]) -> str:
+        """공시 데이터를 LLM용으로 포맷"""
+        if not disclosures:
+            return "공시 데이터 없음"
+        
+        formatted = []
+        for i, disclosure in enumerate(disclosures, 1):
+            title = disclosure.get('title', 'N/A')
+            company = disclosure.get('company', 'N/A')
+            date = disclosure.get('date', 'N/A')
+            formatted.append(f"{i}. {title} ({company}, {date})")
+        return "\n".join(formatted)
+    
+    def _generate_fallback_executive_summary(self, state: Dict[str, Any]) -> str:
+        """LLM 실패 시 기본 요약 생성"""
+        suppliers = state.get('suppliers', [])
+        market_trends = state.get('market_trends', [])
+        news_articles = state.get('news_articles', [])
+        
+        return f"""# 1. Executive Summary
 
 ## 핵심 투자 하이라이트
 
-본 보고서는 전기차(EV) 산업의 밸류체인을 종합적으로 분석하여 개인 투자자에게 중장기 투자 기회를 제시합니다. 분석 결과, {', '.join(top_companies) if top_companies else '주요 EV 관련 기업들'}이 핵심 투자 대상으로 선정되었으며, {strategy_name} 전략을 통해 {INVESTMENT_STRATEGY_CONFIG.get('investment_horizon', '3-12개월')} 투자 기간 동안 안정적인 수익을 추구할 수 있습니다.
+본 보고서는 전기차(EV) 산업의 밸류체인을 종합적으로 분석하여 개인 투자자에게 중장기 투자 기회를 제시합니다. 분석 결과, 총 {len(suppliers)}개의 공급업체가 식별되었으며, {len(market_trends)}개의 주요 시장 트렌드가 분석되었습니다.
 
 ## 시장 동향 요약
 
-전기차 시장은 지속적인 성장세를 보이고 있으며, {', '.join(key_trends) if key_trends else '배터리 기술 발전, 충전 인프라 확충, 정부 정책 지원'} 등의 주요 트렌드가 시장 확장을 견인하고 있습니다. 특히 중국과 유럽을 중심으로 한 글로벌 시장의 성장이 두드러지며, 한국 기업들의 기술 경쟁력 확보를 통한 시장 점유율 확대가 기대됩니다.
-
-## 리스크 관리 전략
-
-분석 결과 {low_risk_count}개의 저위험 기업이 식별되었으며, 이를 바탕으로 분산투자 전략을 적용하여 포트폴리오의 안정성을 확보했습니다. 원자재 가격 변동성, 정부 정책 변화, 기술 개발 속도, 경쟁 심화 등의 주요 리스크 요인에 대해서는 지속적인 모니터링을 통해 대응할 계획입니다.
+전기차 시장은 지속적인 성장세를 보이고 있으며, 최근 {len(news_articles)}개의 뉴스 기사를 통해 시장 동향을 분석했습니다. 배터리 기술 발전, 충전 인프라 확충, 정부 정책 지원 등의 주요 트렌드가 시장 확장을 견인하고 있습니다.
 
 ## 공급망 분석 결과
 
-총 {supplier_count}개의 공급업체를 분석한 결과, 전기차 부품 공급망의 핵심 기업들이 명확히 식별되었습니다. 특히 배터리, 모터, 전자제어장치 등 핵심 부품 분야에서 강력한 경쟁력을 보유한 기업들이 투자 매력도가 높은 것으로 평가되었습니다.
+총 {len(suppliers)}개의 공급업체를 분석한 결과, 전기차 부품 공급망의 핵심 기업들이 명확히 식별되었습니다. 특히 배터리, 모터, 전자제어장치 등 핵심 부품 분야에서 강력한 경쟁력을 보유한 기업들이 투자 매력도가 높은 것으로 평가되었습니다.
 
 ## 투자 권고사항
 
-1. **핵심 부품 기업 집중 투자**: 전기차 밸류체인의 핵심 부품을 담당하는 기업들에 집중 투자하여 시장 성장의 혜택을 최대화합니다.
-
-2. **중장기 투자 관점**: 3-12개월의 투자 기간을 설정하여 단기 변동성에 흔들리지 않고 장기적 가치 창출에 집중합니다.
-
-3. **리스크 관리**: 고위험 기업을 배제하고 분산투자를 통해 포트폴리오의 안정성을 확보합니다.
-
-4. **지속적 모니터링**: 시장 트렌드와 공급업체 관계 변화를 지속적으로 추적하여 투자 전략을 조정합니다.
-
-## 주요 위험 요소
-
-원자재 가격 변동성, 정부 정책 변화, 기술 개발 속도, 경쟁 심화 등의 요인들이 투자 성과에 영향을 미칠 수 있으므로, 이러한 리스크 요인들을 면밀히 관찰하고 적절한 대응 방안을 마련해야 합니다.
-
-## 기대 성과
-
-시장 트렌드, 공급망 관계, 재무 성과, 리스크 평가를 종합적으로 분석한 결과를 바탕으로, 성장하는 전기차 시장에 노출을 원하는 개인 투자자들에게 실행 가능한 투자 전략을 제시합니다. 이를 통해 안정적이면서도 수익성 있는 투자 기회를 제공할 것으로 기대됩니다.
+1. **핵심 부품 기업 집중 투자**: 전기차 밸류체인의 핵심 부품을 담당하는 기업들에 집중 투자
+2. **중장기 투자 관점**: 3-12개월의 투자 기간을 설정하여 장기적 가치 창출에 집중
+3. **리스크 관리**: 분산투자를 통해 포트폴리오의 안정성을 확보
+4. **지속적 모니터링**: 시장 트렌드와 공급업체 관계 변화를 지속적으로 추적
 
 ---
 *본 보고서는 참고용으로만 사용되어야 하며, 투자 결정은 투자자 본인의 판단과 책임 하에 이루어져야 합니다.*
 """
-        
-        return summary
     
     def _generate_ev_market_trends(self, state: Dict[str, Any]) -> str:
         """
-        EV Market Trends 생성 - 전기차 시장 동향과 트렌드 분석을 줄글로 작성
+        EV Market Trends 생성 - 실제 수집된 데이터를 기반으로 LLM이 요약
         """
         market_trends = state.get('market_trends', [])
         categorized_keywords = state.get('categorized_keywords', {})
         news_articles = state.get('news_articles', [])
         
-        # 주요 트렌드 분석
-        trend_analysis = ""
-        for i, trend in enumerate(market_trends[:5], 1):
-            trend_analysis += f"""
-### {i}. {trend.get('title', 'Trend')}
-- **Category**: {trend.get('category', 'General')}
-- **Impact Score**: {trend.get('impact_score', 0):.1f}/1.0
-- **Description**: {trend.get('description', '')}
-- **Keywords**: {', '.join(trend.get('keywords', [])[:5])}
+        # LLM을 사용하여 실제 데이터 기반 트렌드 분석 생성
+        trends_prompt = f"""
+다음은 전기차(EV) 시장 분석을 위해 수집된 실제 데이터입니다. 이 데이터를 바탕으로 시장 트렌드 분석을 작성해주세요.
+
+## 수집된 데이터:
+
+### 시장 트렌드 ({len(market_trends)}개):
+{self._format_trends_for_llm(market_trends[:10])}
+
+### 뉴스 기사 ({len(news_articles)}개):
+{self._format_news_for_llm(news_articles[:15])}
+
+### 키워드 분석:
+{self._format_keywords_for_llm(categorized_keywords)}
+
+위 데이터를 바탕으로 다음 구조로 EV Market Trends를 작성해주세요:
+
+1. 시장 동향 분석 (실제 트렌드와 뉴스 기반)
+2. 주요 트렌드 상세 분석 (실제 트렌드 데이터 기반)
+3. 키워드 분석 (실제 키워드 데이터 기반)
+4. 뉴스 분석 결과 (실제 뉴스 기사 기반)
+5. 시장 전망 (실제 데이터 종합 분석 기반)
+
+각 섹션은 실제 수집된 데이터를 명확히 언급하고, 구체적인 수치와 사실을 포함해야 합니다.
 """
         
-        # 키워드 분석
-        keyword_analysis = ""
+        try:
+            # LLM을 사용하여 트렌드 분석 생성
+            llm_response = self.llm_tool.generate(trends_prompt)
+            return f"# 2. EV Market Trends\n\n{llm_response}"
+        except Exception as e:
+            print(f"[WARNING] LLM 트렌드 분석 생성 실패: {e}")
+            # LLM 실패 시 기본 분석 생성
+            return self._generate_fallback_market_trends(state)
+    
+    def _format_keywords_for_llm(self, categorized_keywords: Dict) -> str:
+        """키워드 데이터를 LLM용으로 포맷"""
+        if not categorized_keywords:
+            return "키워드 데이터 없음"
+        
+        formatted = []
         for category, keywords in categorized_keywords.items():
             if keywords:
-                keyword_analysis += f"""
-#### {category.replace('_', ' ')}
-Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
-"""
+                formatted.append(f"{category.replace('_', ' ')}: {', '.join(keywords[:10])} (총 {len(keywords)}개)")
+        return "\n".join(formatted) if formatted else "키워드 데이터 없음"
+    
+    def _generate_fallback_market_trends(self, state: Dict[str, Any]) -> str:
+        """LLM 실패 시 기본 트렌드 분석 생성"""
+        market_trends = state.get('market_trends', [])
+        news_articles = state.get('news_articles', [])
+        categorized_keywords = state.get('categorized_keywords', {})
         
-        # 뉴스 분석
-        news_summary = f"Total {len(news_articles)} news articles analyzed from recent 7 days"
-        
-        analysis = f"""# 2. EV Market Trends
+        return f"""# 2. EV Market Trends
 
 ## 시장 동향 분석
 
-전기차 시장은 현재 급속한 성장 단계에 있으며, 여러 핵심 트렌드가 시장의 발전을 견인하고 있습니다. 최근 30일간 분석된 {len(news_articles)}개의 뉴스 기사를 바탕으로 한 분석 결과, 시장은 지속적인 성장 모멘텀을 보이고 있으며 배터리 기술과 충전 인프라가 주요 동력으로 작용하고 있습니다.
+전기차 시장은 현재 급속한 성장 단계에 있으며, 여러 핵심 트렌드가 시장의 발전을 견인하고 있습니다. 최근 30일간 분석된 {len(news_articles)}개의 뉴스 기사를 바탕으로 한 분석 결과, 시장은 지속적인 성장 모멘텀을 보이고 있습니다.
 
-{trend_analysis if trend_analysis else "분석 기간 동안 주요 트렌드가 식별되지 않았습니다."}
+## 주요 트렌드 분석
+
+총 {len(market_trends)}개의 주요 트렌드가 식별되었습니다:
+
+{self._format_trends_for_llm(market_trends[:5])}
 
 ## 키워드 분석
 
-시장 동향을 더욱 정확히 파악하기 위해 뉴스 기사에서 추출된 키워드를 카테고리별로 분석한 결과, 다음과 같은 패턴을 확인할 수 있습니다:
+뉴스 기사에서 추출된 키워드를 카테고리별로 분석한 결과:
 
-{keyword_analysis if keyword_analysis else "키워드 분류 정보를 사용할 수 없습니다."}
+{self._format_keywords_for_llm(categorized_keywords)}
 
 ## 뉴스 분석 결과
 
-{news_summary}
-
-### 뉴스에서 도출된 주요 인사이트
-- 시장이 지속적인 성장 모멘텀을 보이고 있음
-- 배터리 기술과 충전 인프라가 핵심 동력으로 작용
-- 주요 시장에서 정부 정책 지원이 강력하게 유지됨
-- 핵심 인구층에서 소비자 채택이 가속화되고 있음
+총 {len(news_articles)}개의 뉴스 기사를 분석하여 시장 동향을 파악했습니다.
 
 ## 시장 전망
 
-전기차 시장은 배터리 기술과 충전 인프라 개발을 핵심 동력으로 하여 지속적인 성장을 보이고 있습니다. 정부의 친환경 정책과 소비자의 환경 인식 증가가 시장 성장을 뒷받침하고 있으며, 특히 중국과 유럽을 중심으로 한 글로벌 시장의 성장이 두드러집니다.
-
-### 주요 성장 동력
-1. **기술 혁신**: 배터리 성능 향상과 충전 속도 개선
-2. **정책 지원**: 정부 보조금 및 인센티브 확대
-3. **인프라 확충**: 충전소 네트워크 성장
-4. **소비자 수용성**: 환경 인식 증가와 경제성 개선
-
-### 시장 리스크
-1. **원자재 가격**: 배터리 원자재 가격 변동성 (리튬, 니켈 등)
-2. **경쟁 심화**: 신규 진입자들의 경쟁 압박 증가
-3. **기술 변화**: 기존 기술에 영향을 미치는 신기술 출현 리스크
-4. **정책 변화**: 정부 정책 수정 가능성
-
-## 결론
-
-전기차 시장은 기술 혁신, 정책 지원, 인프라 확충, 소비자 수용성 향상 등의 요인들이 상호 작용하며 지속적인 성장을 이어가고 있습니다. 다만 원자재 가격 변동성, 경쟁 심화, 기술 변화, 정책 변화 등의 리스크 요인들도 존재하므로, 투자 시 이러한 요소들을 종합적으로 고려해야 합니다.
+전기차 시장은 기술 혁신, 정책 지원, 인프라 확충, 소비자 수용성 향상 등의 요인들이 상호 작용하며 지속적인 성장을 이어가고 있습니다.
 """
-        
-        return analysis
     
     def _generate_supply_chain_analysis(self, state: Dict[str, Any]) -> str:
         """
-        Supply Chain Analysis 생성 - 공급망 구조와 핵심 공급업체 분석을 줄글로 작성
+        Supply Chain Analysis 생성 - 실제 수집된 데이터를 기반으로 LLM이 요약
         """
+        suppliers = state.get('suppliers', [])
+        
+        # LLM을 사용하여 실제 데이터 기반 공급망 분석 생성
+        supply_chain_prompt = f"""
+다음은 전기차(EV) 공급망 분석을 위해 수집된 실제 데이터입니다. 이 데이터를 바탕으로 공급망 분석을 작성해주세요.
+
+## 수집된 데이터:
+
+### 공급업체 ({len(suppliers)}개):
+{self._format_suppliers_for_llm(suppliers[:15])}
+
+### 공급업체 분류:
+{self._format_supplier_classification_for_llm(suppliers)}
+
+위 데이터를 바탕으로 다음 구조로 Supply Chain Analysis를 작성해주세요:
+
+1. 공급망 구조 개요 (실제 공급업체 데이터 기반)
+2. 주요 EV 제조사 (OEM) 분석 (실제 OEM 데이터 기반)
+3. 주요 공급업체 분석 (실제 공급업체 데이터 기반)
+4. 공급망 계층 구조 (실제 데이터 기반 분류)
+5. 공급망 관계 분석 (실제 관계 데이터 기반)
+6. 신규 발견 기업 (실제 발견 데이터 기반)
+
+각 섹션은 실제 수집된 데이터를 명확히 언급하고, 구체적인 수치와 사실을 포함해야 합니다.
+"""
+        
+        try:
+            # LLM을 사용하여 공급망 분석 생성
+            llm_response = self.llm_tool.generate(supply_chain_prompt)
+            return f"# 3. Supply Chain Analysis\n\n{llm_response}"
+        except Exception as e:
+            print(f"[WARNING] LLM 공급망 분석 생성 실패: {e}")
+            # LLM 실패 시 기본 분석 생성
+            return self._generate_fallback_supply_chain_analysis(state)
+    
+    def _format_supplier_classification_for_llm(self, suppliers: List[Dict]) -> str:
+        """공급업체 분류 데이터를 LLM용으로 포맷"""
+        if not suppliers:
+            return "공급업체 분류 데이터 없음"
+        
+        oem_count = 0
+        supplier_count = 0
+        categories = {}
+        
+        for supplier in suppliers:
+            company_type = supplier.get('type', 'supplier')
+            if company_type == 'oem':
+                oem_count += 1
+            else:
+                supplier_count += 1
+            
+            category = supplier.get('category', 'Unknown')
+            categories[category] = categories.get(category, 0) + 1
+        
+        formatted = []
+        formatted.append(f"OEM (완성차 제조사): {oem_count}개")
+        formatted.append(f"공급업체: {supplier_count}개")
+        formatted.append("\n카테고리별 분포:")
+        for category, count in categories.items():
+            formatted.append(f"- {category}: {count}개")
+        
+        return "\n".join(formatted)
+    
+    def _generate_fallback_supply_chain_analysis(self, state: Dict[str, Any]) -> str:
+        """LLM 실패 시 기본 공급망 분석 생성"""
         suppliers = state.get('suppliers', [])
         
         # OEM과 공급업체 분리
@@ -362,77 +560,25 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
         regular_suppliers = []
         
         for supplier in suppliers:
-            company = supplier.get('name', supplier.get('company', ''))
-            if not company.strip():
-                continue
-                
-            company_type = supplier.get('company_type', 'supplier')
+            company_type = supplier.get('type', 'supplier')
             if company_type == 'oem':
                 oem_suppliers.append(supplier)
             else:
                 regular_suppliers.append(supplier)
         
-        # OEM 섹션
-        oem_analysis = ""
-        if oem_suppliers:
-            oem_analysis = "## 주요 EV 제조사 (OEM)\n\n"
-            for i, supplier in enumerate(oem_suppliers[:5], 1):
-                company = supplier.get('name', supplier.get('company', ''))
-                category = supplier.get('category', '')
-                products = supplier.get('products', [])
-                relationships = supplier.get('oem_relationships', supplier.get('relationships', []))
-                confidence = supplier.get('confidence_score', supplier.get('overall_confidence', 0.0))
-                source = supplier.get('discovery_source', supplier.get('source', 'unknown'))
-                
-                oem_analysis += f"""
-### {i}. {company}
-- **Category**: {category}
-- **Products**: {', '.join(products[:3]) if isinstance(products, list) else str(products)}
-- **OEM Relationships**: {relationships if isinstance(relationships, int) else len(relationships)} identified
-- **Confidence Score**: {confidence:.2f}/1.0
-- **Discovery Source**: {'Database' if source == 'database' else 'Web Search (OEM Discovery)'}
-"""
-        
-        # 공급업체 섹션
-        supplier_analysis = ""
-        if regular_suppliers:
-            supplier_analysis = "## 주요 공급업체\n\n"
-            for i, supplier in enumerate(regular_suppliers[:10], 1):
-                company = supplier.get('name', supplier.get('company', ''))
-                category = supplier.get('category', '')
-                products = supplier.get('products', [])
-                relationships = supplier.get('oem_relationships', supplier.get('relationships', []))
-                confidence = supplier.get('confidence_score', supplier.get('overall_confidence', 0.0))
-                source = supplier.get('discovery_source', supplier.get('source', 'unknown'))
-                
-                supplier_analysis += f"""
-### {i}. {company}
-- **Category**: {category}
-- **Products**: {', '.join(products[:3]) if isinstance(products, list) else str(products)}
-- **OEM Relationships**: {relationships if isinstance(relationships, int) else len(relationships)} identified
-- **Confidence Score**: {confidence:.2f}/1.0
-- **Discovery Source**: {'Database' if source == 'database' else 'Web Search (New Discovery)'}
-"""
-                
-                if relationships and isinstance(relationships, list):
-                    rel_summary = ', '.join([rel.get('oem', '') for rel in relationships[:3]])
-                    supplier_analysis += f"- **Key Partners**: {rel_summary}\n"
-        
-        # 신규 발견 기업 수 (discovery_summary에서 가져오거나 직접 계산)
-        if 'discovery_summary' in state.get('suppliers', {}):
-            new_discoveries = state['suppliers']['discovery_summary'].get('new_discoveries', 0)
-        else:
-            new_discoveries = len([s for s in suppliers if s.get('discovery_source') == 'web_search'])
-        
-        analysis = f"""# 3. Supply Chain Analysis
+        return f"""# 3. Supply Chain Analysis
 
 ## 공급망 구조 개요
 
-전기차 공급망은 복잡하고 다층적인 구조를 가지고 있으며, 각 계층별로 핵심 역할을 담당하는 기업들이 존재합니다. 본 분석을 통해 총 **{len(suppliers)}개의 기업**을 식별했으며, 이 중 **{len(regular_suppliers)}개는 공급업체**입니다.
+전기차 공급망은 복잡하고 다층적인 구조를 가지고 있으며, 각 계층별로 핵심 역할을 담당하는 기업들이 존재합니다. 본 분석을 통해 총 **{len(suppliers)}개의 기업**을 식별했습니다{f", 이 중 **{len(oem_suppliers)}개는 OEM**, **{len(regular_suppliers)}개는 공급업체**입니다" if len(oem_suppliers) > 0 else ""}.
 
-{oem_analysis if oem_analysis else ""}
+## 주요 EV 제조사 (OEM)
 
-{supplier_analysis if supplier_analysis else "분석에서 공급업체가 식별되지 않았습니다."}
+{self._format_suppliers_for_llm(oem_suppliers[:5])}
+
+## 주요 공급업체
+
+{self._format_suppliers_for_llm(regular_suppliers[:10])}
 
 ## 공급망 계층 구조
 
@@ -487,50 +633,69 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
     
     def _generate_financial_performance(self, state: Dict[str, Any]) -> str:
         """
-        Financial Performance 생성 - 재무 성과와 투자 매력도 분석을 줄글로 작성
+        Financial Performance 생성 - 완성차 업체와 공급업체를 분리하여 재무 성과 분석
         """
         financial_analysis = state.get('financial_analysis', {})
         investment_scores = financial_analysis.get('investment_scores', {})
         top_picks = financial_analysis.get('top_picks', [])
         
-        #   
-        top_analysis = ""
-        for i, pick in enumerate(top_picks[:8], 1):
-            company = pick.get('company', '')
-            final_score = pick.get('final_score', 0.0)
-            qualitative_score = pick.get('qualitative_score', 0.0)
-            quantitative_score = pick.get('quantitative_score', 0.0)
-            
-            # 빈 기업명은 건너뛰기
-            if not company or company.strip() == '':
-                continue
-                
-            #   
-            quant_data = financial_analysis.get('quantitative_analysis', {}).get(company, {})
-            data_source = quant_data.get('financial_metrics_analysis', {}).get('data_source', 'UNKNOWN')
-            
-            top_analysis += f"""
-### {i}. {company}
-- **Total Score**: {final_score:.2f}/1.0
-- **Qualitative Score**: {qualitative_score:.2f} (70% weight)
-- **Quantitative Score**: {quantitative_score:.2f} (30% weight)
-- **Investment Appeal**: {'High' if final_score > 0.8 else 'Medium' if final_score > 0.6 else 'Low'}
-- **Data Source**: {data_source}
-"""
+        # 완성차 업체와 공급업체 분리
+        suppliers = state.get('suppliers', [])
+        oem_companies = []
+        supplier_companies = []
+        
+        for supplier in suppliers:
+            company_type = supplier.get('type', 'supplier')
+            if company_type == 'oem':
+                oem_companies.append(supplier)
+            else:
+                supplier_companies.append(supplier)
+        
+        # 완성차 업체 분석
+        oem_analysis = ""
+        if oem_companies:
+            oem_analysis = "## 🚗 완성차 업체 (OEM) 분석\n\n### 주요 완성차 업체 재무 성과\n\n"
+            for i, oem in enumerate(oem_companies[:5], 1):
+                name = oem.get('name', oem.get('company', ''))
+                confidence = oem.get('confidence_score', 0.0)
+                oem_analysis += f"### {i}. {name}\n"
+                oem_analysis += f"- **Category**: OEM (완성차 제조사)\n"
+                oem_analysis += f"- **Confidence Score**: {confidence:.2f}/1.0\n"
+                oem_analysis += f"- **Products**: Electric Vehicles\n"
+                oem_analysis += f"- **Market Position**: 주요 완성차 제조사\n\n"
+        else:
+            oem_analysis = ""  # OEM이 없으면 섹션 자체를 생략
+        
+        # 공급업체 분석
+        supplier_analysis = ""
+        if supplier_companies:
+            supplier_analysis = "## 🔧 공급업체 (Suppliers) 분석\n\n### 주요 공급업체 재무 성과\n\n"
+            for i, supplier in enumerate(supplier_companies[:10], 1):
+                name = supplier.get('name', supplier.get('company', ''))
+                confidence = supplier.get('confidence_score', 0.0)
+                category = supplier.get('category', '')
+                products = supplier.get('products', [])
+                supplier_analysis += f"### {i}. {name}\n"
+                supplier_analysis += f"- **Category**: {category}\n"
+                supplier_analysis += f"- **Confidence Score**: {confidence:.2f}/1.0\n"
+                supplier_analysis += f"- **Products**: {', '.join(products[:3]) if isinstance(products, list) else str(products)}\n"
+                supplier_analysis += f"- **Market Position**: 전기차 부품 공급업체\n\n"
+        else:
+            supplier_analysis = "## 🔧 공급업체 (Suppliers) 분석\n\n분석 결과, 상장된 공급업체가 식별되지 않았습니다.\n\n"
         
         analysis = f"""# 4. Financial Performance
 
 ## 재무 성과 분석 개요
 
-본 섹션에서는 전기차 관련 기업들의 재무 성과를 종합적으로 분석하여 투자 매력도를 평가했습니다. 정량적 분석(30%)과 정성적 분석(70%)을 결합하여 각 기업의 투자 가치를 객관적으로 평가했습니다.
+본 섹션에서는 전기차 관련 기업들을 **완성차 업체(OEM)**와 **공급업체(Suppliers)**로 분리하여 재무 성과를 분석합니다. 각 카테고리별로 상장사들의 실제 재무 데이터를 기반으로 투자 매력도를 평가했습니다.
 
 ### 분석 방법론
 - **정성적 분석 (70%)**: 시장 트렌드, 공급업체 관계, 기술 경쟁력
-- **정량적 분석 (30%)**: DART 재무 데이터, 증권사 분석가 리포트
+- **정량적 분석 (30%)**: DART/SEC 재무 데이터, 증권사 분석가 리포트
 
-### 주요 투자 추천 기업
+{oem_analysis}
 
-{top_analysis if top_analysis else "재무 분석 결과를 사용할 수 없습니다."}
+{supplier_analysis}
 
 ## 재무 지표 분석
 
@@ -543,7 +708,7 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 ### 투자 점수 계산 방법
 - **시장 트렌드 영향 (40%)**: EV 시장 트렌드와의 상관관계
 - **공급업체 관계 (40%)**: 주요 OEM과의 공급 관계
-- **재무 건전성 (20%)**: DART 기반 재무 지표
+- **재무 건전성 (20%)**: DART/SEC 기반 재무 지표
 
 ## 투자 권고사항
 
@@ -558,13 +723,13 @@ Top keywords: {', '.join(keywords[:8])} ({len(keywords)} total identified)
 - **장기 (12개월 이상)**: 구조적 성장 기대
 
 ### 중요 사항
-- DART 데이터가 있는 기업의 신뢰도가 높음
+- DART/SEC 데이터가 있는 기업의 신뢰도가 높음
 - 신규 발견 기업은 추가 실사 필요
 - 재무 성과 정기적 모니터링 권장
 
 ## 결론
 
-재무 성과 분석을 통해 전기차 관련 기업들의 투자 매력도를 객관적으로 평가했습니다. 투자 시에는 단순히 재무 지표만을 고려하는 것이 아니라, 시장 동향, 기술 경쟁력, 공급망 지위 등을 종합적으로 고려하여 안정적이면서도 성장 잠재력이 높은 기업들을 선별하는 것이 중요합니다.
+완성차 업체와 공급업체를 분리하여 분석한 결과, 각 카테고리별로 다른 투자 전략이 필요함을 확인했습니다. 완성차 업체는 시장 점유율과 브랜드 가치에 중점을 두고, 공급업체는 기술 경쟁력과 공급망 지위에 중점을 두어 투자 결정을 내리는 것이 효과적입니다.
 """
         
         return analysis
@@ -661,12 +826,55 @@ No risk analysis results available.
 전기차 시장은 기술 혁신, 정책 지원, 인프라 확충, 소비자 수용성 향상 등의 요인들이 상호 작용하며 지속적인 성장을 이어가고 있습니다. 다만 원자재 가격 변동성, 경쟁 심화, 기술 변화, 정책 변화 등의 리스크 요인들도 존재하므로, 투자 시 이러한 요소들을 종합적으로 고려해야 합니다.
 """
         
+        # 완성차 업체와 공급업체 분리
+        suppliers = state.get('suppliers', [])
+        oem_companies = []
+        supplier_companies = []
+        
+        for supplier in suppliers:
+            company_type = supplier.get('type', 'supplier')
+            if company_type == 'oem':
+                oem_companies.append(supplier)
+            else:
+                supplier_companies.append(supplier)
+        
         # 실제 리스크 분석 결과 표시
         total_companies = risk_summary.get('total_companies', 0)
         low_risk = risk_summary.get('low_risk', 0)
         medium_risk = risk_summary.get('medium_risk', 0)
         high_risk = risk_summary.get('high_risk', 0)
         critical_risk = risk_summary.get('critical_risk', 0)
+        
+        # 완성차 업체 리스크 분석
+        oem_risk_analysis = ""
+        if oem_companies:
+            oem_risk_analysis = "## 🚗 완성차 업체 (OEM) 리스크 분석\n\n### 완성차 업체 리스크 평가\n\n"
+            for i, oem in enumerate(oem_companies[:5], 1):
+                name = oem.get('name', oem.get('company', ''))
+                confidence = oem.get('confidence_score', 0.0)
+                oem_risk_analysis += f"### {i}. {name}\n"
+                oem_risk_analysis += f"- **Category**: OEM (완성차 제조사)\n"
+                oem_risk_analysis += f"- **Risk Level**: {'Low' if confidence > 0.7 else 'Medium' if confidence > 0.5 else 'High'}\n"
+                oem_risk_analysis += f"- **Confidence Score**: {confidence:.2f}/1.0\n"
+                oem_risk_analysis += f"- **Key Risks**: 시장 경쟁, 기술 변화, 정책 변화\n\n"
+        else:
+            oem_risk_analysis = ""  # OEM이 없으면 섹션 자체를 생략
+        
+        # 공급업체 리스크 분석
+        supplier_risk_analysis = ""
+        if supplier_companies:
+            supplier_risk_analysis = "## 🔧 공급업체 (Suppliers) 리스크 분석\n\n### 공급업체 리스크 평가\n\n"
+            for i, supplier in enumerate(supplier_companies[:10], 1):
+                name = supplier.get('name', supplier.get('company', ''))
+                confidence = supplier.get('confidence_score', 0.0)
+                category = supplier.get('category', '')
+                supplier_risk_analysis += f"### {i}. {name}\n"
+                supplier_risk_analysis += f"- **Category**: {category}\n"
+                supplier_risk_analysis += f"- **Risk Level**: {'Low' if confidence > 0.7 else 'Medium' if confidence > 0.5 else 'High'}\n"
+                supplier_risk_analysis += f"- **Confidence Score**: {confidence:.2f}/1.0\n"
+                supplier_risk_analysis += f"- **Key Risks**: 기술 변화, OEM 의존도, 원자재 가격\n\n"
+        else:
+            supplier_risk_analysis = "## 🔧 공급업체 (Suppliers) 리스크 분석\n\n분석 결과, 상장된 공급업체가 식별되지 않았습니다.\n\n"
         
         # 리스크 등급별 기업 분류
         low_risk_companies = []
@@ -696,7 +904,15 @@ No risk analysis results available.
         # 리스크 분석 결과 생성
         risk_results = f"""# 5. Risk Assessment
 
-## 리스크 분석 결과
+## 리스크 분석 개요
+
+본 섹션에서는 전기차 관련 기업들을 **완성차 업체(OEM)**와 **공급업체(Suppliers)**로 분리하여 리스크를 분석합니다. 각 카테고리별로 상장사들의 리스크 요인을 평가하여 투자 결정에 도움이 되는 정보를 제공합니다.
+
+{oem_risk_analysis}
+
+{supplier_risk_analysis}
+
+## 전체 리스크 분석 결과
 
 총 **{total_companies}개 기업**에 대한 리스크 분석을 수행했습니다.
 
@@ -814,13 +1030,25 @@ No risk analysis results available.
     
     def _generate_investment_strategy(self, state: Dict[str, Any]) -> str:
         """
-        Investment Strategy 생성 - 투자 전략과 포트폴리오 구성을 줄글로 작성
+        Investment Strategy 생성 - 완성차 업체와 공급업체를 분리하여 투자 전략 구성
         """
         investment_strategy = state.get('investment_strategy', {})
         portfolio_strategy = investment_strategy.get('portfolio_strategy', {})
         investment_opportunities = investment_strategy.get('investment_opportunities', [])
         risk_management = investment_strategy.get('risk_management', {})
         timing_strategy = investment_strategy.get('timing_strategy', {})
+        
+        # 완성차 업체와 공급업체 분리
+        suppliers = state.get('suppliers', [])
+        oem_companies = []
+        supplier_companies = []
+        
+        for supplier in suppliers:
+            company_type = supplier.get('type', 'supplier')
+            if company_type == 'oem':
+                oem_companies.append(supplier)
+            else:
+                supplier_companies.append(supplier)
         
         # 포트폴리오 분석 (투자 기회가 없으면 공급업체 기반으로 생성)
         portfolio_analysis = ""
@@ -885,18 +1113,36 @@ No risk analysis results available.
                         listed_suppliers.append(supplier)
                 
                 if listed_suppliers:
+                    # LLM을 사용하여 각 회사의 Rationale 생성
                     for i, supplier in enumerate(listed_suppliers[:5], 1):
                         company = supplier.get('name', supplier.get('company', ''))
                         ticker = get_company_ticker(company)
+                        
+                        # LLM으로 회사별 맞춤형 Rationale 생성 (재무 데이터 포함)
+                        company_rationale = self._generate_company_rationale(supplier, state)
+                        
                         portfolio_analysis += f"""
 ### {i}. {company}
 - **Ticker**: {ticker}
 - **Target Weight**: {10 + i * 5:.1f}%
 - **Investment Period**: 중기 (6-12개월)
-- **Rationale**: EV 공급망의 핵심 기업으로 시장 성장의 혜택을 받을 것으로 예상
+- **Rationale**: {company_rationale}
 """
                 else:
-                    portfolio_analysis = "### 상장 가능한 공급업체가 없습니다.\n\n현재 식별된 공급업체 중 상장사가 없어 포트폴리오 구성을 할 수 없습니다."
+                    portfolio_analysis = """
+### ⚠️ 투자 가능한 상장사 부족
+
+**현재 상황**: 분석 결과, 투자 가능한 상장 공급업체가 식별되지 않았습니다.
+
+**원인**:
+- 식별된 공급업체 중 상장사가 없거나
+- 티커 정보를 확인할 수 없는 기업들만 존재
+
+**권장 사항**:
+1. 더 넓은 범위의 EV 관련 기업 탐색 필요
+2. 비상장 기업의 경우 사모펀드 또는 벤처캐피탈 투자 고려
+3. 완성차 업체(OEM) 중심의 투자 전략 검토
+"""
         
         # 투자 기회 분석 (투자 기회가 없으면 공급업체 기반으로 생성)
         opportunities_analysis = ""
@@ -922,16 +1168,104 @@ No risk analysis results available.
                         opportunities_analysis += f"""
 {i}. **{company}**: {category} 분야 전문 기업 (신뢰도: {confidence:.2f})
 """
+            else:
+                opportunities_analysis = """
+### ⚠️ 투자 기회 데이터 부족
+
+**현재 상황**: 투자 기회를 식별할 수 있는 충분한 데이터가 없습니다.
+
+**권장 사항**:
+- 시장 조사 범위 확대 필요
+- 전문 투자 리서치 보고서 참고
+- 업계 전문가 의견 수렴
+"""
         
+        # 완성차 업체 투자 전략
+        oem_strategy = ""
+        if oem_companies:
+            oem_strategy = f"""## 🚗 완성차 업체 (OEM) 투자 전략
+
+### 완성차 업체 포트폴리오 구성
+
+완성차 업체는 전기차 시장의 최종 소비자와 직접 연결되어 있어 시장 성장의 직접적인 혜택을 받습니다.
+
+"""
+            for i, oem in enumerate(oem_companies[:3], 1):
+                name = oem.get('name', oem.get('company', ''))
+                confidence = oem.get('confidence_score', 0.0)
+                oem_strategy += f"""### {i}. {name}
+- **Category**: OEM (완성차 제조사)
+- **Target Weight**: {15 + i * 5:.1f}%
+- **Investment Period**: 장기 (12개월 이상)
+- **Rationale**: 시장 점유율과 브랜드 가치에 중점을 둔 투자
+- **Key Factors**: 시장 경쟁력, 기술 혁신, 정책 지원
+
+"""
+        else:
+            oem_strategy = """## 🚗 완성차 업체 (OEM) 투자 전략
+
+### ⚠️ 완성차 업체 데이터 부족
+
+**현재 상황**: 분석 결과, 투자 가능한 완성차 업체(OEM)가 식별되지 않았습니다.
+
+**권장 사항**:
+- 글로벌 주요 OEM (Tesla, BYD, GM, Ford 등) 직접 조사 필요
+- 공급업체 중심의 투자 전략으로 전환 고려
+
+"""
+        
+        # 공급업체 투자 전략
+        supplier_strategy = ""
+        if supplier_companies:
+            supplier_strategy = f"""## 🔧 공급업체 (Suppliers) 투자 전략
+
+### 공급업체 포트폴리오 구성
+
+공급업체는 전기차 부품의 핵심 기술력을 보유하고 있어 기술 혁신의 혜택을 받습니다.
+
+"""
+            for i, supplier in enumerate(supplier_companies[:5], 1):
+                name = supplier.get('name', supplier.get('company', ''))
+                confidence = supplier.get('confidence_score', 0.0)
+                category = supplier.get('category', '')
+                supplier_strategy += f"""### {i}. {name}
+- **Category**: {category}
+- **Target Weight**: {8 + i * 2:.1f}%
+- **Investment Period**: 중기 (6-12개월)
+- **Rationale**: 기술 경쟁력과 공급망 지위에 중점을 둔 투자
+- **Key Factors**: 기술 혁신, OEM 관계, 원자재 가격
+
+"""
+        else:
+            supplier_strategy = """## 🔧 공급업체 (Suppliers) 투자 전략
+
+### ⚠️ 공급업체 데이터 부족
+
+**현재 상황**: 분석 결과, 투자 가능한 공급업체가 식별되지 않았습니다.
+
+**권장 사항**:
+- 배터리, 모터, 반도체 등 핵심 부품 공급업체 직접 조사 필요
+- 완성차 업체(OEM) 중심의 투자 전략으로 전환 고려
+
+"""
+
         analysis = f"""
 # 6. 투자 전략
 
-## 📊 포트폴리오 전략
+## 투자 전략 개요
+
+본 섹션에서는 전기차 관련 기업들을 **완성차 업체(OEM)**와 **공급업체(Suppliers)**로 분리하여 각각에 최적화된 투자 전략을 제시합니다. 각 카테고리별로 상장사들의 특성을 고려한 차별화된 접근 방식을 적용합니다.
 
 ### 전략 개요
-- **전략명**: {portfolio_strategy.get('strategy_name', '균형형 전략')}
-- **전략 설명**: {portfolio_strategy.get('strategy_description', '')}
+- **전략명**: {portfolio_strategy.get('strategy_name', '완성차-공급업체 분리 전략')}
+- **전략 설명**: {portfolio_strategy.get('strategy_description', '완성차 업체와 공급업체를 분리하여 각각의 특성에 맞는 투자 전략 적용')}
 - **기대 수익률**: {self._calculate_expected_return(portfolio_strategy, investment_opportunities):.1f}%
+
+{oem_strategy}
+
+{supplier_strategy}
+
+## 📊 통합 포트폴리오 전략
 
 ### 추천 포트폴리오 구성
 
@@ -1245,6 +1579,103 @@ No risk analysis results available.
         }
         
         return glossary
+    
+    def _generate_company_rationale(self, supplier: Dict[str, Any], state: Dict[str, Any] = None) -> str:
+        """
+        회사별 맞춤형 투자 근거 생성 (재무 데이터, 시장 포지션 포함)
+        """
+        from config.settings import is_oem_company
+        
+        company_name = supplier.get('name', supplier.get('company', ''))
+        category = supplier.get('category', '')
+        confidence = supplier.get('confidence_score', 0.0)
+        products = supplier.get('products', [])
+        
+        # OEM 여부 확인
+        is_oem = is_oem_company(company_name)
+        company_type = "완성차 제조사(OEM)" if is_oem else "부품 공급업체"
+        
+        # 재무 데이터 추출 (state에서)
+        financial_info = ""
+        if state:
+            financial_analysis = state.get('financial_analysis', {})
+            qualitative_analysis = financial_analysis.get('qualitative_analysis', {})
+            quantitative_analysis = financial_analysis.get('quantitative_analysis', {})
+            
+            qual_data = qualitative_analysis.get(company_name, {})
+            quant_data = quantitative_analysis.get(company_name, {})
+            
+            # 재무 비율
+            financial_ratios = quant_data.get('financial_ratios', {})
+            roe = financial_ratios.get('roe', 0) * 100
+            operating_margin = financial_ratios.get('operating_margin', 0) * 100
+            data_source = quant_data.get('data_source', 'unknown')
+            
+            if data_source != 'NONE':
+                financial_info = f"\n재무 지표 (출처: {data_source}):\n- ROE: {roe:.1f}%\n- 영업이익률: {operating_margin:.1f}%"
+            
+            # 정성적 분석 요약
+            qual_score = qual_data.get('qualitative_score', 0)
+            if qual_score > 0:
+                financial_info += f"\n- 전문가 평가: {qual_score * 100:.0f}점"
+        
+        # OEM 관계 정보
+        oem_relationships = supplier.get('oem_relationships', [])
+        oem_info = ""
+        if oem_relationships and isinstance(oem_relationships, list) and len(oem_relationships) > 0:
+            oem_list = ', '.join(oem_relationships[:3])
+            oem_info = f"\n주요 고객: {oem_list}"
+        
+        rationale_prompt = f"""
+다음 전기차(EV) 관련 기업의 투자 근거를 구체적으로 작성해주세요.
+2-3문장으로 작성하되, 기업의 차별화된 강점과 명확한 투자 포인트를 제시해주세요.
+
+## 기업 정보
+- 회사명: {company_name}
+- 유형: {company_type}
+- 카테고리: {category}
+- 주요 제품: {', '.join(products[:3]) if isinstance(products, list) and products else '전기차 관련 제품'}
+- 신뢰도: {confidence:.0%}{oem_info}{financial_info}
+
+## 작성 가이드
+1. 기업의 핵심 경쟁력을 먼저 언급
+2. 재무 지표가 있다면 강점 위주로 언급
+3. OEM인 경우: 시장 점유율, 기술력, 브랜드 가치
+4. 공급업체인 경우: 핵심 기술, 주요 고객사, 공급망 지위
+
+투자 근거:
+"""
+        
+        try:
+            llm_response = self.llm_tool.generate(rationale_prompt)
+            # LLM 응답 정리
+            rationale = llm_response.strip()
+            
+            # "투자 근거:" 레이블 제거
+            if rationale.startswith('투자 근거:'):
+                rationale = rationale[6:].strip()
+            
+            # 너무 길면 앞 3문장만
+            sentences = rationale.split('.')
+            if len(sentences) > 3:
+                rationale = '. '.join(sentences[:3]) + '.'
+            
+            return rationale if rationale else self._generate_fallback_rationale(company_name, is_oem, financial_info)
+        except Exception as e:
+            print(f"[WARNING] Rationale 생성 실패 for {company_name}: {e}")
+            return self._generate_fallback_rationale(company_name, is_oem, financial_info)
+    
+    def _generate_fallback_rationale(self, company_name: str, is_oem: bool, financial_info: str) -> str:
+        """LLM 실패 시 기본 투자 근거 생성"""
+        if is_oem:
+            base = f"{company_name}는 전기차 시장의 주요 완성차 제조사로서 글로벌 시장에서 강력한 브랜드 파워를 보유하고 있습니다."
+        else:
+            base = f"{company_name}는 전기차 핵심 부품을 공급하는 기업으로 EV 공급망에서 중요한 위치를 차지하고 있습니다."
+        
+        if "ROE" in financial_info and "%" in financial_info:
+            base += " 견고한 재무 구조와 수익성을 바탕으로 지속적인 성장이 기대됩니다."
+        
+        return base
     
     def _generate_investor_guide(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
