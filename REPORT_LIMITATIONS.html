@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Investment Analysis Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #f1f5f9;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: var(--dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 15px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 20px;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 900;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .subtitle {
+            font-size: 1.3em;
+            opacity: 0.95;
+            font-weight: 400;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .header .date {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 0.95em;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .content {
+            padding: 60px 50px;
+            background: white;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.2em;
+            font-weight: 800;
+            margin-bottom: 30px;
+            margin-top: 50px;
+            padding-bottom: 20px;
+            border-bottom: 4px solid var(--primary);
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+        }
+
+        h1:first-child {
+            margin-top: 0;
+        }
+
+        h2 {
+            color: var(--secondary);
+            font-size: 1.7em;
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 25px;
+            padding-left: 20px;
+            border-left: 5px solid var(--secondary);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        h2:hover {
+            padding-left: 25px;
+            border-left-color: var(--accent);
+        }
+
+        h3 {
+            color: var(--dark);
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        h3::before {
+            content: '▸';
+            color: var(--primary);
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+
+        h4 {
+            color: var(--gray);
+            font-size: 1.15em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p {
+            margin-bottom: 18px;
+            text-align: justify;
+            line-height: 1.8;
+            color: #334155;
+        }
+
+        ul, ol {
+            margin-left: 35px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            padding-left: 8px;
+            line-height: 1.7;
+        }
+
+        ul li {
+            list-style: none;
+            position: relative;
+        }
+
+        ul li::before {
+            content: '●';
+            color: var(--primary);
+            font-size: 0.8em;
+            position: absolute;
+            left: -20px;
+            top: 2px;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 25px;
+            border-left: 5px solid var(--warning);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .highlight::before {
+            content: '⚡';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            opacity: 0.2;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            padding: 25px;
+            border-left: 5px solid var(--danger);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .warning::before {
+            content: '⚠️';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            opacity: 0.2;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            padding: 25px;
+            border-left: 5px solid var(--success);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success::before {
+            content: '✓';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.5em;
+            opacity: 0.2;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 25px;
+            border-left: 5px solid var(--info);
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info::before {
+            content: 'ℹ';
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            opacity: 0.2;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 30px 0;
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        th {
+            color: white;
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9em;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: var(--light-gray);
+            transform: scale(1.01);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #e11d48;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+        }
+
+        pre {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            padding: 25px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 25px 0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+        }
+
+        .divider {
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            margin: 60px 0;
+            border-radius: 10px;
+            opacity: 0.4;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 40px 50px;
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.95em;
+            border-top: 3px solid var(--primary);
+            position: relative;
+        }
+
+        .footer p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .footer strong {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .badge-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        blockquote {
+            margin: 25px 0;
+            padding: 20px 30px;
+            background: var(--light-gray);
+            border-left: 5px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--gray);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .header {
+                page-break-after: always;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .header::before {
+                display: none;
+            }
+
+            tr {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 50px 30px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header .subtitle {
+                font-size: 1.1em;
+            }
+
+            .content {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.4em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 12px 10px;
+            }
+        }
+
+        /* 스크롤바 스타일링 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-gray);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>⚡ EV Investment Analysis Report</h1>
+                <div class="subtitle">전기차 산업 투자 분석 보고서</div>
+                <div class="date">📅 2025년 10월</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section"><h1 id="ev-investment-analysis-report">EV Investment Analysis Report</h1>
+<h2 id="system-limitations-and-disclaimers">System Limitations and Disclaimers</h2>
+<p><strong>Document Version:</strong> 1.0<br />
+<strong>Publication Date:</strong> October 26, 2025<br />
+<strong>Document Type:</strong> System Limitations and Risk Disclosure<br />
+<strong>Classification:</strong> Public</p>
+<hr />
+<h2 id="important-disclaimer">IMPORTANT DISCLAIMER</h2>
+<h3 id="investment-advisory-disclaimer">Investment Advisory Disclaimer</h3>
+<p>This report is provided for informational purposes only and does not constitute investment advice, financial advice, trading advice, or any other sort of advice. The content of this report should not be relied upon for making investment decisions. All investment decisions are made at the investor's own risk and responsibility.</p>
+<h3 id="no-financial-license">No Financial License</h3>
+<p>This system does not hold any financial investment business license under the Financial Investment Services and Capital Markets Act and is legally prohibited from providing investment advisory services. For professional financial advice, please consult with licensed investment advisors or registered investment advisory firms.</p>
+<h3 id="no-guarantee-of-accuracy">No Guarantee of Accuracy</h3>
+<p>While reasonable efforts have been made to ensure accuracy, this system does not guarantee the completeness, accuracy, reliability, or timeliness of any information provided. All data and analyses are subject to errors, omissions, and delays. Past performance does not guarantee future results.</p>
+<h3 id="limitation-of-liability">Limitation of Liability</h3>
+<p>The developers, contributors, and operators of this system shall not be held liable for any losses, damages, or consequences arising from the use of this report or reliance on its contents. Users assume all risks associated with investment decisions based on this information.</p>
+<hr />
+<h2 id="1-data-limitations">1. DATA LIMITATIONS</h2>
+<h3 id="11-data-latency">1.1 Data Latency</h3>
+<p>The system experiences inherent delays in data collection and processing:</p>
+<table>
+<thead>
+<tr>
+<th>Data Source</th>
+<th>Update Frequency</th>
+<th>Typical Delay</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>News (GNews)</td>
+<td>Real-time</td>
+<td>1-2 hours</td>
+</tr>
+<tr>
+<td>DART Disclosures</td>
+<td>Daily</td>
+<td>1 business day</td>
+</tr>
+<tr>
+<td>SEC Filings</td>
+<td>Daily</td>
+<td>1 business day</td>
+</tr>
+<tr>
+<td>Financial Statements</td>
+<td>Quarterly</td>
+<td>45-90 days</td>
+</tr>
+<tr>
+<td>Yahoo Finance</td>
+<td>Daily</td>
+<td>1 business day</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implications:</strong>
+- Real-time market movements are not reflected
+- Post-market announcements appear with delay
+- Quarterly earnings are incorporated only after official filing
+- Investment timing may be suboptimal due to information lag</p>
+<p><strong>Example Scenario:</strong>
+If a company announces major earnings after market close, this information will not be reflected until the next data collection cycle, potentially missing critical investment timing windows.</p>
+<h3 id="12-limited-coverage">1.2 Limited Coverage</h3>
+<p>Coverage is constrained to major listed companies:</p>
+<table>
+<thead>
+<tr>
+<th>Market Segment</th>
+<th>Coverage</th>
+<th>Limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Korean Listed (KOSPI)</td>
+<td>50+ major companies</td>
+<td>Small-cap stocks excluded</td>
+</tr>
+<tr>
+<td>US Listed (NYSE/NASDAQ)</td>
+<td>30+ major companies</td>
+<td>Micro-cap stocks excluded</td>
+</tr>
+<tr>
+<td>China/Europe</td>
+<td>10+ major companies</td>
+<td>Limited to large-cap only</td>
+</tr>
+<tr>
+<td>Private Companies</td>
+<td>Restricted (max 5)</td>
+<td>Most private firms excluded</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implications:</strong>
+- Small and mid-cap companies inadequately analyzed
+- Newly public companies (IPO &lt; 1 year) have insufficient data
+- Private high-growth companies cannot be identified
+- Hidden investment opportunities may be missed</p>
+<h3 id="13-data-quality-issues">1.3 Data Quality Issues</h3>
+<p><strong>Search Result Reliability</strong>
+- Web search confidence scores range from 0.4 to 0.8
+- Risk of incorporating inaccurate or misleading information
+- Source verification capabilities are limited</p>
+<p><strong>Financial Data Inconsistency</strong>
+- Discrepancies between DART, SEC, and Yahoo Finance data
+- Different accounting standards (K-IFRS vs US-GAAP)
+- Currency exchange rate impacts not fully modeled</p>
+<p><strong>News Bias</strong>
+- Over-representation of large-cap company news
+- Tendency toward positive/promotional coverage
+- Potential underreporting of negative developments</p>
+<hr />
+<h2 id="2-analytical-limitations">2. ANALYTICAL LIMITATIONS</h2>
+<h3 id="21-quantitative-analysis-gaps">2.1 Quantitative Analysis Gaps</h3>
+<p><strong>Current Metrics:</strong>
+- Financial Ratios: ROE, Debt Ratio, Operating Margin, Current Ratio
+- Growth Metrics: Revenue Growth, Operating Income Growth
+- Profitability: ROE, ROA, ROIC
+- Stability: Debt Ratio, Current Ratio, Interest Coverage</p>
+<p><strong>Missing Analyses:</strong>
+- Valuation metrics (P/E, P/B, EV/EBITDA) are insufficient
+- Cash flow analysis (FCF, OCF) not conducted
+- Margin trend analysis not performed
+- Peer comparison within industry segments inadequate
+- Technical analysis (chart patterns, indicators) completely absent</p>
+<p><strong>Impact on Valuation:</strong>
+Companies may be recommended based on incomplete financial assessment, potentially leading to poor investment decisions. For instance, a company with strong ROE but trading at excessive P/E multiples may be overvalued yet still recommended.</p>
+<h3 id="22-qualitative-analysis-limitations">2.2 Qualitative Analysis Limitations</h3>
+<p><strong>Current Methodology:</strong>
+- LLM-based news and disclosure text analysis
+- Keyword-based trend extraction
+- Web search-based risk assessment</p>
+<p><strong>Deficiencies:</strong></p>
+<ol>
+<li><strong>Management and Governance Analysis Insufficient</strong></li>
+<li>CEO capability and track record not evaluated</li>
+<li>Board independence not assessed</li>
+<li>
+<p>Minority shareholder protection not considered</p>
+</li>
+<li>
+<p><strong>Industry Analysis Lacks Depth</strong></p>
+</li>
+<li>Porter's Five Forces framework not applied</li>
+<li>SWOT analysis remains superficial</li>
+<li>
+<p>Competitive moat analysis inadequate</p>
+</li>
+<li>
+<p><strong>Macroeconomic Factors Underweighted</strong></p>
+</li>
+<li>Interest rate and exchange rate impacts not modeled</li>
+<li>Geopolitical risks not systematically evaluated</li>
+<li>Policy changes (subsidies, tax regulations) insufficiently reflected</li>
+</ol>
+<p><strong>Example:</strong>
+An analysis may identify a company as an "EV market leader" without adequately considering risks such as:
+- Subsidy reductions in key markets
+- Regulatory changes affecting emission standards
+- Trade policy shifts impacting supply chains</p>
+<h3 id="23-aillm-limitations">2.3 AI/LLM Limitations</h3>
+<p><strong>Hallucination Risk</strong>
+Large language models may generate plausible but factually incorrect information. Claims about market share, competitive position, or financial metrics may lack proper sourcing or verification.</p>
+<p><strong>Training Data Cutoff</strong>
+The underlying LLM (GPT-4o-mini) was trained on data up to October 2023. Recent industry developments, competitive dynamics, and market conditions may not be adequately reflected.</p>
+<p><strong>Numerical Reasoning Weakness</strong>
+LLMs demonstrate limited capability for complex financial calculations and comparative analysis. Relative performance assessments may be inaccurate.</p>
+<p><strong>Fallback Quality Degradation</strong>
+The system employs a three-tier fallback mechanism:
+- Tier 1 (LLM API): High-quality analysis
+- Tier 2 (Financial Data-Based): Moderate quality
+- Tier 3 (Template-Based): Basic quality</p>
+<p>When API access fails, analysis quality degrades significantly.</p>
+<hr />
+<h2 id="3-investment-decision-limitations">3. INVESTMENT DECISION LIMITATIONS</h2>
+<h3 id="31-target-price-estimation-issues">3.1 Target Price Estimation Issues</h3>
+<p><strong>Current Methodology:</strong>
+- Tier 1: LLM-generated estimates
+- Tier 2: Simple appreciation (e.g., +20% from current price)
+- Tier 3: No target price provided</p>
+<p><strong>Missing Approaches:</strong>
+- Discounted Cash Flow (DCF) models not employed
+- Analyst consensus not incorporated
+- Multiple-based valuation (P/E, P/B) not systematically applied
+- Upside potential calculations lack rigorous foundation</p>
+<p><strong>Risk:</strong>
+Target prices may significantly deviate from intrinsic value. Overvaluation risks are substantial when relying on simple percentage appreciations without fundamental valuation support.</p>
+<h3 id="32-investment-timing-not-addressed">3.2 Investment Timing Not Addressed</h3>
+<p><strong>What the System Provides:</strong>
+- Investment horizon (short/medium/long-term)
+- Investment rationale</p>
+<p><strong>What the System Does NOT Provide:</strong>
+- Entry timing recommendations (buy now vs. wait for pullback)
+- Scaling/averaging strategies
+- Stop-loss and take-profit levels
+- Rebalancing timing guidance</p>
+<p><strong>Impact:</strong>
+Even with sound long-term recommendations, poor entry timing can result in significant underperformance or losses in the near term.</p>
+<h3 id="33-portfolio-optimization-limitations">3.3 Portfolio Optimization Limitations</h3>
+<p><strong>Current Approach:</strong>
+Portfolio weights are assigned based on normalized investment scores without consideration of:
+- Risk-return optimization (Markowitz framework)
+- Correlation between holdings
+- Individual investor profiles (age, wealth, risk tolerance, objectives)</p>
+<p><strong>Example Issue:</strong>
+A portfolio consisting of multiple Korean battery manufacturers (LG Energy Solution, Samsung SDI, SK On) exhibits high correlation, providing minimal diversification benefits despite appearing diversified by number of holdings.</p>
+<hr />
+<h2 id="4-real-time-capability-limitations">4. REAL-TIME CAPABILITY LIMITATIONS</h2>
+<h3 id="41-market-dynamics-not-captured">4.1 Market Dynamics Not Captured</h3>
+<p><strong>Issue:</strong>
+Reports are generated at a point in time. Significant market-moving events occurring after generation are not reflected until the next update cycle.</p>
+<p><strong>Examples:</strong>
+- Intraday volatility and price movements
+- Breaking news (recalls, management changes, M&amp;A announcements)
+- Global events (geopolitical conflicts, pandemics, financial crises)</p>
+<h3 id="42-cache-dependency">4.2 Cache Dependency</h3>
+<p><strong>Current Setting:</strong> 24-hour cache duration</p>
+<p><strong>Trade-off:</strong>
+- Cache enabled: Reduces API costs but may use stale data
+- Cache disabled: Always current but higher operational costs</p>
+<p><strong>Scenario:</strong>
+If a report is generated in the morning and a major development occurs in the afternoon (e.g., product recall), re-running the analysis within 24 hours will use cached data and miss the critical new information.</p>
+<hr />
+<h2 id="5-legal-and-regulatory-constraints">5. LEGAL AND REGULATORY CONSTRAINTS</h2>
+<h3 id="51-financial-investment-services-licensing">5.1 Financial Investment Services Licensing</h3>
+<p>Under Korean law (Financial Investment Services and Capital Markets Act Article 6), providing investment advisory or discretionary investment management services requires regulatory approval from the Financial Services Commission.</p>
+<p><strong>This System:</strong>
+- Does NOT hold required financial investment business license
+- CANNOT legally provide investment advisory services
+- MAY ONLY provide general information</p>
+<p><strong>Permitted Activities:</strong>
+- "Company X has an ROE of 15%"
+- "The battery market is experiencing growth"</p>
+<p><strong>Prohibited Activities:</strong>
+- "You should buy Company X stock"
+- "Allocate 30% of your portfolio to this investment"
+- "Hold until target price of 500,000 won"</p>
+<h3 id="52-required-disclaimers">5.2 Required Disclaimers</h3>
+<p>All reports must clearly state:
+- Not investment recommendations
+- Investment losses are the sole responsibility of the investor
+- Past performance does not guarantee future results
+- Information accuracy is not guaranteed</p>
+<h3 id="53-not-a-prospectus-or-offering-document">5.3 Not a Prospectus or Offering Document</h3>
+<p>This report:
+- Is not filed with or reviewed by financial regulators
+- Has no legal standing
+- Has not been audited by certified public accountants
+- Should not be used as the sole basis for investment decisions</p>
+<hr />
+<h2 id="6-technical-constraints">6. TECHNICAL CONSTRAINTS</h2>
+<h3 id="61-api-dependencies">6.1 API Dependencies</h3>
+<p><strong>Single Points of Failure:</strong>
+- OpenAI API: Outages degrade analysis quality
+- Tavily API: Disruptions limit information gathering
+- DART API: Unavailability prevents Korean company analysis
+- SEC API: Rate limits can cause data gaps</p>
+<p><strong>Operational Risk:</strong>
+External API failures or rate limiting directly impacts report completeness and quality.</p>
+<h3 id="62-workflow-architecture">6.2 Workflow Architecture</h3>
+<p><strong>Current Status:</strong>
+LangGraph orchestration framework bypassed due to persistent technical issues (KeyError: '<strong>start</strong>'). Agents are manually executed in sequence.</p>
+<p><strong>Implications:</strong>
+- Limited workflow automation
+- No parallel processing capabilities
+- Checkpoint/restart functionality unavailable
+- Scalability constraints</p>
+<h3 id="63-scalability-limitations">6.3 Scalability Limitations</h3>
+<p><strong>Current Constraints:</strong>
+- Concurrent analysis: ~30 companies (memory limitations)
+- Execution time: ~14 minutes (sequential processing)
+- Report length: ~5,000 tokens (LLM constraints)</p>
+<p><strong>Cannot Support:</strong>
+- Comprehensive market scans (800+ KOSPI companies)
+- Global EV sector analysis (200+ companies)
+- Real-time monitoring and alerts</p>
+<hr />
+<h2 id="7-user-customization-limitations">7. USER CUSTOMIZATION LIMITATIONS</h2>
+<h3 id="71-lack-of-personalization">7.1 Lack of Personalization</h3>
+<p><strong>Fixed Parameters:</strong>
+- Target audience: Individual investors (generic)
+- Risk tolerance: Not assessed
+- Investment horizon: Not personalized
+- Available capital: Not considered</p>
+<p><strong>Impact:</strong>
+The same portfolio recommendations are provided regardless of whether the user is:
+- 60-year-old retiree with 500M KRW seeking stability
+- 30-year-old professional with 10M KRW seeking growth</p>
+<h3 id="72-limited-interactivity">7.2 Limited Interactivity</h3>
+<p><strong>Current Functionality:</strong>
+- One-way report generation
+- Static JSON/Markdown/HTML output</p>
+<p><strong>Missing Features:</strong>
+- User question-and-answer capability
+- Drill-down analysis on demand
+- Scenario analysis (what-if modeling)
+- Rebalancing alerts and notifications</p>
+<h3 id="73-educational-content-gaps">7.3 Educational Content Gaps</h3>
+<p><strong>Available:</strong>
+- Investment terminology glossary
+- General investment guidelines</p>
+<p><strong>Insufficient:</strong>
+- Structured investment education curriculum
+- Case studies (success and failure examples)
+- Progressive learning pathways
+- Risk management training</p>
+<hr />
+<h2 id="8-competitive-comparison">8. COMPETITIVE COMPARISON</h2>
+<h3 id="81-vs-professional-securities-analysts">8.1 vs. Professional Securities Analysts</h3>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>This System</th>
+<th>Professional Analysts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Analysis Depth</td>
+<td>Basic-Intermediate</td>
+<td>Comprehensive</td>
+</tr>
+<tr>
+<td>Target Price Reliability</td>
+<td>Low</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Industry Expertise</td>
+<td>General</td>
+<td>Specialized</td>
+</tr>
+<tr>
+<td>Real-time Updates</td>
+<td>Delayed</td>
+<td>Real-time</td>
+</tr>
+<tr>
+<td>Cost</td>
+<td>Free</td>
+<td>High (subscription/commission)</td>
+</tr>
+<tr>
+<td>Accessibility</td>
+<td>Open</td>
+<td>Restricted</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-vs-bloombergreuters-terminals">8.2 vs. Bloomberg/Reuters Terminals</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>This System</th>
+<th>Bloomberg Terminal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data Coverage</td>
+<td>Limited</td>
+<td>Extensive</td>
+</tr>
+<tr>
+<td>Real-time Data</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Technical Analysis</td>
+<td>No</td>
+<td>Comprehensive</td>
+</tr>
+<tr>
+<td>News Speed</td>
+<td>Delayed</td>
+<td>Immediate</td>
+</tr>
+<tr>
+<td>API Quality</td>
+<td>Basic</td>
+<td>Professional</td>
+</tr>
+<tr>
+<td>Cost</td>
+<td>Free</td>
+<td>$24,000/year</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83-vs-robo-advisors">8.3 vs. Robo-Advisors</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>This System</th>
+<th>Robo-Advisors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Portfolio Optimization</td>
+<td>Basic</td>
+<td>Advanced (MPT)</td>
+</tr>
+<tr>
+<td>Rebalancing</td>
+<td>Manual</td>
+<td>Automatic</td>
+</tr>
+<tr>
+<td>Tax Optimization</td>
+<td>None</td>
+<td>Available</td>
+</tr>
+<tr>
+<td>Trade Execution</td>
+<td>None</td>
+<td>Integrated</td>
+</tr>
+<tr>
+<td>Personalization</td>
+<td>Limited</td>
+<td>Extensive</td>
+</tr>
+<tr>
+<td>Regulatory Compliance</td>
+<td>None</td>
+<td>Licensed</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-ethical-considerations">9. ETHICAL CONSIDERATIONS</h2>
+<h3 id="91-data-and-model-bias">9.1 Data and Model Bias</h3>
+<p><strong>Data Bias:</strong>
+- Over-representation of large-cap companies (more news coverage)
+- English-language/US-centric data availability
+- Positive news bias (promotional content)</p>
+<p><strong>AI Bias:</strong>
+- LLM training data biases
+- US-centric perspectives in GPT models
+- Potential over-emphasis on recent trends</p>
+<h3 id="92-transparency-limitations">9.2 Transparency Limitations</h3>
+<p><strong>Black Box Problem:</strong>
+When LLM analysis concludes a company is "attractive," the reasoning process is often opaque. Users cannot readily determine:
+- Specific factors driving the assessment
+- Relative weightings of different considerations
+- Potential errors or faulty assumptions</p>
+<h3 id="93-responsibility-and-accountability">9.3 Responsibility and Accountability</h3>
+<p><strong>In Case of Loss:</strong>
+If investment decisions based on this report result in financial loss, responsibility attribution is unclear:
+- System developers: Not liable (disclaimer)
+- AI model: Cannot be held accountable
+- User: Bears full responsibility</p>
+<p>There is no compensation mechanism or dispute resolution framework.</p>
+<hr />
+<h2 id="10-future-development-roadmap">10. FUTURE DEVELOPMENT ROADMAP</h2>
+<h3 id="101-short-term-improvements-1-3-months">10.1 Short-term Improvements (1-3 months)</h3>
+<ul>
+<li>Integration with real-time price feeds</li>
+<li>Technical analysis indicators (RSI, MACD, moving averages)</li>
+<li>Enhanced target price models (DCF implementation)</li>
+<li>User risk tolerance profiling</li>
+</ul>
+<h3 id="102-medium-term-enhancements-3-6-months">10.2 Medium-term Enhancements (3-6 months)</h3>
+<ul>
+<li>Deeper fundamental analysis frameworks</li>
+<li>Analyst consensus integration</li>
+<li>Portfolio optimization using Modern Portfolio Theory</li>
+<li>Backtesting functionality</li>
+</ul>
+<h3 id="103-long-term-development-6-12-months">10.3 Long-term Development (6-12 months)</h3>
+<ul>
+<li>Pursue financial investment business licensing (investment advisory)</li>
+<li>Trade execution integration</li>
+<li>Automated portfolio rebalancing</li>
+<li>Web and mobile dashboard development</li>
+</ul>
+<hr />
+<h2 id="appropriate-use-cases">APPROPRIATE USE CASES</h2>
+<h3 id="recommended-applications">Recommended Applications</h3>
+<ol>
+<li><strong>Investment Idea Generation</strong></li>
+<li>Identifying potential investment candidates</li>
+<li>Understanding market trends</li>
+<li>
+<p>Exploring supply chain relationships</p>
+</li>
+<li>
+<p><strong>Educational Purposes</strong></p>
+</li>
+<li>Learning investment terminology</li>
+<li>Practicing financial statement analysis</li>
+<li>
+<p>Understanding industry analysis frameworks</p>
+</li>
+<li>
+<p><strong>Supplementary Research Tool</strong></p>
+</li>
+<li>Complementing professional research reports</li>
+<li>Gaining alternative perspectives</li>
+<li>Identifying overlooked information</li>
+</ol>
+<h3 id="inappropriate-applications">Inappropriate Applications</h3>
+<ol>
+<li><strong>Sole Basis for Investment Decisions</strong></li>
+<li>Making buy/sell decisions based solely on this report</li>
+<li>Treating target prices as absolute benchmarks</li>
+<li>
+<p>Replicating recommended portfolios without independent analysis</p>
+</li>
+<li>
+<p><strong>Professional Advice Replacement</strong></p>
+</li>
+<li>Substituting for securities analyst reports</li>
+<li>Replacing licensed financial advisory services</li>
+<li>
+<p>Using instead of professional portfolio management</p>
+</li>
+<li>
+<p><strong>Short-term Trading</strong></p>
+</li>
+<li>Day trading decisions</li>
+<li>Swing trading timing</li>
+<li>Options and futures trading strategies</li>
+</ol>
+<hr />
+<h2 id="recommended-investment-process">RECOMMENDED INVESTMENT PROCESS</h2>
+<p>For investors choosing to incorporate this system into their research:</p>
+<p><strong>Step 1:</strong> Use this report for initial investment idea generation</p>
+<p><strong>Step 2:</strong> Supplement with professional securities research reports</p>
+<p><strong>Step 3:</strong> Verify key information through primary sources (financial statements, company filings)</p>
+<p><strong>Step 4:</strong> Consult with licensed financial advisors when appropriate</p>
+<p><strong>Step 5:</strong> Make investment decisions based on personal judgment, risk tolerance, and financial circumstances</p>
+<p><strong>Step 6:</strong> Continuously monitor investments and adjust as market conditions change</p>
+<hr />
+<h2 id="final-disclaimer">FINAL DISCLAIMER</h2>
+<p>This system is an open-source project provided for educational and research purposes. </p>
+<p>The developers and contributors assume no liability for any losses, damages, or adverse consequences arising from the use of this system or reliance on its outputs.</p>
+<p>Investment decisions should be made only after:
+1. Comprehensive information gathering from multiple sources
+2. Consultation with qualified financial professionals when appropriate
+3. Careful consideration of personal financial circumstances and risk tolerance
+4. Independent verification of key facts and assumptions</p>
+<p>Past performance is not indicative of future results. All investments carry risk, including potential loss of principal.</p>
+<p>Users are solely responsible for their investment decisions and any consequences thereof.</p>
+<hr />
+<p><strong>Document Control</strong></p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>Effective Date</td>
+<td>October 26, 2025</td>
+</tr>
+<tr>
+<td>Document Owner</td>
+<td>EV Investment Analysis System Development Team</td>
+</tr>
+<tr>
+<td>Classification</td>
+<td>Public</td>
+</tr>
+<tr>
+<td>Review Frequency</td>
+<td>Quarterly</td>
+</tr>
+<tr>
+<td>Next Review</td>
+<td>January 26, 2026</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>END OF DOCUMENT</strong></p></div>
+        </div>
+
+        <div class="footer">
+            <p><strong>생성 일시:</strong> 2025-10-26 17:26:59</p>
+            <p style="margin-top: 10px;">이 보고서는 참고용으로만 사용되어야 합니다. 투자 결정은 투자자 자신의 판단과 책임 하에 이루어져야 합니다.</p>
+            <p style="margin-top: 20px; opacity: 0.6; font-size: 0.9em;">✨ Generated by EVI Agent System</p>
+        </div>
+    </div>
+</body>
+</html>
