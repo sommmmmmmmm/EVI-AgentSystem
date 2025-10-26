@@ -1452,16 +1452,24 @@ No risk analysis results available.
         if source_manager and hasattr(source_manager, 'generate_references_section'):
             references_section = source_manager.generate_references_section()
         
+        # 제목이 있는 뉴스만 필터링
+        news_with_titles = [article for article in news_articles[:10] if article.get('title') and article.get('title').strip()]
+        news_list = chr(10).join([f"- {article['title']}" for article in news_with_titles]) if news_with_titles else "뉴스 기사 데이터 없음"
+        
+        # 제목이 있는 공시만 필터링
+        disclosures_with_titles = [d for d in disclosure_data[:10] if d.get('title') and d.get('title').strip()]
+        disclosure_list = chr(10).join([f"- {d['title']}" for d in disclosures_with_titles]) if disclosures_with_titles else "공시 데이터 없음"
+        
         appendix = f"""
 # 9. 참고문헌 및 부록
 
 ## 📚 데이터 출처 요약
 
-### 뉴스 기사 ({len(news_articles)}개 기사)
-{chr(10).join([f"- {article.get('title', '제목 없음')}" for article in news_articles[:10]]) if news_articles else "뉴스 기사 데이터 없음"}
+### 뉴스 기사 ({len(news_with_titles)}개 기사)
+{news_list}
 
-### 공시 데이터 ({len(disclosure_data)}건 공시)
-{chr(10).join([f"- {disclosure.get('title', '제목 없음')}" for disclosure in disclosure_data[:10]]) if disclosure_data else "공시 데이터 없음"}
+### 공시 데이터 ({len(disclosures_with_titles)}건 공시)
+{disclosure_list}
 
 ## 🔬 분석 방법론
 
