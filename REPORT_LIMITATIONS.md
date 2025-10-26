@@ -1,532 +1,578 @@
-# EV Investment Analysis Report
-## System Limitations and Disclaimers
+# EV 투자 분석 시스템
+## 시스템 한계 및 면책사항
 
-**Document Version:** 1.0  
-**Publication Date:** October 26, 2025  
-**Document Type:** System Limitations and Risk Disclosure  
-**Classification:** Public
-
----
-
-## IMPORTANT DISCLAIMER
-
-### Investment Advisory Disclaimer
-
-This report is provided for informational purposes only and does not constitute investment advice, financial advice, trading advice, or any other sort of advice. The content of this report should not be relied upon for making investment decisions. All investment decisions are made at the investor's own risk and responsibility.
-
-### No Financial License
-
-This system does not hold any financial investment business license under the Financial Investment Services and Capital Markets Act and is legally prohibited from providing investment advisory services. For professional financial advice, please consult with licensed investment advisors or registered investment advisory firms.
-
-### No Guarantee of Accuracy
-
-While reasonable efforts have been made to ensure accuracy, this system does not guarantee the completeness, accuracy, reliability, or timeliness of any information provided. All data and analyses are subject to errors, omissions, and delays. Past performance does not guarantee future results.
-
-### Limitation of Liability
-
-The developers, contributors, and operators of this system shall not be held liable for any losses, damages, or consequences arising from the use of this report or reliance on its contents. Users assume all risks associated with investment decisions based on this information.
+**문서 버전:** 1.0  
+**발행일:** 2025년 10월 26일  
+**문서 유형:** 시스템 한계 및 리스크 공시  
+**등급:** 공개
 
 ---
 
-## 1. DATA LIMITATIONS
+## 중요 면책사항
 
-### 1.1 Data Latency
+### 투자 권유 면책
 
-The system experiences inherent delays in data collection and processing:
+본 보고서는 정보 제공 목적으로만 작성되었으며, 투자 자문, 금융 자문, 매매 권유 또는 기타 어떠한 형태의 자문도 구성하지 않습니다. 본 보고서의 내용에 의존하여 투자 결정을 내려서는 안 됩니다. 모든 투자 결정은 투자자 본인의 위험과 책임 하에 이루어집니다.
 
-| Data Source | Update Frequency | Typical Delay |
-|------------|------------------|---------------|
-| News (GNews) | Real-time | 1-2 hours |
-| DART Disclosures | Daily | 1 business day |
-| SEC Filings | Daily | 1 business day |
-| Financial Statements | Quarterly | 45-90 days |
-| Yahoo Finance | Daily | 1 business day |
+### 금융투자업 인가 부재
 
-**Implications:**
-- Real-time market movements are not reflected
-- Post-market announcements appear with delay
-- Quarterly earnings are incorporated only after official filing
-- Investment timing may be suboptimal due to information lag
+본 시스템은 자본시장과 금융투자업에 관한 법률에 따른 금융투자업 인가를 보유하고 있지 않으며, 법적으로 투자자문업을 영위할 수 없습니다. 전문적인 금융 자문이 필요한 경우 금융위원회에 등록된 투자자문업자 또는 투자일임업자와 상담하시기 바랍니다.
 
-**Example Scenario:**
-If a company announces major earnings after market close, this information will not be reflected until the next data collection cycle, potentially missing critical investment timing windows.
+### 정확성 보장 불가
 
-### 1.2 Limited Coverage
+정확성을 제고하기 위해 합리적인 노력을 기울였으나, 본 시스템은 제공되는 정보의 완전성, 정확성, 신뢰성 또는 적시성을 보장하지 않습니다. 모든 데이터와 분석은 오류, 누락 및 지연의 가능성이 있습니다. 과거 실적이 미래 수익을 보장하지 않습니다.
 
-Coverage is constrained to major listed companies:
+### 책임의 제한
 
-| Market Segment | Coverage | Limitations |
-|---------------|----------|-------------|
-| Korean Listed (KOSPI) | 50+ major companies | Small-cap stocks excluded |
-| US Listed (NYSE/NASDAQ) | 30+ major companies | Micro-cap stocks excluded |
-| China/Europe | 10+ major companies | Limited to large-cap only |
-| Private Companies | Restricted (max 5) | Most private firms excluded |
-
-**Implications:**
-- Small and mid-cap companies inadequately analyzed
-- Newly public companies (IPO < 1 year) have insufficient data
-- Private high-growth companies cannot be identified
-- Hidden investment opportunities may be missed
-
-### 1.3 Data Quality Issues
-
-**Search Result Reliability**
-- Web search confidence scores range from 0.4 to 0.8
-- Risk of incorporating inaccurate or misleading information
-- Source verification capabilities are limited
-
-**Financial Data Inconsistency**
-- Discrepancies between DART, SEC, and Yahoo Finance data
-- Different accounting standards (K-IFRS vs US-GAAP)
-- Currency exchange rate impacts not fully modeled
-
-**News Bias**
-- Over-representation of large-cap company news
-- Tendency toward positive/promotional coverage
-- Potential underreporting of negative developments
+본 시스템의 개발자, 기여자 및 운영자는 본 보고서의 사용 또는 내용에 대한 의존으로 인해 발생하는 손실, 손해 또는 결과에 대해 책임을 지지 않습니다. 사용자는 본 정보에 기초한 투자 결정과 관련된 모든 위험을 부담합니다.
 
 ---
 
-## 2. ANALYTICAL LIMITATIONS
+## 1. 데이터 한계
 
-### 2.1 Quantitative Analysis Gaps
+### 1.1 데이터 지연
 
-**Current Metrics:**
-- Financial Ratios: ROE, Debt Ratio, Operating Margin, Current Ratio
-- Growth Metrics: Revenue Growth, Operating Income Growth
-- Profitability: ROE, ROA, ROIC
-- Stability: Debt Ratio, Current Ratio, Interest Coverage
+시스템은 데이터 수집 및 처리 과정에서 필연적인 지연이 발생합니다:
 
-**Missing Analyses:**
-- Valuation metrics (P/E, P/B, EV/EBITDA) are insufficient
-- Cash flow analysis (FCF, OCF) not conducted
-- Margin trend analysis not performed
-- Peer comparison within industry segments inadequate
-- Technical analysis (chart patterns, indicators) completely absent
+| 데이터 소스 | 업데이트 주기 | 일반적 지연 시간 |
+|------------|-------------|----------------|
+| 뉴스 (GNews) | 실시간 | 1-2시간 |
+| DART 공시 | 당일 | 1영업일 |
+| SEC 공시 | 당일 | 1영업일 |
+| 재무제표 | 분기별 | 45-90일 |
+| Yahoo Finance | 당일 | 1영업일 |
 
-**Impact on Valuation:**
-Companies may be recommended based on incomplete financial assessment, potentially leading to poor investment decisions. For instance, a company with strong ROE but trading at excessive P/E multiples may be overvalued yet still recommended.
+**시사점:**
+- 실시간 시장 움직임이 반영되지 않음
+- 장 마감 후 공시는 지연되어 반영됨
+- 분기 실적은 공식 발표 후에만 반영됨
+- 지연으로 인해 투자 타이밍을 놓칠 수 있음
 
-### 2.2 Qualitative Analysis Limitations
+**사례:**
+기업이 장 마감 후 중요 실적을 발표할 경우, 다음 데이터 수집 주기까지 이 정보가 반영되지 않아 중요한 투자 타이밍 기회를 놓칠 수 있습니다.
 
-**Current Methodology:**
-- LLM-based news and disclosure text analysis
-- Keyword-based trend extraction
-- Web search-based risk assessment
+### 1.2 제한적 커버리지
 
-**Deficiencies:**
+주요 상장 기업에 한정된 커버리지:
 
-1. **Management and Governance Analysis Insufficient**
-   - CEO capability and track record not evaluated
-   - Board independence not assessed
-   - Minority shareholder protection not considered
+| 시장 구분 | 커버리지 | 한계사항 |
+|---------|---------|---------|
+| 한국 상장 (KOSPI) | 50개 이상 주요 기업 | 소형주 제외 |
+| 미국 상장 (NYSE/NASDAQ) | 30개 이상 주요 기업 | 마이크로캡 제외 |
+| 중국/유럽 | 10개 이상 주요 기업 | 대형주만 포함 |
+| 비상장 기업 | 제한적 (최대 5개) | 대부분 비상장 기업 제외 |
 
-2. **Industry Analysis Lacks Depth**
-   - Porter's Five Forces framework not applied
-   - SWOT analysis remains superficial
-   - Competitive moat analysis inadequate
+**시사점:**
+- 중소형주 분석 부족
+- 신규 상장 기업 (IPO 후 1년 미만) 데이터 부족
+- 비상장 고성장 기업 발굴 불가
+- 숨은 투자 기회 누락 가능
 
-3. **Macroeconomic Factors Underweighted**
-   - Interest rate and exchange rate impacts not modeled
-   - Geopolitical risks not systematically evaluated
-   - Policy changes (subsidies, tax regulations) insufficiently reflected
+### 1.3 데이터 품질 문제
 
-**Example:**
-An analysis may identify a company as an "EV market leader" without adequately considering risks such as:
-- Subsidy reductions in key markets
-- Regulatory changes affecting emission standards
-- Trade policy shifts impacting supply chains
+**검색 결과 신뢰도**
+- 웹 검색 신뢰도 점수가 0.4~0.8 범위
+- 부정확하거나 오해의 소지가 있는 정보 포함 위험
+- 출처 검증 능력 제한적
 
-### 2.3 AI/LLM Limitations
+**재무 데이터 불일치**
+- DART, SEC, Yahoo Finance 간 데이터 차이
+- 회계 기준 차이 (K-IFRS vs US-GAAP)
+- 환율 영향 미반영
 
-**Hallucination Risk**
-Large language models may generate plausible but factually incorrect information. Claims about market share, competitive position, or financial metrics may lack proper sourcing or verification.
-
-**Training Data Cutoff**
-The underlying LLM (GPT-4o-mini) was trained on data up to October 2023. Recent industry developments, competitive dynamics, and market conditions may not be adequately reflected.
-
-**Numerical Reasoning Weakness**
-LLMs demonstrate limited capability for complex financial calculations and comparative analysis. Relative performance assessments may be inaccurate.
-
-**Fallback Quality Degradation**
-The system employs a three-tier fallback mechanism:
-- Tier 1 (LLM API): High-quality analysis
-- Tier 2 (Financial Data-Based): Moderate quality
-- Tier 3 (Template-Based): Basic quality
-
-When API access fails, analysis quality degrades significantly.
+**뉴스 편향**
+- 대형주 뉴스 과다 대표
+- 긍정적/홍보성 뉴스 편중
+- 부정적 뉴스 보도 부족 가능성
 
 ---
 
-## 3. INVESTMENT DECISION LIMITATIONS
+## 2. 분석 한계
 
-### 3.1 Target Price Estimation Issues
+### 2.1 정량 분석 공백
 
-**Current Methodology:**
-- Tier 1: LLM-generated estimates
-- Tier 2: Simple appreciation (e.g., +20% from current price)
-- Tier 3: No target price provided
+**현재 분석 지표:**
+- 재무비율: ROE, 부채비율, 영업이익률, 유동비율
+- 성장성: 매출증가율, 영업이익증가율
+- 수익성: ROE, ROA, ROIC
+- 안정성: 부채비율, 유동비율, 이자보상배율
 
-**Missing Approaches:**
-- Discounted Cash Flow (DCF) models not employed
-- Analyst consensus not incorporated
-- Multiple-based valuation (P/E, P/B) not systematically applied
-- Upside potential calculations lack rigorous foundation
+**누락된 분석:**
+- 밸류에이션 지표 (PER, PBR, EV/EBITDA) 분석 미흡
+- 현금흐름 분석 (FCF, OCF) 미실시
+- 마진 추세 분석 미실시
+- 동종 업계 내 상대 비교 부족
+- 기술적 분석 (차트, 지표) 전무
 
-**Risk:**
-Target prices may significantly deviate from intrinsic value. Overvaluation risks are substantial when relying on simple percentage appreciations without fundamental valuation support.
+**밸류에이션 영향:**
+불완전한 재무 평가에 기반한 종목 추천이 이루어질 수 있습니다. 예를 들어, ROE는 높지만 과도한 PER 배수로 거래되는 기업이 여전히 추천될 수 있습니다.
 
-### 3.2 Investment Timing Not Addressed
+### 2.2 정성 분석 한계
 
-**What the System Provides:**
-- Investment horizon (short/medium/long-term)
-- Investment rationale
+**현재 방법론:**
+- LLM 기반 뉴스 및 공시 텍스트 분석
+- 키워드 기반 트렌드 추출
+- 웹 검색 기반 리스크 평가
 
-**What the System Does NOT Provide:**
-- Entry timing recommendations (buy now vs. wait for pullback)
-- Scaling/averaging strategies
-- Stop-loss and take-profit levels
-- Rebalancing timing guidance
+**결함:**
 
-**Impact:**
-Even with sound long-term recommendations, poor entry timing can result in significant underperformance or losses in the near term.
+1. **경영진 및 지배구조 분석 부족**
+   - CEO 역량 및 실적 미평가
+   - 이사회 독립성 미평가
+   - 소액주주 보호 미고려
 
-### 3.3 Portfolio Optimization Limitations
+2. **산업 분석 깊이 부족**
+   - Porter's Five Forces 미적용
+   - SWOT 분석 피상적
+   - 경쟁우위 (Moat) 분석 부족
 
-**Current Approach:**
-Portfolio weights are assigned based on normalized investment scores without consideration of:
-- Risk-return optimization (Markowitz framework)
-- Correlation between holdings
-- Individual investor profiles (age, wealth, risk tolerance, objectives)
+3. **거시경제 요인 과소평가**
+   - 금리 및 환율 영향 미모델링
+   - 지정학적 리스크 미평가
+   - 정책 변화 (보조금, 세제) 반영 미흡
 
-**Example Issue:**
-A portfolio consisting of multiple Korean battery manufacturers (LG Energy Solution, Samsung SDI, SK On) exhibits high correlation, providing minimal diversification benefits despite appearing diversified by number of holdings.
+**사례:**
+분석이 기업을 "EV 시장 리더"로 식별하면서도 다음과 같은 리스크를 간과할 수 있습니다:
+- 주요 시장의 보조금 감축
+- 배출 기준 규제 변화
+- 공급망에 영향을 미치는 무역 정책 변화
 
----
+### 2.3 AI/LLM 한계
 
-## 4. REAL-TIME CAPABILITY LIMITATIONS
+**환각(Hallucination) 위험**
+대형 언어 모델은 그럴듯하지만 사실과 다른 정보를 생성할 수 있습니다. 시장 점유율, 경쟁 지위 또는 재무 지표에 대한 주장이 적절한 출처나 검증이 부족할 수 있습니다.
 
-### 4.1 Market Dynamics Not Captured
+**학습 데이터 시점 제한**
+기본 LLM (GPT-4o-mini)은 2023년 10월까지의 데이터로 학습되었습니다. 최근 산업 발전, 경쟁 역학 및 시장 상황이 적절히 반영되지 않을 수 있습니다.
 
-**Issue:**
-Reports are generated at a point in time. Significant market-moving events occurring after generation are not reflected until the next update cycle.
+**수치 추론 약점**
+LLM은 복잡한 재무 계산 및 비교 분석에 대한 능력이 제한적입니다. 상대적 성과 평가가 부정확할 수 있습니다.
 
-**Examples:**
-- Intraday volatility and price movements
-- Breaking news (recalls, management changes, M&A announcements)
-- Global events (geopolitical conflicts, pandemics, financial crises)
+**대체 메커니즘 품질 저하**
+시스템은 3단계 대체 메커니즘을 사용합니다:
+- 1단계 (LLM API): 고품질 분석
+- 2단계 (재무 데이터 기반): 중간 품질
+- 3단계 (템플릿 기반): 기본 품질
 
-### 4.2 Cache Dependency
+API 접근이 실패하면 분석 품질이 크게 저하됩니다.
 
-**Current Setting:** 24-hour cache duration
+### 2.4 기업 분류 및 점수 오류
 
-**Trade-off:**
-- Cache enabled: Reduces API costs but may use stale data
-- Cache disabled: Always current but higher operational costs
+**동일한 신뢰도 점수**
+시스템은 데이터 품질, 출처 신뢰성 또는 분석 깊이에 따른 차별화 없이 서로 다른 기업에 동일한 신뢰도 점수를 부여할 수 있습니다.
 
-**Scenario:**
-If a report is generated in the morning and a major development occurs in the afternoon (e.g., product recall), re-running the analysis within 24 hours will use cached data and miss the critical new information.
+**실제 출력 사례:**
+```
+Tesla: 신뢰도 점수: 0.80/1.0
+Ford: 신뢰도 점수: 0.80/1.0
+Rivian: 신뢰도 점수: 0.80/1.0
+Lucid: 신뢰도 점수: 0.80/1.0
+BYD: 신뢰도 점수: 0.80/1.0
+```
 
----
+**문제점:** 다음 사항과 무관하게 모든 기업이 동일한 0.80 점수를 받음:
+- 데이터 가용성 차이
+- 재무 공시 품질 차이
+- 시장 지위 차이
+- 애널리스트 커버리지 수준 차이
 
-## 5. LEGAL AND REGULATORY CONSTRAINTS
+**OEM의 공급업체 오분류**
+주요 자동차 OEM(완성차 제조사)이 최종 제품 제조업체가 아닌 공급업체로 잘못 분류될 수 있습니다.
 
-### 5.1 Financial Investment Services Licensing
+**실제 출력 사례:**
+```
+Tesla: 카테고리: companies, 제품: companies Components, companies Systems
+시장 지위: 전기차 부품 공급업체
 
-Under Korean law (Financial Investment Services and Capital Markets Act Article 6), providing investment advisory or discretionary investment management services requires regulatory approval from the Financial Services Commission.
+실제 현실: Tesla는 OEM(차량 제조사)이지 부품 공급업체가 아님
+```
 
-**This System:**
-- Does NOT hold required financial investment business license
-- CANNOT legally provide investment advisory services
-- MAY ONLY provide general information
+**영향:**
+- 투자 권고가 근본적으로 결함이 있을 수 있음
+- 포트폴리오 구성이 중요한 산업 구분을 무시함
+- 경쟁 역학을 오해함
+- 리스크 평가가 부정확함 (OEM과 공급업체의 리스크 프로필이 크게 다름)
 
-**Permitted Activities:**
-- "Company X has an ROE of 15%"
-- "The battery market is experiencing growth"
+**원인:**
+- 뉴스 분석 중 키워드 추출 오류
+- 1차 분류 실패 시 대체 카테고리 할당
+- 기업 분류 검증 부족
+- 플레이스홀더 텍스트를 사용하는 템플릿 기반 제품 설명
 
-**Prohibited Activities:**
-- "You should buy Company X stock"
-- "Allocate 30% of your portfolio to this investment"
-- "Hold until target price of 500,000 won"
-
-### 5.2 Required Disclaimers
-
-All reports must clearly state:
-- Not investment recommendations
-- Investment losses are the sole responsibility of the investor
-- Past performance does not guarantee future results
-- Information accuracy is not guaranteed
-
-### 5.3 Not a Prospectus or Offering Document
-
-This report:
-- Is not filed with or reviewed by financial regulators
-- Has no legal standing
-- Has not been audited by certified public accountants
-- Should not be used as the sole basis for investment decisions
-
----
-
-## 6. TECHNICAL CONSTRAINTS
-
-### 6.1 API Dependencies
-
-**Single Points of Failure:**
-- OpenAI API: Outages degrade analysis quality
-- Tavily API: Disruptions limit information gathering
-- DART API: Unavailability prevents Korean company analysis
-- SEC API: Rate limits can cause data gaps
-
-**Operational Risk:**
-External API failures or rate limiting directly impacts report completeness and quality.
-
-### 6.2 Workflow Architecture
-
-**Current Status:**
-LangGraph orchestration framework bypassed due to persistent technical issues (KeyError: '__start__'). Agents are manually executed in sequence.
-
-**Implications:**
-- Limited workflow automation
-- No parallel processing capabilities
-- Checkpoint/restart functionality unavailable
-- Scalability constraints
-
-### 6.3 Scalability Limitations
-
-**Current Constraints:**
-- Concurrent analysis: ~30 companies (memory limitations)
-- Execution time: ~14 minutes (sequential processing)
-- Report length: ~5,000 tokens (LLM constraints)
-
-**Cannot Support:**
-- Comprehensive market scans (800+ KOSPI companies)
-- Global EV sector analysis (200+ companies)
-- Real-time monitoring and alerts
+**사용자 권장사항:**
+기업 분류는 항상 독립적으로 검증하십시오. 투자 결정 시 시스템 생성 분류에만 의존하지 마십시오.
 
 ---
 
-## 7. USER CUSTOMIZATION LIMITATIONS
+## 3. 투자 판단 한계
 
-### 7.1 Lack of Personalization
+### 3.1 목표가 산정 문제
 
-**Fixed Parameters:**
-- Target audience: Individual investors (generic)
-- Risk tolerance: Not assessed
-- Investment horizon: Not personalized
-- Available capital: Not considered
+**현재 방법론:**
+- 1단계: LLM 생성 추정치
+- 2단계: 단순 상승률 (예: 현재가 대비 +20%)
+- 3단계: 목표가 미제공
 
-**Impact:**
-The same portfolio recommendations are provided regardless of whether the user is:
-- 60-year-old retiree with 500M KRW seeking stability
-- 30-year-old professional with 10M KRW seeking growth
+**누락된 접근법:**
+- 현금흐름할인(DCF) 모델 미사용
+- 애널리스트 컨센서스 미반영
+- 멀티플 기반 밸류에이션 (PER, PBR) 체계적 미적용
+- 상승 여력 계산 근거 부족
 
-### 7.2 Limited Interactivity
+**리스크:**
+목표가가 내재가치와 크게 벗어날 수 있습니다. 기본적인 밸류에이션 지원 없이 단순 백분율 상승에 의존할 때 고평가 리스크가 상당합니다.
 
-**Current Functionality:**
-- One-way report generation
-- Static JSON/Markdown/HTML output
+### 3.2 투자 시점 미제시
 
-**Missing Features:**
-- User question-and-answer capability
-- Drill-down analysis on demand
-- Scenario analysis (what-if modeling)
-- Rebalancing alerts and notifications
+**시스템 제공 사항:**
+- 투자 기간 (단기/중기/장기)
+- 투자 근거
 
-### 7.3 Educational Content Gaps
+**시스템 미제공 사항:**
+- 진입 시점 권고 (지금 매수? 하락 대기?)
+- 분할 매수 전략
+- 손절 및 익절 수준
+- 리밸런싱 시기 지침
 
-**Available:**
-- Investment terminology glossary
-- General investment guidelines
+**영향:**
+장기적으로 건전한 권고라도 부적절한 진입 시점은 단기적으로 상당한 저조한 성과나 손실을 초래할 수 있습니다.
 
-**Insufficient:**
-- Structured investment education curriculum
-- Case studies (success and failure examples)
-- Progressive learning pathways
-- Risk management training
+### 3.3 포트폴리오 최적화 한계
 
----
+**현재 접근법:**
+포트폴리오 가중치는 다음을 고려하지 않고 정규화된 투자 점수를 기반으로 할당됩니다:
+- 위험-수익 최적화 (Markowitz 프레임워크)
+- 보유 종목 간 상관관계
+- 개별 투자자 프로필 (연령, 자산, 위험 허용도, 목표)
 
-## 8. COMPETITIVE COMPARISON
-
-### 8.1 vs. Professional Securities Analysts
-
-| Aspect | This System | Professional Analysts |
-|--------|-------------|---------------------|
-| Analysis Depth | Basic-Intermediate | Comprehensive |
-| Target Price Reliability | Low | High |
-| Industry Expertise | General | Specialized |
-| Real-time Updates | Delayed | Real-time |
-| Cost | Free | High (subscription/commission) |
-| Accessibility | Open | Restricted |
-
-### 8.2 vs. Bloomberg/Reuters Terminals
-
-| Feature | This System | Bloomberg Terminal |
-|---------|-------------|-------------------|
-| Data Coverage | Limited | Extensive |
-| Real-time Data | No | Yes |
-| Technical Analysis | No | Comprehensive |
-| News Speed | Delayed | Immediate |
-| API Quality | Basic | Professional |
-| Cost | Free | $24,000/year |
-
-### 8.3 vs. Robo-Advisors
-
-| Feature | This System | Robo-Advisors |
-|---------|-------------|--------------|
-| Portfolio Optimization | Basic | Advanced (MPT) |
-| Rebalancing | Manual | Automatic |
-| Tax Optimization | None | Available |
-| Trade Execution | None | Integrated |
-| Personalization | Limited | Extensive |
-| Regulatory Compliance | None | Licensed |
+**문제 사례:**
+여러 한국 배터리 제조업체(LG에너지솔루션, 삼성SDI, SK온)로 구성된 포트폴리오는 보유 종목 수로는 분산된 것처럼 보이지만 높은 상관관계로 인해 최소한의 분산 효과만을 제공합니다.
 
 ---
 
-## 9. ETHICAL CONSIDERATIONS
+## 4. 실시간 기능 한계
 
-### 9.1 Data and Model Bias
+### 4.1 시장 역학 미포착
 
-**Data Bias:**
-- Over-representation of large-cap companies (more news coverage)
-- English-language/US-centric data availability
-- Positive news bias (promotional content)
+**문제:**
+보고서는 특정 시점에 생성됩니다. 생성 후 발생하는 중요한 시장 움직임 이벤트는 다음 업데이트 주기까지 반영되지 않습니다.
 
-**AI Bias:**
-- LLM training data biases
-- US-centric perspectives in GPT models
-- Potential over-emphasis on recent trends
+**사례:**
+- 장중 변동성 및 가격 움직임
+- 속보 (리콜, 경영진 변경, M&A 발표)
+- 글로벌 이벤트 (지정학적 갈등, 팬데믹, 금융 위기)
 
-### 9.2 Transparency Limitations
+### 4.2 캐시 의존성
 
-**Black Box Problem:**
-When LLM analysis concludes a company is "attractive," the reasoning process is often opaque. Users cannot readily determine:
-- Specific factors driving the assessment
-- Relative weightings of different considerations
-- Potential errors or faulty assumptions
+**현재 설정:** 24시간 캐시 유지 시간
 
-### 9.3 Responsibility and Accountability
+**트레이드오프:**
+- 캐시 활성화: API 비용 감소하지만 오래된 데이터 사용 가능
+- 캐시 비활성화: 항상 최신이지만 운영 비용 증가
 
-**In Case of Loss:**
-If investment decisions based on this report result in financial loss, responsibility attribution is unclear:
-- System developers: Not liable (disclaimer)
-- AI model: Cannot be held accountable
-- User: Bears full responsibility
-
-There is no compensation mechanism or dispute resolution framework.
+**시나리오:**
+오전에 보고서가 생성되고 오후에 중요한 사건(예: 제품 리콜)이 발생하는 경우, 24시간 내에 분석을 재실행하면 캐시된 데이터를 사용하여 중요한 새 정보를 놓치게 됩니다.
 
 ---
 
-## 10. FUTURE DEVELOPMENT ROADMAP
+## 5. 법적 및 규제 제약
 
-### 10.1 Short-term Improvements (1-3 months)
+### 5.1 금융투자업 인가
 
-- Integration with real-time price feeds
-- Technical analysis indicators (RSI, MACD, moving averages)
-- Enhanced target price models (DCF implementation)
-- User risk tolerance profiling
+자본시장과 금융투자업에 관한 법률 제6조에 따라, 투자자문업 또는 투자일임업을 영위하려면 금융위원회의 인가를 받아야 합니다.
 
-### 10.2 Medium-term Enhancements (3-6 months)
+**본 시스템:**
+- 금융투자업 인가를 보유하지 않음
+- 법적으로 투자자문 서비스를 제공할 수 없음
+- 일반 정보만 제공 가능
 
-- Deeper fundamental analysis frameworks
-- Analyst consensus integration
-- Portfolio optimization using Modern Portfolio Theory
-- Backtesting functionality
+**허용 활동:**
+- "X 기업의 ROE는 15%입니다"
+- "배터리 시장이 성장하고 있습니다"
 
-### 10.3 Long-term Development (6-12 months)
+**금지 활동:**
+- "X 기업 주식을 매수하세요"
+- "포트폴리오의 30%를 이 투자에 배분하세요"
+- "목표가 50만원까지 보유하세요"
 
-- Pursue financial investment business licensing (investment advisory)
-- Trade execution integration
-- Automated portfolio rebalancing
-- Web and mobile dashboard development
+### 5.2 필수 면책사항
 
----
+모든 보고서는 다음을 명시해야 합니다:
+- 투자 권고가 아님
+- 투자 손실은 투자자 본인의 책임
+- 과거 실적이 미래 수익을 보장하지 않음
+- 정보의 정확성을 보장하지 않음
 
-## APPROPRIATE USE CASES
+### 5.3 투자설명서가 아님
 
-### Recommended Applications
-
-1. **Investment Idea Generation**
-   - Identifying potential investment candidates
-   - Understanding market trends
-   - Exploring supply chain relationships
-
-2. **Educational Purposes**
-   - Learning investment terminology
-   - Practicing financial statement analysis
-   - Understanding industry analysis frameworks
-
-3. **Supplementary Research Tool**
-   - Complementing professional research reports
-   - Gaining alternative perspectives
-   - Identifying overlooked information
-
-### Inappropriate Applications
-
-1. **Sole Basis for Investment Decisions**
-   - Making buy/sell decisions based solely on this report
-   - Treating target prices as absolute benchmarks
-   - Replicating recommended portfolios without independent analysis
-
-2. **Professional Advice Replacement**
-   - Substituting for securities analyst reports
-   - Replacing licensed financial advisory services
-   - Using instead of professional portfolio management
-
-3. **Short-term Trading**
-   - Day trading decisions
-   - Swing trading timing
-   - Options and futures trading strategies
+본 보고서는:
+- 금융 규제 당국에 제출되거나 검토된 문서가 아님
+- 법적 효력이 없음
+- 공인회계사의 감사를 거치지 않음
+- 투자 결정의 유일한 근거로 사용되어서는 안 됨
 
 ---
 
-## RECOMMENDED INVESTMENT PROCESS
+## 6. 기술적 제약
 
-For investors choosing to incorporate this system into their research:
+### 6.1 API 의존성
 
-**Step 1:** Use this report for initial investment idea generation
+**단일 장애 지점:**
+- OpenAI API: 중단 시 분석 품질 저하
+- Tavily API: 중단 시 정보 수집 제한
+- DART API: 사용 불가 시 한국 기업 분석 불가
+- SEC API: 속도 제한 시 데이터 공백 발생
 
-**Step 2:** Supplement with professional securities research reports
+**운영 리스크:**
+외부 API 장애 또는 속도 제한이 보고서 완전성과 품질에 직접 영향을 미칩니다.
 
-**Step 3:** Verify key information through primary sources (financial statements, company filings)
+### 6.2 워크플로우 아키텍처
 
-**Step 4:** Consult with licensed financial advisors when appropriate
+**현재 상태:**
+지속적인 기술 문제 (KeyError: '__start__')로 인해 LangGraph 오케스트레이션 프레임워크를 우회했습니다. 에이전트가 수동으로 순차 실행됩니다.
 
-**Step 5:** Make investment decisions based on personal judgment, risk tolerance, and financial circumstances
+**시사점:**
+- 워크플로우 자동화 제한
+- 병렬 처리 기능 없음
+- 체크포인트/재시작 기능 사용 불가
+- 확장성 제약
 
-**Step 6:** Continuously monitor investments and adjust as market conditions change
+### 6.3 확장성 한계
 
----
+**현재 제약:**
+- 동시 분석: 약 30개 기업 (메모리 제한)
+- 실행 시간: 약 14분 (순차 처리)
+- 보고서 길이: 약 5,000 토큰 (LLM 제약)
 
-## FINAL DISCLAIMER
-
-This system is an open-source project provided for educational and research purposes. 
-
-The developers and contributors assume no liability for any losses, damages, or adverse consequences arising from the use of this system or reliance on its outputs.
-
-Investment decisions should be made only after:
-1. Comprehensive information gathering from multiple sources
-2. Consultation with qualified financial professionals when appropriate
-3. Careful consideration of personal financial circumstances and risk tolerance
-4. Independent verification of key facts and assumptions
-
-Past performance is not indicative of future results. All investments carry risk, including potential loss of principal.
-
-Users are solely responsible for their investment decisions and any consequences thereof.
-
----
-
-**Document Control**
-
-| Attribute | Value |
-|-----------|-------|
-| Version | 1.0 |
-| Effective Date | October 26, 2025 |
-| Document Owner | EV Investment Analysis System Development Team |
-| Classification | Public |
-| Review Frequency | Quarterly |
-| Next Review | January 26, 2026 |
+**지원 불가:**
+- 종합 시장 스캔 (KOSPI 전체 800개 이상 기업)
+- 글로벌 EV 섹터 분석 (200개 이상 기업)
+- 실시간 모니터링 및 알림
 
 ---
 
-**END OF DOCUMENT**
+## 7. 사용자 맞춤화 한계
+
+### 7.1 개인화 부족
+
+**고정 매개변수:**
+- 대상 독자: 개인 투자자 (일반)
+- 위험 허용도: 미평가
+- 투자 기간: 개인화되지 않음
+- 가용 자본: 미고려
+
+**영향:**
+사용자가 다음 중 어느 경우인지와 무관하게 동일한 포트폴리오 권고가 제공됩니다:
+- 5억원을 보유한 60세 은퇴자로 안정성 추구
+- 1천만원을 보유한 30세 직장인으로 성장 추구
+
+### 7.2 제한적 상호작용
+
+**현재 기능:**
+- 일방향 보고서 생성
+- 정적 JSON/Markdown/HTML 출력
+
+**누락된 기능:**
+- 사용자 질의응답 기능
+- 요청 시 상세 분석
+- 시나리오 분석 (가정 모델링)
+- 리밸런싱 알림 및 통지
+
+### 7.3 교육 콘텐츠 공백
+
+**제공 사항:**
+- 투자 용어 용어집
+- 일반 투자 가이드라인
+
+**불충분:**
+- 구조화된 투자 교육 커리큘럼
+- 사례 연구 (성공 및 실패 사례)
+- 단계별 학습 경로
+- 리스크 관리 교육
+
+---
+
+## 8. 경쟁사 대비 비교
+
+### 8.1 vs 전문 증권 애널리스트
+
+| 측면 | 본 시스템 | 전문 애널리스트 |
+|-----|---------|--------------|
+| 분석 깊이 | 기초-중급 | 종합적 |
+| 목표가 신뢰도 | 낮음 | 높음 |
+| 산업 전문성 | 일반 | 전문화 |
+| 실시간 업데이트 | 지연 | 실시간 |
+| 비용 | 무료 | 고가 (구독/수수료) |
+| 접근성 | 개방 | 제한적 |
+
+### 8.2 vs Bloomberg/Reuters 터미널
+
+| 기능 | 본 시스템 | Bloomberg Terminal |
+|-----|---------|-------------------|
+| 데이터 범위 | 제한적 | 방대함 |
+| 실시간 데이터 | 없음 | 있음 |
+| 기술적 분석 | 없음 | 종합적 |
+| 뉴스 속도 | 지연 | 즉시 |
+| API 품질 | 기본 | 전문가급 |
+| 비용 | 무료 | 연 $24,000 |
+
+### 8.3 vs 로보어드바이저
+
+| 기능 | 본 시스템 | 로보어드바이저 |
+|-----|---------|-------------|
+| 포트폴리오 최적화 | 기본 | 고급 (MPT) |
+| 리밸런싱 | 수동 | 자동 |
+| 세금 최적화 | 없음 | 있음 |
+| 거래 실행 | 없음 | 통합 |
+| 개인화 | 제한적 | 광범위 |
+| 규제 준수 | 없음 | 인가됨 |
+
+---
+
+## 9. 윤리적 고려사항
+
+### 9.1 데이터 및 모델 편향
+
+**데이터 편향:**
+- 대형주 과다 대표 (뉴스 커버리지 많음)
+- 영어권/미국 중심 데이터 가용성
+- 긍정적 뉴스 편향 (홍보 콘텐츠)
+
+**AI 편향:**
+- LLM 학습 데이터 편향
+- GPT 모델의 미국 중심 관점
+- 최근 트렌드의 과대평가 가능성
+
+### 9.2 투명성 한계
+
+**블랙박스 문제:**
+LLM 분석이 기업이 "매력적"이라고 결론 내릴 때, 추론 과정이 불투명한 경우가 많습니다. 사용자는 다음을 쉽게 파악할 수 없습니다:
+- 평가를 이끄는 구체적 요인
+- 다양한 고려사항의 상대적 가중치
+- 잠재적 오류 또는 잘못된 가정
+
+### 9.3 책임 및 의무
+
+**손실 발생 시:**
+본 보고서를 기반으로 한 투자 결정이 금전적 손실을 초래하는 경우, 책임 귀속이 불명확합니다:
+- 시스템 개발자: 책임지지 않음 (면책사항)
+- AI 모델: 책임을 물을 수 없음
+- 사용자: 전적인 책임을 부담
+
+보상 메커니즘이나 분쟁 해결 프레임워크가 없습니다.
+
+---
+
+## 10. 향후 개발 로드맵
+
+### 10.1 단기 개선사항 (1-3개월)
+
+- 실시간 가격 피드 통합
+- 기술적 분석 지표 (RSI, MACD, 이동평균)
+- 향상된 목표가 모델 (DCF 구현)
+- 사용자 위험 허용도 프로파일링
+
+### 10.2 중기 개선사항 (3-6개월)
+
+- 심화된 펀더멘털 분석 프레임워크
+- 애널리스트 컨센서스 통합
+- 현대 포트폴리오 이론을 사용한 포트폴리오 최적화
+- 백테스팅 기능
+
+### 10.3 장기 개발 (6-12개월)
+
+- 금융투자업 인가 취득 추진 (투자자문업)
+- 거래 실행 통합
+- 자동 포트폴리오 리밸런싱
+- 웹 및 모바일 대시보드 개발
+
+---
+
+## 적절한 활용 사례
+
+### 권장 활용
+
+1. **투자 아이디어 발굴**
+   - 잠재적 투자 후보 식별
+   - 시장 트렌드 이해
+   - 공급망 관계 탐색
+
+2. **교육 목적**
+   - 투자 용어 학습
+   - 재무제표 분석 연습
+   - 산업 분석 프레임워크 이해
+
+3. **보조 연구 도구**
+   - 전문 연구 보고서 보완
+   - 대안적 관점 확보
+   - 간과된 정보 발견
+
+### 부적절한 활용
+
+1. **투자 결정의 유일한 근거**
+   - 본 보고서만을 기반으로 매수/매도 결정
+   - 목표가를 절대적 기준으로 취급
+   - 독립적 분석 없이 권고 포트폴리오 복제
+
+2. **전문 자문 대체**
+   - 증권 애널리스트 보고서 대신 사용
+   - 인가된 금융 자문 서비스 대체
+   - 전문 포트폴리오 관리 대신 사용
+
+3. **단기 매매**
+   - 데이트레이딩 판단 근거
+   - 스윙트레이딩 타이밍
+   - 옵션 및 선물 거래 전략
+
+---
+
+## 권장 투자 프로세스
+
+본 시스템을 연구에 통합하기로 선택한 투자자를 위한 권장 프로세스:
+
+**1단계:** 초기 투자 아이디어 발굴을 위해 본 보고서 활용
+
+**2단계:** 전문 증권사 리서치 보고서로 보완
+
+**3단계:** 1차 출처를 통해 핵심 정보 검증 (재무제표, 기업 공시)
+
+**4단계:** 적절한 경우 인가된 금융 자문사와 상담
+
+**5단계:** 개인의 판단, 위험 허용도 및 재무 상황에 기반한 투자 결정
+
+**6단계:** 지속적으로 투자를 모니터링하고 시장 상황 변화에 따라 조정
+
+---
+
+## 최종 면책사항
+
+본 시스템은 교육 및 연구 목적으로 제공되는 오픈소스 프로젝트입니다.
+
+개발자 및 기여자는 본 시스템의 사용 또는 출력에 대한 의존으로 인해 발생하는 손실, 손해 또는 불리한 결과에 대해 책임을 지지 않습니다.
+
+투자 결정은 다음을 거친 후에만 이루어져야 합니다:
+1. 여러 출처로부터 종합적인 정보 수집
+2. 적절한 경우 자격을 갖춘 금융 전문가와 상담
+3. 개인의 재무 상황 및 위험 허용도에 대한 신중한 고려
+4. 핵심 사실 및 가정의 독립적 검증
+
+과거 실적이 미래 결과를 나타내지 않습니다. 모든 투자는 원금 손실 가능성을 포함한 리스크를 수반합니다.
+
+사용자는 투자 결정 및 그에 따른 결과에 대해 전적으로 책임을 집니다.
+
+---
+
+**문서 관리**
+
+| 항목 | 값 |
+|-----|---|
+| 버전 | 1.0 |
+| 시행일 | 2025년 10월 26일 |
+| 문서 소유자 | EV 투자 분석 시스템 개발팀 |
+| 등급 | 공개 |
+| 검토 주기 | 분기별 |
+| 다음 검토 | 2026년 1월 26일 |
+
+---
+
+**문서 끝**
