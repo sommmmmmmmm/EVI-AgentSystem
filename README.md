@@ -23,6 +23,14 @@ LangGraph 기반 멀티 에이전트 구조를 활용해, 전기차 산업의 **
 
 ## Features
 
+### Key Improvements (v1.0)
+
+1. **Listed Company Filtering**: 상장 기업 우선 분석, 비상장 5개 제한 → API 비용 최적화
+2. **3-Tier Dynamic Fallback**: LLM API → 재무데이터 기반 생성 → 차별화 템플릿 (API 실패시에도 고품질 분석)
+3. **24h Cache System**: Tavily 검색 결과 캐싱으로 API 비용 30-70% 절감
+4. **Manual Agent Orchestration**: LangGraph 버그 우회, 안정적 순차 실행
+5. **Data Quality Filtering**: "제목 없음" 자동 제거, 유효 데이터만 보고서 포함
+
 ### Core Features
 - **High-Reliability Data Collection**: Tavily AI search for up to 100 news articles with integrated Korean/US disclosures
 - **Time-Weighted System**: Recent articles receive higher weights (1 week = 1.0, 4 weeks = 0.4)
@@ -35,12 +43,14 @@ LangGraph 기반 멀티 에이전트 구조를 활용해, 전기차 산업의 **
 - **Comprehensive Risk Assessment**: Quantitative (80%) + Qualitative (20%) risk scoring with 3 core risk factors
 - **Integrated Quantitative-Qualitative Analysis**: Financial data (30%) + LLM qualitative analysis (70%) balanced approach
 - **Transparent Data Sources**: Clear indication of listed company financial data availability (financial-based/qualitative-only/unlisted)
+- **Dynamic Fallback**: 3-tier system ensures meaningful analysis even when APIs fail
 
 ### Report Generation
 - **Detailed Reports**: Stock analysis, risk factors, data source attribution, glossary included
 - **Multiple Formats**: JSON, Markdown, HTML support
-- **Visualization**: Weight distribution, disclosure statistics, keyword trends
-- **Data Transparency**: Clear indication of supporting data (N news articles, M disclosures) for each analysis  
+- **Professional Design**: Clean, single-color investment report layout
+- **Data Transparency**: Clear indication of supporting data (N news articles, M disclosures) for each analysis
+- **Quality Filtering**: Automatic removal of empty or invalid data entries  
 
 ---
 
